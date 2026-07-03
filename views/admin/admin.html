@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NALAM AI - Admin Dashboard</title>
+<style>
+*{ margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI",sans-serif; }
+body{ background:#f4f8ff; }
+
+.sidebar{
+    position:fixed; left:0; top:0;
+    width:250px; height:100vh;
+    background:linear-gradient(135deg,#134f8f,#1a6fc4);
+    color:white; padding:25px; overflow-y:auto;
+}
+.sidebar h2{ text-align:center; margin-bottom:30px; }
+.menu{
+    padding:14px; margin-bottom:12px;
+    background:rgba(255,255,255,.15);
+    border-radius:12px; cursor:pointer; transition:.3s;
+}
+.menu:hover{ background:rgba(255,255,255,.30); }
+
+.main{ margin-left:250px; min-height:100vh; }
+.topbar{
+    height:65px; background:white;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0 30px; box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+.topbar h2{ color:#0d47a1; }
+.profile{
+    background:#1565c0; color:white;
+    padding:9px 18px; border-radius:20px; font-weight:bold;
+}
+.content{ padding:30px; }
+
+.card{
+    background:white; padding:25px;
+    border-radius:18px; box-shadow:0 5px 18px rgba(0,0,0,.08);
+    margin-bottom:20px;
+}
+.card h2{ color:#0d47a1; margin-bottom:16px; }
+.hidden{ display:none; }
+
+/* STAT GRID */
+.stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px; margin-bottom:24px;
+}
+.stat-box{
+    background:#eef4ff; border-radius:14px;
+    padding:20px; text-align:center;
+    border-left:5px solid #1565c0;
+}
+.stat-box h1{ color:#1565c0; font-size:32px; }
+.stat-box p{ color:#555; font-size:13px; margin-top:6px; }
+
+/* USER CARDS */
+.user-card{
+    background:#eef5ff; padding:16px; margin-bottom:12px;
+    border-left:5px solid #1565c0; border-radius:12px;
+    cursor:pointer; transition:.3s;
+}
+.user-card:hover{ background:#dfeeff; transform:translateY(-2px); }
+.detail-row{
+    display:grid; grid-template-columns:180px auto;
+    padding:10px 0; border-bottom:1px solid #ddd;
+}
+
+/* BUTTONS */
+.btn{
+    padding:10px 18px; border:none; border-radius:8px;
+    cursor:pointer; margin:6px 6px 0 0; color:white; font-size:13px;
+}
+.approve{ background:#2e7d32; }
+.reject{ background:#d32f2f; }
+.back{ background:#1565c0; }
+.report-btn{ background:#6a1b9a; }
+
+/* TABLE */
+table{ width:100%; border-collapse:collapse; font-size:13px; }
+th{ background:#1565c0; color:white; padding:10px; text-align:left; }
+td{ padding:10px; border-bottom:1px solid #eee; color:#333; }
+tr:hover td{ background:#f5f9ff; }
+
+/* ITEM CARD */
+.item{
+    background:#eef4ff; padding:18px; margin:12px 0;
+    border-radius:14px; border-left:5px solid #1565c0;
+}
+.item h3{ color:#0d47a1; margin-bottom:8px; }
+.item p{ font-size:13px; color:#444; margin:4px 0; }
+
+.badge{
+    display:inline-block; padding:4px 12px;
+    border-radius:20px; font-size:12px; font-weight:600;
+}
+.pending{ background:#ffeaa7; color:#7d6608; }
+.approved{ background:#c8f7c5; color:#1a5c1a; }
+.completed{ background:#d6eaff; color:#0d47a1; }
+.rejected{ background:#fde8e8; color:#c0392b; }
+
+/* REPORT FORM */
+.report-form{ background:#f9f9f9; padding:16px; border-radius:12px; margin-top:12px; }
+.report-form textarea{
+    width:100%; padding:10px; border-radius:8px;
+    border:1px solid #ccc; font-size:13px; resize:vertical; min-height:80px;
+}
+.report-form button{ margin-top:8px; }
+
+/* TABS */
+.tabs{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+.tab{
+    padding:9px 18px; border-radius:10px; cursor:pointer;
+    background:#eef4ff; color:#1565c0; font-weight:600; font-size:13px;
+    border:2px solid transparent; transition:.2s;
+}
+.tab.active{ background:#1565c0; color:white; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>NALAM AI</h2>
+    <div class="menu" onclick="showDashboard()">Dashboard</div>
+    <div class="menu" onclick="showProfile()">Admin Profile</div>
+    <div class="menu" onclick="showApproval()">User Approval</div>
+    <div class="menu" onclick="showPurchase()">Purchase Management</div>
+    <div class="menu" onclick="showMaintenance()">Maintenance Management</div>
+    <div class="menu" onclick="location.href='salary.html'">
+    Salary Management
+</div>
+
+<div class="menu" onclick="location.href='revenue.html'">
+    Revenue Analytics
+</div>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <h2>Hospital Administration Dashboard</h2>
+        <div class="profile">Admin</div>
+    </div>
+
+    <div class="content">
+
+        <!-- DASHBOARD -->
+        <div id="dashboardSection" class="card">
+            <h2>Welcome to NALAM AI Admin</h2>
+            <br>
+            <div class="stat-grid" id="dashStats">Loading stats...</div>
+        </div>
+
+        <!-- PROFILE -->
+        <div id="profileSection" class="card hidden">
+            <h2>Admin Profile</h2><br>
+            <table>
+                <tr><td><b>Name</b></td><td>Hospital Administrator</td></tr>
+                <tr><td><b>Role</b></td><td>Admin</td></tr>
+                <tr><td><b>Email</b></td><td>admin@nalam.ai</td></tr>
+                <tr><td><b>Department</b></td><td>Administration</td></tr>
+            </table>
+        </div>
+
+        <!-- USER APPROVAL -->
+        <div id="approvalSection" class="card hidden"></div>
+
+        <!-- PURCHASE -->
+        <div id="purchaseSection" class="card hidden"></div>
+
+        <!-- MAINTENANCE -->
+        <div id="maintenanceSection" class="card hidden"></div>
+        <!-- SALARY -->
+        <div id="salarySection" class="card hidden"></div>
+
+        <!-- REVENUE -->
+        <div id="revenueSection" class="card hidden"></div>
+
+    </div>
+</div>
+
+<script>
+const BASE = "http://localhost:5000";
+
+/* ---- SECTION HELPERS ---- */
+function hideAll(){
+    ["dashboardSection","profileSection","approvalSection","purchaseSection","maintenanceSection"]
+    .forEach(id => document.getElementById(id).classList.add("hidden"));
+}
+function showSection(id){ hideAll(); document.getElementById(id).classList.remove("hidden"); }
+
+/* ========================
+   DASHBOARD STATS
+======================== */
+function showDashboard(){
+    showSection("dashboardSection");
+    loadDashStats();
+}
+
+async function loadDashStats(){
+    try {
+        const [pu, mu, pu2] = await Promise.all([
+            fetch(BASE+"/admin/stats/purchase").then(r=>r.json()),
+            fetch(BASE+"/admin/stats/maintenance").then(r=>r.json()),
+            fetch(BASE+"/admin/pending-users").then(r=>r.json())
+        ]);
+        document.getElementById("dashStats").innerHTML = `
+            <div class="stat-box"><h1>${pu2.length}</h1><p>Pending User Approvals</p></div>
+            <div class="stat-box"><h1>${pu.total_uploads||0}</h1><p>Purchase Uploads</p></div>
+            <div class="stat-box"><h1>${pu.total_items||0}</h1><p>Total Items Purchased</p></div>
+            <div class="stat-box"><h1>${mu.pending||0}</h1><p>Pending Maintenance</p></div>
+            <div class="stat-box"><h1>${mu.approved||0}</h1><p>Approved Maintenance</p></div>
+            <div class="stat-box"><h1>${mu.completed||0}</h1><p>Completed Maintenance</p></div>
+        `;
+    } catch(e){
+        document.getElementById("dashStats").innerHTML = "<p>Could not load stats.</p>";
+    }
+}
+
+/* ========================
+   ADMIN PROFILE
+======================== */
+function showProfile(){ showSection("profileSection"); }
+
+/* ========================
+   USER APPROVAL
+======================== */
+async function showApproval(){
+    showSection("approvalSection");
+    document.getElementById("approvalSection").innerHTML = `
+        <h2>✅ Pending User Approvals</h2><br>
+        <div id="userList">Loading...</div>
+    `;
+    loadPendingUsers();
+}
+
+async function loadPendingUsers(){
+    const res = await fetch(BASE+"/admin/pending-users");
+    const users = await res.json();
+    if(users.length===0){
+        document.getElementById("userList").innerHTML = "<p>No pending users.</p>";
+        return;
+    }
+    document.getElementById("userList").innerHTML = users.map(u=>`
+        <div class="user-card" onclick="viewUser(${u.id})">
+            <h3>${u.name}</h3>
+            <p>Email: ${u.email} &nbsp;|&nbsp; Role: ${u.role}</p>
+        </div>
+    `).join("");
+}
+
+async function viewUser(id){
+    const res = await fetch(BASE+"/admin/user/"+id);
+    const u = await res.json();
+    document.getElementById("approvalSection").innerHTML = `
+        <button class="btn back" onclick="showApproval()">← Back</button>
+        <h2 style="margin-top:16px">User Details</h2><br>
+        <div class="detail-row"><b>Name</b><span>${u.name}</span></div>
+        <div class="detail-row"><b>Email</b><span>${u.email}</span></div>
+        <div class="detail-row"><b>Role</b><span>${u.role}</span></div>
+        <div class="detail-row"><b>Mobile</b><span>${u.mobile||"-"}</span></div>
+        <div class="detail-row"><b>Gender</b><span>${u.gender||"-"}</span></div>
+        <div class="detail-row"><b>Date of Birth</b><span>${u.dob||"-"}</span></div>
+        <div class="detail-row"><b>Address</b><span>${u.address||"-"}</span></div>
+        <br>
+        <button class="btn approve" onclick="approveUser(${u.id})">✔ Approve</button>
+        <button class="btn reject" onclick="rejectUser(${u.id})">✘ Reject</button>
+    `;
+}
+
+async function approveUser(id){
+    const res = await fetch(BASE+"/admin/approve-user/"+id, { method:"POST" });
+    const data = await res.json();
+    if(data.success){ alert("User Approved"); showApproval(); }
+}
+
+async function rejectUser(id){
+    if(!confirm("Reject this user?")) return;
+    const res = await fetch(BASE+"/admin/reject-user/"+id, { method:"POST" });
+    const data = await res.json();
+    if(data.success){ alert("User Rejected"); showApproval(); }
+}
+
+/* ========================
+   PURCHASE MANAGEMENT
+======================== */
+function showPurchase(){
+    showSection("purchaseSection");
+    document.getElementById("purchaseSection").innerHTML = `
+        <h2>📦 Purchase Management</h2>
+        <div class="tabs">
+            <div class="tab active" id="tab-uploads" onclick="switchPurchaseTab('uploads')">Uploads</div>
+            <div class="tab" id="tab-stock" onclick="switchPurchaseTab('stock')">Stock Report</div>
+            <div class="tab" id="tab-reports" onclick="switchPurchaseTab('reports')">Admin Reports</div>
+        </div>
+        <div id="purchaseContent">Loading...</div>
+    `;
+    loadPurchaseUploads();
+}
+
+function switchPurchaseTab(tab){
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.getElementById("tab-"+tab).classList.add("active");
+    if(tab==="uploads") loadPurchaseUploads();
+    if(tab==="stock") loadPurchaseStock();
+    if(tab==="reports") loadPurchaseReports();
+}
+
+async function loadPurchaseUploads(){
+    const res = await fetch(BASE+"/purchase/uploads");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("purchaseContent").innerHTML = "<p>No uploads yet.</p>";
+        return;
+    }
+    document.getElementById("purchaseContent").innerHTML = `
+        <table>
+            <thead><tr><th>#</th><th>File Name</th><th>Uploaded By</th><th>Staff ID</th><th>Items</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+            ${data.map(x=>`
+                <tr>
+                    <td>${x.id}</td>
+                    <td>${x.file_name}</td>
+                    <td>${x.uploaded_by}</td>
+                    <td>${x.staff_id||"PUR001"}</td>
+                    <td>${x.total_items}</td>
+                    <td>${new Date(x.uploaded_time).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn back" style="padding:6px 12px;margin:0 4px 0 0" onclick="viewPurchaseFile(${x.id})">View</button>
+                        <button class="btn report-btn" style="padding:6px 12px;margin:0" onclick="openReportForm(${x.id})">Add Report</button>
+                    </td>
+                </tr>
+            `).join("")}
+            </tbody>
+        </table>
+        <div id="reportFormContainer"></div>
+    `;
+}
+
+async function loadPurchaseStock(){
+    const res = await fetch(BASE+"/purchase/report");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("purchaseContent").innerHTML = "<p>No stock records.</p>";
+        return;
+    }
+    document.getElementById("purchaseContent").innerHTML = `
+        <table>
+            <thead><tr><th>#</th><th>Item</th><th>Type</th><th>Supplier</th><th>Qty</th><th>Rate</th><th>Batch</th><th>Expiry</th></tr></thead>
+            <tbody>
+            ${data.map(x=>`
+                <tr>
+                    <td>${x.id}</td>
+                    <td>${x.item_name}</td>
+                    <td>${x.item_type||"-"}</td>
+                    <td>${x.supplier||"-"}</td>
+                    <td>${x.quantity}</td>
+                    <td>${x.rate||"-"}</td>
+                    <td>${x.batch_no||"-"}</td>
+                    <td>${x.expiry_date||"-"}</td>
+                </tr>
+            `).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+async function loadPurchaseReports(){
+    const res = await fetch(BASE+"/purchase/reports");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("purchaseContent").innerHTML = "<p>No admin reports yet.</p>";
+        return;
+    }
+    document.getElementById("purchaseContent").innerHTML = data.map(r=>`
+        <div class="item">
+            <h3>Report for Purchase #${r.purchase_id}</h3>
+            <p>${r.message}</p>
+            <p style="color:#888;font-size:12px">${new Date(r.created_at).toLocaleString()}</p>
+        </div>
+    `).join("");
+}
+
+function viewPurchaseFile(id){
+    window.open(BASE+"/purchase/view-file/"+id, "_blank");
+}
+
+function openReportForm(purchaseId){
+    document.getElementById("reportFormContainer").innerHTML = `
+        <div class="report-form">
+            <h3>Add Admin Report for Upload #${purchaseId}</h3>
+            <textarea id="reportMsg" placeholder="Enter your report/remarks..."></textarea>
+            <button class="btn approve" onclick="submitReport(${purchaseId})">Submit Report</button>
+            <button class="btn back" onclick="document.getElementById('reportFormContainer').innerHTML=''">Cancel</button>
+        </div>
+    `;
+}
+
+async function submitReport(purchaseId){
+    const message = document.getElementById("reportMsg").value.trim();
+    if(!message){ alert("Please enter a report message."); return; }
+    const res = await fetch(BASE+"/purchase/admin-report", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ purchase_id: purchaseId, message })
+    });
+    const data = await res.json();
+    if(data.success){ alert("Report submitted."); switchPurchaseTab("reports"); }
+}
+
+/* ========================
+   MAINTENANCE MANAGEMENT
+======================== */
+function showMaintenance(){
+    showSection("maintenanceSection");
+    document.getElementById("maintenanceSection").innerHTML = `
+        <h2>🛠 Maintenance Management</h2>
+        <div class="tabs">
+            <div class="tab active" id="mtab-pending" onclick="switchMaintTab('pending')">Pending</div>
+            <div class="tab" id="mtab-approved" onclick="switchMaintTab('approved')">Approved</div>
+            <div class="tab" id="mtab-completed" onclick="switchMaintTab('completed')">Completed</div>
+            <div class="tab" id="mtab-all" onclick="switchMaintTab('all')">All Requests</div>
+        </div>
+        <div id="maintContent">Loading...</div>
+    `;
+    loadMaintenancePending();
+}
+
+function switchMaintTab(tab){
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.getElementById("mtab-"+tab).classList.add("active");
+    if(tab==="pending") loadMaintenancePending();
+    if(tab==="approved") loadMaintenanceApproved();
+    if(tab==="completed") loadMaintenanceCompleted();
+    if(tab==="all") loadMaintenanceAll();
+}
+
+async function loadMaintenancePending(){
+    const res = await fetch(BASE+"/maintenance/manager/pending");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("maintContent").innerHTML = "<p>No pending requests.</p>";
+        return;
+    }
+    document.getElementById("maintContent").innerHTML = data.map(x=>`
+        <div class="item">
+            <h3>${x.category} — ${x.asset_name}</h3>
+            <p><b>Department:</b> ${x.department}</p>
+            <p><b>Problem:</b> ${x.problem}</p>
+            <p><b>Priority:</b> ${x.priority}</p>
+            <p><b>Requested By:</b> ${x.requested_by}</p>
+            <p><b>Date:</b> ${new Date(x.created_at).toLocaleString()}</p>
+            <span class="badge pending">Pending</span><br>
+            <button class="btn approve" style="margin-top:10px" onclick="approveMaint(${x.id})">✔ Approve</button>
+            <button class="btn reject" style="margin-top:10px" onclick="rejectMaint(${x.id})">✘ Reject</button>
+        </div>
+    `).join("");
+}
+
+async function loadMaintenanceApproved(){
+    const res = await fetch(BASE+"/maintenance/approved");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("maintContent").innerHTML = "<p>No approved requests.</p>";
+        return;
+    }
+    document.getElementById("maintContent").innerHTML = data.map(x=>`
+        <div class="item">
+            <h3>${x.category} — ${x.asset_name}</h3>
+            <p><b>Department:</b> ${x.department}</p>
+            <p><b>Technician:</b> ${x.technician||"Not Assigned"}</p>
+            <p><b>Approved By:</b> ${x.approved_by}</p>
+            <p><b>Token:</b> ${x.token_no}</p>
+            <p><b>Approved Date:</b> ${new Date(x.approved_date).toLocaleString()}</p>
+            <span class="badge approved">Approved</span><br>
+            <button class="btn approve" style="margin-top:10px" onclick="completeMaint(${x.id})">✔ Mark Complete</button>
+        </div>
+    `).join("");
+}
+
+async function loadMaintenanceCompleted(){
+    const res = await fetch(BASE+"/maintenance/tokens");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("maintContent").innerHTML = "<p>No completed work.</p>";
+        return;
+    }
+    document.getElementById("maintContent").innerHTML = data.map(x=>`
+        <div class="item">
+            <h3>🎫 Token: ${x.token_no} — ${x.asset_name}</h3>
+            <p><b>Department:</b> ${x.department}</p>
+            <p><b>Work Done:</b> ${x.work_done||"-"}</p>
+            <p><b>Completed:</b> ${new Date(x.completed_at).toLocaleString()}</p>
+            <span class="badge completed">Completed</span>
+        </div>
+    `).join("");
+}
+
+async function loadMaintenanceAll(){
+    const res = await fetch(BASE+"/maintenance/all");
+    const data = await res.json();
+    if(!data.length){
+        document.getElementById("maintContent").innerHTML = "<p>No requests found.</p>";
+        return;
+    }
+    document.getElementById("maintContent").innerHTML = `
+        <table>
+            <thead><tr><th>#</th><th>Category</th><th>Asset</th><th>Department</th><th>Priority</th><th>Requested By</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+            ${data.map(x=>`
+                <tr>
+                    <td>${x.id}</td>
+                    <td>${x.category}</td>
+                    <td>${x.asset_name}</td>
+                    <td>${x.department}</td>
+                    <td>${x.priority}</td>
+                    <td>${x.requested_by}</td>
+                    <td><span class="badge ${x.status}">${x.status}</span></td>
+                    <td>${new Date(x.created_at).toLocaleDateString()}</td>
+                </tr>
+            `).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+async function approveMaint(id){
+    const technician = prompt("Enter technician name:");
+    if(!technician) return;
+    const res = await fetch(BASE+"/maintenance/approve/"+id, {
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ approved_by:"Admin", technician })
+    });
+    const data = await res.json();
+    if(data.success){ alert("Approved! Token: "+data.token); loadMaintenancePending(); }
+}
+
+async function rejectMaint(id){
+    if(!confirm("Reject this request?")) return;
+    await fetch(BASE+"/maintenance/reject/"+id, { method:"PUT" });
+    alert("Rejected.");
+    loadMaintenancePending();
+}
+
+async function completeMaint(id){
+    const work_done = prompt("Enter work done description:");
+    if(!work_done) return;
+    const res = await fetch(BASE+"/maintenance/complete/"+id, {
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ work_done })
+    });
+    const data = await res.json();
+    if(data.success){ alert("Marked as Completed."); loadMaintenanceApproved(); }
+}
+function showSalary(){
+    showSection("salarySection");
+    loadSalaryDashboard();
+}
+
+function showRevenue(){
+    showSection("revenueSection");
+    loadRevenueDashboard();
+}
+/* ---- INIT ---- */
+showDashboard();
+</script>
+</body>
+</html>

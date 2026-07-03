@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Lab Tests</title>
+
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#f2f5f8;
+            margin:0;
+        }
+
+        .container{
+            width:700px;
+            margin:40px auto;
+            background:white;
+            padding:25px;
+            border-radius:10px;
+            box-shadow:0 0 10px rgba(0,0,0,.2);
+        }
+
+        h2,h3{
+            color:#1565c0;
+        }
+
+        input{
+            width:100%;
+            padding:10px;
+            margin:10px 0;
+            border:1px solid #ccc;
+            border-radius:5px;
+            font-size:15px;
+        }
+
+        .test-card{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:15px;
+            background:#eef5ff;
+            margin:10px 0;
+            border-radius:8px;
+        }
+
+        .selected-card{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:12px;
+            background:#d4edda;
+            margin:10px 0;
+            border-radius:8px;
+        }
+
+        button{
+            padding:8px 15px;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+        }
+
+        .add-btn{
+            background:#1565c0;
+            color:white;
+        }
+
+        .remove-btn{
+            background:#dc3545;
+            color:white;
+        }
+
+        .confirm{
+            width:100%;
+            padding:12px;
+            background:green;
+            color:white;
+            margin-top:20px;
+            font-size:16px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Lab Test Recommendation</h2>
+
+<label><b>Doctor Name</b></label>
+
+<input
+id="doctorName"
+type="text"
+placeholder="Enter Doctor Name">
+
+<h3>Search Test</h3>
+
+<input
+id="searchBox"
+type="text"
+placeholder="Search CBC, MRI..."
+onkeyup="searchTest()">
+
+<h3>Available Tests</h3>
+
+<div id="testList">
+Loading...
+</div>
+
+<h3>Selected Tests</h3>
+
+<div id="selectedList"></div>
+
+<p>
+Selected :
+<b id="count">0</b>
+</p>
+
+<button
+class="confirm"
+onclick="confirmSelection()">
+Confirm Selection
+</button>
+
+</div>
+
+<script>
+
+const params=new URLSearchParams(window.location.search);
+
+const appointmentId=params.get("appointmentId");
+const patientId=params.get("patientId");
+const doctorId=params.get("doctorId");
+
+console.log("Appointment:",appointmentId);
+console.log("Patient:",patientId);
+console.log("Doctor:",doctorId);
+
+let labTests=[];
+let selectedTests=[];
+
+fetch("labTests.csv")
+.then(res=>res.text())
+.then(data=>{
+
+const rows=data.trim().split("\n");
+
+rows.shift();
+
+rows.forEach(row=>{
+
+const values=row.split(",");
+
+if(values.length>=4){
+
+labTests.push({
+
+id:values[0].trim(),
+name:values[1].trim(),
+category:values[2].trim(),
+department:values[3].trim()
+
+});
+
+}
+
+});
+
+displayTests(labTests);
+
+})
+.catch(err=>{
+
+console.log(err);
+
+document.getElementById("testList").innerHTML="Unable to load labTests.csv";
+
+});
+
+function displayTests(list){
+
+let html="";
+
+if(list.length===0){
+
+html="<p>No Tests Found</p>";
+
+}
+
+list.forEach(test=>{
+
+html+=`
+
+<div class="test-card">
+
+<div>
+
+<b>${test.name}</b><br>
+
+ID : ${test.id}<br>
+
+Category : ${test.category}<br>
+
+Department : ${test.department}
+
+</div>
+
+<button
+class="add-btn"
+onclick="addTest('${test.name}')">
+Add
+</button>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("testList").innerHTML=html;
+
+}
+
+function searchTest(){
+
+const value=document.getElementById("searchBox").value.toLowerCase();
+
+const filtered=labTests.filter(test=>
+
+test.name.toLowerCase().includes(value) ||
+
+test.category.toLowerCase().includes(value) ||
+
+test.department.toLowerCase().includes(value)
+
+);
+
+displayTests(filtered);
+
+}
+
+function addTest(name){
+
+if(!selectedTests.includes(name)){
+
+selectedTests.push(name);
+
+}
+
+showSelected();
+
+}
+
+function removeTest(name){
+
+selectedTests=selectedTests.filter(item=>item!==name);
+
+showSelected();
+
+}
+
+function showSelected(){
+
+let html="";
+
+selectedTests.forEach(test=>{
+
+html+=`
+
+<div class="selected-card">
+
+<span>${test}</span>
+
+<button
+class="remove-btn"
+onclick="removeTest('${test}')">
+
+Remove
+
+</button>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("selectedList").innerHTML=html;
+
+document.getElementById("count").innerText=selectedTests.length;
+
+}
+
+function confirmSelection(){
+
+const doctorName=document.getElementById("doctorName").value.trim();
+
+if(doctorName===""){
+
+alert("Please enter Doctor Name");
+
+return;
+
+}
+
+if(selectedTests.length===0){
+
+alert("Please select at least one test.");
+
+return;
+
+}
+
+localStorage.setItem("doctorName",doctorName);
+
+localStorage.setItem("selectedTests",JSON.stringify(selectedTests));
+
+window.location.href=`labpreview.html?appointmentId=${appointmentId}&patientId=${patientId}&doctorId=${doctorId}`;
+
+}
+
+</script>
+
+</body>
+</html>

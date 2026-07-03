@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Purchase Dashboard</title>
+
+
+<style>
+
+/* =========================
+   GLOBAL
+========================= */
+
+*{
+box-sizing:border-box;
+}
+
+body{
+
+margin:0;
+font-family:"Segoe UI",Arial,sans-serif;
+background:#f4f7fb;
+color:#333;
+
+}
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar{
+
+position:fixed;
+left:0;
+top:0;
+
+width:240px;
+height:100vh;
+
+background:
+linear-gradient(
+180deg,
+#0d47a1,
+#1565c0
+);
+
+color:white;
+
+padding:25px;
+
+display:flex;
+flex-direction:column;
+gap:10px;
+
+}
+
+
+.sidebar h1,
+.sidebar h2{
+
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+
+.menu,
+.nav-item{
+
+padding:14px;
+
+background:
+rgba(255,255,255,0.12);
+
+border-radius:10px;
+
+cursor:pointer;
+
+transition:.3s;
+
+color:white;
+
+}
+
+
+
+.menu:hover,
+.nav-item:hover{
+
+background:
+rgba(255,255,255,0.3);
+
+transform:translateX(5px);
+
+}
+
+
+
+/* =========================
+MAIN
+========================= */
+
+
+.main{
+
+margin-left:270px;
+
+padding:30px;
+
+}
+
+
+
+
+.topbar{
+
+background:white;
+
+padding:15px 25px;
+
+border-radius:15px;
+
+box-shadow:
+0 5px 20px #ddd;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:25px;
+
+}
+
+
+
+.topbar h1{
+
+color:#0d47a1;
+
+}
+
+
+
+
+
+/* =========================
+CARDS
+========================= */
+
+
+.card,
+.panel,
+.form-card{
+
+background:white;
+
+padding:25px;
+
+border-radius:18px;
+
+box-shadow:
+0 8px 25px rgba(0,0,0,.08);
+
+margin-bottom:25px;
+
+}
+
+
+
+.card h2,
+.panel h2,
+.form-card h2{
+
+color:#0d47a1;
+
+}
+
+
+
+/* DASHBOARD CARDS */
+
+
+.cards{
+
+display:grid;
+
+grid-template-columns:
+repeat(auto-fit,minmax(220px,1fr));
+
+gap:20px;
+
+}
+
+
+
+.stat-card{
+
+background:white;
+
+padding:25px;
+
+border-radius:18px;
+
+box-shadow:
+0 5px 20px #ddd;
+
+}
+
+
+
+.stat-card h1{
+
+color:#1565c0;
+
+}
+
+
+
+
+/* =========================
+INPUTS
+========================= */
+
+
+input,
+textarea,
+select{
+
+
+width:100%;
+
+padding:12px;
+
+border-radius:10px;
+
+border:1px solid #ccc;
+
+margin-top:10px;
+
+outline:none;
+
+}
+
+
+
+input:focus,
+textarea:focus,
+select:focus{
+
+border-color:#1565c0;
+
+}
+
+
+
+
+/* =========================
+BUTTON
+========================= */
+
+
+button{
+
+background:#1565c0;
+
+color:white;
+
+border:none;
+
+padding:12px 20px;
+
+border-radius:10px;
+
+cursor:pointer;
+
+margin-top:10px;
+
+transition:.3s;
+
+}
+
+
+button:hover{
+
+background:#0d47a1;
+
+}
+
+
+
+
+
+/* =========================
+LIST ITEMS
+========================= */
+
+
+.item,
+.upload-card,
+.d-card{
+
+
+background:#eef4ff;
+
+padding:20px;
+
+border-radius:15px;
+
+margin:15px 0;
+
+border-left:
+5px solid #1565c0;
+
+}
+
+
+
+
+
+/* =========================
+MODAL
+========================= */
+
+
+.modal{
+
+
+display:none;
+
+position:fixed;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+background:#0008;
+
+
+}
+
+
+
+.modal-box{
+
+
+background:white;
+
+width:600px;
+
+margin:100px auto;
+
+padding:30px;
+
+border-radius:20px;
+
+box-shadow:
+0 10px 30px #333;
+
+}
+
+
+
+
+/* =========================
+TABLE
+========================= */
+
+
+table{
+
+
+width:100%;
+
+border-collapse:collapse;
+
+background:white;
+
+border-radius:15px;
+
+overflow:hidden;
+
+}
+
+
+
+th{
+
+
+background:#1565c0;
+
+color:white;
+
+padding:12px;
+
+}
+
+
+
+td{
+
+padding:12px;
+
+border-bottom:1px solid #ddd;
+
+}
+
+
+
+
+.hidden{
+
+display:none;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+
+<div class="sidebar">
+
+<h2>
+Purchase
+</h2>
+
+
+<div class="menu"
+onclick="showUpload()">
+
+Upload Purchase File
+
+</div>
+
+
+<div class="menu"
+onclick="loadUploads()">
+
+My Uploads
+
+</div>
+<div class="menu"
+onclick="loadReports()">
+
+Reports
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="main">
+
+
+
+<div id="uploadPage"
+class="card">
+
+
+<h2>
+Upload Purchase Excel
+</h2>
+
+
+<input 
+type="file"
+id="file">
+
+
+<br><br>
+
+
+<button onclick="uploadFile()">
+
+Upload
+
+</button>
+
+
+</div>
+
+
+
+
+
+<div id="uploadsPage"
+class="card">
+
+
+<h2>
+My Uploads
+</h2>
+
+
+<div id="uploads">
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div id="modal" class="modal">
+<div class="modal-box">
+<h2>Edit Purchase Item</h2>
+<div id="details"></div>
+<label>Supplier</label>
+<input id="supplier" placeholder="Supplier">
+<label>Quantity</label>
+<input id="quantity" type="number" placeholder="Quantity">
+<label>Rate</label>
+<input id="rate" type="number" placeholder="Rate">
+<br>
+<button onclick="saveEdit()">Save</button>
+<button onclick="closeModal()" style="background:#888;margin-left:10px">Cancel</button>
+</div>
+</div>
+
+
+
+
+
+<script>
+
+
+
+function showUpload(){
+
+document.getElementById(
+"uploadPage"
+).style.display="block";
+
+document.getElementById(
+"uploadsPage"
+).style.display="none";
+
+}
+
+
+
+
+async function uploadFile(){
+
+
+let file =
+document.getElementById("file").files[0];
+
+
+let form =
+new FormData();
+
+
+form.append(
+"file",
+file
+);
+
+
+await fetch(
+"http://localhost:5000/purchase/upload",
+{
+
+method:"POST",
+
+body:form
+
+});
+
+
+alert(
+"Upload Completed"
+);
+
+
+loadUploads();
+
+
+}
+async function loadReports(){
+
+
+let res =
+await fetch(
+"http://localhost:5000/purchase/reports"
+);
+
+
+let data =
+await res.json();
+
+
+
+document.getElementById("uploads").innerHTML=
+
+data.map(r=>`
+
+<div class="item">
+
+<h3>
+Admin Report
+</h3>
+
+<p>
+${r.message}
+</p>
+
+<p>
+${new Date(r.created_time)
+.toLocaleString()}
+</p>
+
+
+</div>
+
+
+`).join("");
+
+}
+async function loadUploads(){
+
+
+document.getElementById(
+"uploadPage"
+).style.display="none";
+
+
+document.getElementById(
+"uploadsPage"
+).style.display="block";
+
+
+
+let res =
+await fetch(
+"http://localhost:5000/purchase/uploads"
+);
+
+
+
+let data =
+await res.json();
+
+
+
+document.getElementById("uploads").innerHTML =
+
+data.map(x=>{
+
+
+let date =
+new Date(
+x.uploaded_time
+);
+
+
+
+return `
+
+<div class="item">
+
+
+<h3>
+${x.file_name}
+</h3>
+
+
+<p>
+Staff:
+${x.uploaded_by}
+</p>
+
+
+<p>
+ID:
+${x.staff_id || "PUR001"}
+</p>
+
+
+<p>
+Date:
+${date.toLocaleDateString()}
+</p>
+
+
+<p>
+Time:
+${date.toLocaleTimeString()}
+</p>
+
+
+<p>
+Items:
+${x.total_items}
+</p>
+
+
+
+<button onclick="viewFile(${x.id})">
+
+View
+
+</button>
+
+
+<button onclick="editFile(${x.id})">
+
+Edit
+
+</button>
+
+
+</div>
+
+
+`
+
+}).join("");
+
+
+
+}
+
+
+
+
+
+
+
+function viewFile(id){
+    window.open("http://localhost:5000/purchase/view-file/"+id, "_blank");
+}
+
+let currentEditId = null;
+
+function editFile(id){
+    currentEditId = id;
+    document.getElementById("supplier").value = "";
+    document.getElementById("quantity").value = "";
+    document.getElementById("rate").value = "";
+    document.getElementById("modal").style.display = "block";
+}
+
+async function saveEdit(){
+    const supplier = document.getElementById("supplier").value;
+    const quantity = document.getElementById("quantity").value;
+    const rate = document.getElementById("rate").value;
+
+    if(!supplier || !quantity || !rate){
+        alert("Please fill all fields");
+        return;
+    }
+
+    const res = await fetch("http://localhost:5000/purchase/edit/"+currentEditId, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supplier, quantity, rate })
+    });
+
+    const data = await res.json();
+    if(data.success){
+        alert("Updated Successfully");
+        closeModal();
+        loadUploads();
+    }
+}
+
+function closeModal(){
+    document.getElementById("modal").style.display = "none";
+}
+
+
+
+
+
+loadUploads();
+
+
+</script>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pharmacy Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body { display: flex; background: #f4f7fb; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: linear-gradient(180deg, #0d47a1, #1565c0);
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100vh;
+    }
+
+    .sidebar h2 { margin-bottom: 16px; font-size: 20px; }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      transition: 0.2s;
+      color: white;
+      user-select: none;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.22); }
+    .nav-item.active { background: rgba(255,255,255,0.3); font-weight: bold; }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .topbar input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 260px;
+      font-size: 14px;
+    }
+
+    .topbar .profile { font-weight: bold; color: #0d47a1; }
+
+    .content { padding: 20px; flex: 1; }
+
+    /* SECTIONS */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* PANEL */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+
+    .panel h3 { color: #0d47a1; margin-bottom: 16px; font-size: 18px; }
+
+    /* TABLE */
+    .stock-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .stock-table th {
+      background: #0d47a1;
+      color: white;
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .stock-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #eef2f7;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .stock-table tr:hover td { background: #f4f8ff; }
+
+    .low-stock { color: #dc2626; font-weight: bold; }
+
+    /* PRESCRIPTION GRID */
+    .presc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    /* CARD */
+    .p-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      border: 1px solid #e3eaf5;
+      border-left: 4px solid #0d47a1;
+    }
+
+    .p-card h3 { color: #0d47a1; margin-bottom: 10px; font-size: 15px; }
+    .p-card p { font-size: 13px; color: #444; margin: 5px 0; }
+    .p-card hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+
+    .total-row {
+      font-size: 15px;
+      font-weight: bold;
+      color: #0d47a1;
+      margin-top: 8px;
+    }
+
+    .complete-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 9px;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .complete-btn:hover { background: #1e8449; }
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Pharmacy</h2>
+  <div class="nav-item active" onclick="showSection('stock', this); loadStock();">Stock</div>
+  <div class="nav-item" onclick="showSection('prescriptions', this); loadPrescriptions();">Prescriptions</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <input placeholder="Search medicine">
+    <div class="profile">Pharmacy</div>
+  </div>
+
+  <div class="content">
+
+    <!-- STOCK -->
+    <div id="stock" class="section active">
+      <div class="panel">
+        <h3>Medicine Stock</h3>
+        <table class="stock-table">
+          <thead>
+            <tr>
+              <th>Medicine Name</th>
+              <th>Type</th>
+              <th>Price (₹)</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody id="stockList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRESCRIPTIONS -->
+    <div id="prescriptions" class="section">
+      <div class="panel">
+        <h3>Patient Prescriptions</h3>
+        <div id="prescriptionList" class="presc-grid"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showSection(id, el) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if (el) el.classList.add("active");
+}
+
+async function loadStock() {
+  try {
+    const res = await fetch("/medicines");
+    const data = await res.json();
+    const tbody = document.getElementById("stockList");
+    tbody.innerHTML = data.map(m => `
+      <tr>
+        <td>${m.name}</td>
+        <td>${m.type || "-"}</td>
+        <td>₹${m.price || 0}</td>
+        <td class="${m.stock_quantity < 10 ? 'low-stock' : ''}">${m.stock_quantity}</td>
+      </tr>`).join("");
+  } catch (err) { console.error(err); }
+}
+
+async function loadPrescriptions() {
+  try {
+    const res = await fetch("/pharmacy/prescriptions");
+    const data = await res.json();
+    const list = document.getElementById("prescriptionList");
+    if (!data || !data.length) { list.innerHTML = "<p>No prescriptions found.</p>"; return; }
+    list.innerHTML = data.map(p => {
+      const total = p.total_amount || (p.quantity * p.price) || 0;
+      return `
+      <div class="p-card">
+        <h3>${p.patient_name || "-"}</h3>
+        <hr>
+        <p><b>Doctor:</b> ${p.doctor_name || "-"}</p>
+        <p><b>Medicine:</b> ${p.medicine_name || "-"}</p>
+        <p><b>Price:</b> ₹${p.price || 0}</p>
+        <p><b>Quantity:</b> ${p.quantity || 0}</p>
+        <p><b>Duration:</b> ${p.duration || "-"}</p>
+        <p class="total-row">Total: ₹${total}</p>
+        <button class="complete-btn" onclick="completePrescription(${p.prescription_id})">
+          ✅ Mark Completed
+        </button>
+      </div>`;
+    }).join("");
+  } catch (err) { console.error(err); }
+}
+
+async function completePrescription(id) {
+  const res = await fetch(`/pharmacy/complete-prescription/${id}`, { method: "POST" });
+  const data = await res.json();
+  if (data.success) {
+    alert("Prescription completed & stock updated");
+    loadPrescriptions();
+    loadStock();
+  } else {
+    alert("Failed to complete prescription");
+  }
+}
+
+window.onload = function () { loadStock(); };
+</script>
+
+</body>
+</html>

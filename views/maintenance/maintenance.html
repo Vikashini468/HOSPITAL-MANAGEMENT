@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Maintenance Dashboard</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI;
+}
+
+
+body{
+background:#f4f8ff;
+}
+
+
+.sidebar{
+
+position:fixed;
+width:250px;
+height:100vh;
+background:linear-gradient(135deg,#134f8f,#1a6fc4);
+color:white;
+padding:25px;
+
+}
+
+
+.sidebar h2{
+
+text-align:center;
+margin-bottom:30px;
+
+}
+
+
+.menu{
+
+padding:15px;
+background:#ffffff33;
+margin:12px 0;
+border-radius:12px;
+cursor:pointer;
+
+}
+
+
+
+.main{
+
+margin-left:250px;
+padding:30px;
+
+}
+
+
+
+.card{
+
+background:white;
+padding:25px;
+border-radius:18px;
+margin-bottom:25px;
+box-shadow:0 5px 20px #ddd;
+
+}
+
+
+
+input,select,textarea{
+
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:10px;
+border:1px solid #ccc;
+
+}
+
+
+
+button{
+
+background:#1a6fc4;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:10px;
+cursor:pointer;
+
+}
+
+
+
+.item{
+
+background:#eef4ff;
+padding:20px;
+margin:15px 0;
+border-radius:15px;
+border-left:5px solid #1a6fc4;
+
+}
+
+
+
+.token{
+
+background:#e8fff0;
+padding:20px;
+margin:15px 0;
+border-left:5px solid green;
+border-radius:15px;
+
+}
+
+
+.hidden{
+
+display:none;
+
+}
+
+
+.status{
+
+padding:6px 15px;
+border-radius:20px;
+
+}
+
+
+
+.pending{
+background:#ffeaa7;
+}
+
+
+.approved{
+background:#c8f7c5;
+}
+
+
+.completed{
+background:#d6eaff;
+}
+
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+
+<div class="sidebar">
+
+
+<h2>
+Maintenance
+</h2>
+
+
+<div class="menu"
+onclick="show('create')">
+
+Create Request
+
+</div>
+
+
+<div class="menu"
+onclick="show('requests')">
+
+My Requests
+
+</div>
+
+
+<div class="menu"
+onclick="show('approved')">
+
+Approved Maintenance
+
+</div>
+
+
+<div class="menu"
+onclick="show('tokens')">
+
+Maintenance History
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="main">
+
+
+
+<!-- CREATE -->
+
+<div id="create"
+class="card">
+
+
+<h2>
+Create Maintenance Request
+</h2>
+
+
+
+<select id="department">
+
+<option>Lab</option>
+<option>Ward</option>
+<option>ICU</option>
+<option>Pharmacy</option>
+
+</select>
+
+
+
+<select id="category">
+
+<option>Cleaning</option>
+<option>Electrical</option>
+<option>Furniture</option>
+<option>Medical Waste</option>
+<option>Machine Fault</option>
+
+</select>
+
+
+
+
+<input id="asset"
+placeholder="Asset / Area">
+
+
+
+
+<textarea id="problem"
+placeholder="Problem Details">
+</textarea>
+
+
+
+<select id="priority">
+
+<option>Low</option>
+<option>Medium</option>
+<option>High</option>
+
+</select>
+
+
+
+<input id="requested"
+placeholder="Requested By">
+
+
+
+<button onclick="submitRequest()">
+
+Send Request To Manager
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- REQUESTS -->
+
+
+<div id="requests"
+class="card hidden">
+
+
+<h2>
+My Requests
+</h2>
+
+
+<div id="requestList">
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- APPROVED -->
+
+
+<div id="approved"
+class="card hidden">
+
+
+<h2>
+Approved Maintenance
+</h2>
+
+
+<div id="approvedList">
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+<!-- TOKENS -->
+
+
+<div id="tokens"
+class="card hidden">
+
+
+<h2>
+Completed Work Tokens
+</h2>
+
+
+<div id="tokenList">
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<script>
+
+
+const BASE="http://localhost:5000";
+
+
+
+
+
+function show(id){
+
+
+document
+.querySelectorAll(".card")
+.forEach(x=>x.classList.add("hidden"));
+
+
+document
+.getElementById(id)
+.classList.remove("hidden");
+
+
+
+if(id=="requests")
+loadRequests();
+
+
+if(id=="approved")
+loadApproved();
+
+
+if(id=="tokens")
+loadTokens();
+
+
+
+}
+
+
+
+
+
+
+
+
+async function submitRequest(){
+
+
+const body={
+
+department:
+document.getElementById("department").value,
+
+
+category:
+document.getElementById("category").value,
+
+
+asset_name:
+document.getElementById("asset").value,
+
+
+problem:
+document.getElementById("problem").value,
+
+
+priority:
+document.getElementById("priority").value,
+
+
+requested_by:
+document.getElementById("requested").value
+
+};
+
+
+
+let res=await fetch(
+BASE+"/maintenance/create",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(body)
+});
+
+
+let data=await res.json();
+
+
+if(data.success){
+
+alert("Request Sent To Manager");
+
+
+// reset
+
+document.getElementById("department").value="";
+document.getElementById("category").value="";
+document.getElementById("asset").value="";
+document.getElementById("problem").value="";
+document.getElementById("priority").value="";
+document.getElementById("requested").value="";
+
+
+loadRequests();
+
+}
+
+
+}
+async function loadRequests(){
+
+
+let res =
+await fetch(
+BASE+"/maintenance/my"
+);
+
+
+let data =
+await res.json();
+
+
+
+requestList.innerHTML =
+
+
+data.map(x=>`
+
+
+<div class="item">
+
+
+<h3>
+${x.asset_name}
+</h3>
+
+
+<p>
+${x.category}
+</p>
+
+
+<p>
+${x.problem}
+</p>
+
+
+
+<span class="status ${x.status}">
+
+${x.status}
+
+</span>
+
+
+
+</div>
+
+
+`).join("");
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+async function loadApproved(){
+
+
+let res =
+await fetch(
+BASE+"/maintenance/approved"
+);
+
+
+let data =
+await res.json();
+
+
+
+approvedList.innerHTML =
+
+
+data.map(x=>`
+
+
+<div class="item">
+
+
+<h3>
+${x.asset_name}
+</h3>
+
+
+<p>
+Department :
+${x.department}
+</p>
+
+
+<p>
+Technician :
+${x.technician || "Not Assigned"}
+</p>
+
+
+</div>
+
+
+`).join("");
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+async function loadTokens(){
+
+
+let res =
+await fetch(
+BASE+"/maintenance/tokens"
+);
+
+
+let data =
+await res.json();
+
+
+
+
+tokenList.innerHTML=
+
+
+data.map(x=>`
+
+
+<div class="token"
+onclick="viewToken(${x.id})">
+
+
+<h3>
+
+Token :
+${x.token_no}
+
+</h3>
+
+
+<p>
+
+${x.asset_name}
+
+</p>
+
+
+</div>
+
+
+`).join("");
+
+
+
+}
+
+
+
+
+
+
+
+
+
+async function viewToken(id){
+
+
+let res =
+await fetch(
+BASE+"/maintenance/token/"+id
+);
+
+
+let x =
+await res.json();
+
+
+
+alert(
+
+`
+TOKEN : ${x.token_no}
+
+Work:
+${x.work_done}
+
+Department:
+${x.department}
+
+Requested By:
+${x.requested_by}
+
+Approved By:
+${x.manager}
+
+Completed:
+${x.completed_at}
+
+`
+
+);
+
+
+
+}
+
+
+
+show("create");
+
+
+</script>
+
+
+
+
+</body>
+
+</html>

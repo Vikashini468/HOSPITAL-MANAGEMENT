@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Dashboard — NALAM AI</title>
+
+<link rel="stylesheet" href="revenue.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- ===================== SIDEBAR ===================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">NALAM AI</div>
+
+        <nav>
+            <a href="admin.html">🏠 Dashboard</a>
+            <a href="admin.html#profile">👤 Admin Profile</a>
+            <a href="admin.html#approval">✅ User Approval</a>
+            <a href="admin.html#purchase">📦 Purchase</a>
+            <a href="admin.html#maintenance">🛠 Maintenance</a>
+            <a href="salary.html">💰 Salary</a>
+            <a href="revenue.html" class="active">📈 Revenue Analytics</a>
+        </nav>
+
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+
+    <main class="main">
+
+        <!-- TOPBAR -->
+
+        <div class="topbar">
+            <h1>Revenue Analytics</h1>
+            <div class="topbar-right">
+                <span id="lastUpdated" class="last-updated"></span>
+                <button id="refreshBtn" class="btn-refresh">⟳ Refresh</button>
+            </div>
+        </div>
+
+        <!-- SUMMARY CARDS -->
+
+        <section class="cards-grid">
+
+            <div class="card card-revenue">
+                <div class="card-icon">💰</div>
+                <div class="card-body">
+                    <p>Total Revenue</p>
+                    <h2 id="totalRevenue">₹0</h2>
+                </div>
+            </div>
+
+            <div class="card card-expense">
+                <div class="card-icon">📉</div>
+                <div class="card-body">
+                    <p>Total Expenses</p>
+                    <h2 id="totalExpenses">₹0</h2>
+                </div>
+            </div>
+
+            <div class="card card-profit" id="profitCard">
+                <div class="card-icon">📊</div>
+                <div class="card-body">
+                    <p>Net Profit</p>
+                    <h2 id="netProfit">₹0</h2>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- CHARTS ROW -->
+
+        <section class="charts-row">
+
+            <div class="chart-box chart-wide">
+                <h3>Monthly Revenue — <span id="currentYear"></span></h3>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <h3>Revenue by Source</h3>
+                <div id="sourceEmpty" class="empty-msg" style="display:none">No data available</div>
+                <canvas id="sourceChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <h3>Expenses by Category</h3>
+                <div id="expenseEmpty" class="empty-msg" style="display:none">No data available</div>
+                <canvas id="expenseChart"></canvas>
+            </div>
+
+        </section>
+
+        <!-- RECENT TRANSACTIONS -->
+
+        <section class="tables-row">
+
+            <div class="table-box">
+
+                <h3>Recent Revenue Transactions</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Source</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revenueTable">
+                        <tr><td colspan="4">Loading...</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+            <div class="table-box">
+
+                <h3>Recent Expense Transactions</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTable">
+                        <tr><td colspan="4">Loading...</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="revenue.js"></script>
+
+</body>
+</html>

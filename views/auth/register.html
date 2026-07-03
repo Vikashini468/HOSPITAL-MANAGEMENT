@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>NALAM AI Registration</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
+
+body{
+background:#f4f6f9;
+}
+
+.topbar{
+height:60px;
+background:#1a4fa3;
+color:white;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+position:fixed;
+top:0;
+left:0;
+right:0;
+z-index:1000;
+}
+
+.logo{
+font-size:22px;
+font-weight:600;
+}
+
+.sidebar{
+position:fixed;
+top:60px;
+left:0;
+width:70px;
+height:100%;
+background:white;
+border-right:1px solid #ddd;
+display:flex;
+justify-content:center;
+padding-top:20px;
+}
+
+.main{
+margin-left:70px;
+margin-top:60px;
+padding:25px;
+}
+
+.card{
+background:white;
+border-radius:12px;
+box-shadow:0 2px 10px rgba(0,0,0,.08);
+margin-bottom:20px;
+}
+
+.card-header{
+background:#1a4fa3;
+color:white;
+padding:14px;
+font-size:17px;
+font-weight:600;
+border-radius:12px 12px 0 0;
+}
+
+.card-body{
+padding:25px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:25px;
+margin-bottom:20px;
+}
+
+input,
+select,
+textarea{
+
+width:100%;
+
+padding:12px 15px;
+
+border:1px solid #d6dce5;
+
+border-radius:8px;
+
+font-size:14px;
+
+outline:none;
+
+transition:.3s;
+
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+
+border-color:#1a4fa3;
+
+box-shadow:0 0 8px rgba(26,79,163,.2);
+
+}
+
+label{
+display:block;
+margin-bottom:8px;
+font-weight:600;
+color:#444;
+}
+
+.footer{
+text-align:right;
+margin-top:20px;
+}
+
+.btn{
+background:#e67e22;
+color:white;
+padding:12px 25px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:600;
+}
+
+.secondary-btn{
+background:#bfc5cc;
+color:black;
+padding:12px 25px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin-right:10px;
+}
+
+.hidden{
+display:none;
+}
+
+.step-card{
+display:none;
+}
+
+.step-card.active{
+display:block;
+}
+
+.exp-card{
+border:1px solid #ddd;
+padding:20px;
+border-radius:10px;
+margin-top:15px;
+background:#fafafa;
+}
+
+@media(max-width:768px){
+
+.grid{
+grid-template-columns:1fr;
+}
+
+.sidebar{
+display:none;
+}
+
+.main{
+margin-left:0;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="topbar">
+
+<div class="logo">
+NALAM AI
+</div>
+
+</div>
+
+<div class="sidebar">
+☰
+</div>
+
+<div class="main">
+
+<form
+id="registerForm"
+method="POST"
+action="/register"
+enctype="multipart/form-data">
+
+<div id="step1"
+class="step-card active">
+
+<div class="card">
+
+<div class="card-header">
+Basic Information
+</div>
+
+<div class="card-body">
+
+<div class="grid">
+
+<input
+type="text"
+name="name"
+placeholder="Full Name"
+required>
+
+<input
+type="email"
+name="email"
+placeholder="Email Address"
+required>
+
+</div>
+
+<div class="grid">
+
+<input
+type="tel"
+name="mobile"
+placeholder="Mobile Number"
+required>
+
+<input
+type="password"
+name="password"
+placeholder="Password"
+required>
+
+</div>
+
+<div class="grid">
+
+<select
+id="role"
+name="role"
+required>
+
+<option value="">
+Select Role
+</option>
+
+<option value="patient">
+Patient
+</option>
+
+<option value="doctor">
+Doctor
+</option>
+
+<option value="nurse">
+Nurse
+</option>
+
+<option value="lab">
+Lab Assistant
+</option>
+
+<option value="pharmacist">
+Pharmacist
+</option>
+
+</select>
+
+<input
+type="date"
+name="dob">
+
+</div>
+
+<div class="grid">
+
+<input
+type="number"
+name="age"
+placeholder="Age">
+
+<select name="gender">
+
+<option value="">
+Select Gender
+</option>
+
+<option>
+Male
+</option>
+
+<option>
+Female
+</option>
+
+<option>
+Transgender
+</option>
+
+<option>
+Prefer Not To Say
+</option>
+
+</select>
+
+</div>
+
+<textarea
+name="address"
+rows="4"
+placeholder="Address"></textarea>
+
+<div class="footer">
+
+<button
+type="button"
+class="btn"
+onclick="nextStep()">
+
+Next
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="step2"
+class="step-card">
+
+<div class="card">
+
+<div class="card-header">
+Role Specific Information
+</div>
+
+<div class="card-body">
+
+<div id="patient"
+class="hidden">
+
+<label>
+Patient Photograph
+</label>
+
+<input
+type="file"
+name="patientPhoto">
+
+<br><br>
+
+<div class="grid">
+
+<input
+type="text"
+name="bloodGroup"
+placeholder="Blood Group">
+
+<input
+type="number"
+name="weight"
+placeholder="Weight">
+
+</div>
+
+<div class="grid">
+
+<input
+type="text"
+name="previousHospital"
+placeholder="Previous Hospital">
+
+<input
+type="text"
+name="allergies"
+placeholder="Allergies">
+
+</div>
+
+</div>
+
+<div id="doctor"
+class="hidden">
+
+<label>
+Doctor Photograph
+</label>
+
+<input
+type="file"
+name="doctorPhoto">
+
+<br><br>
+
+<div class="grid">
+
+<input
+type="text"
+name="degree"
+placeholder="Degree">
+
+<input
+type="text"
+name="college"
+placeholder="College">
+
+</div>
+
+<div class="grid">
+
+<input
+type="text"
+name="medicalNumber"
+placeholder="Medical Council Number">
+
+<input
+type="text"
+name="specialisation"
+placeholder="Specialisation">
+
+</div>
+
+<input
+type="text"
+name="currentHospitalDoctor"
+placeholder="Current Hospital">
+
+<br><br>
+
+<label>
+Degree Certificate
+</label>
+
+<input
+type="file"
+name="doctorCertificate">
+
+</div>
+
+<div id="nurse"
+class="hidden">
+
+<label>
+Nurse Photograph
+</label>
+
+<input
+type="file"
+name="nursePhoto">
+
+<br><br>
+
+<div class="grid">
+
+<input
+type="text"
+name="nurseQualification"
+placeholder="Qualification">
+
+<input
+type="text"
+name="nurseCollege"
+placeholder="College">
+
+</div>
+
+<input
+type="text"
+name="currentHospitalNurse"
+placeholder="Current Hospital">
+
+<br><br>
+
+<label>
+Qualification Certificate
+</label>
+
+<input
+type="file"
+name="nurseCertificate">
+
+</div>
+
+<div id="lab"
+class="hidden">
+
+<label>
+Lab Assistant Photograph
+</label>
+
+<input
+type="file"
+name="labPhoto">
+
+<br><br>
+
+<div class="grid">
+
+<input
+type="text"
+name="labQualification"
+placeholder="Qualification">
+
+<input
+type="text"
+name="labRegistration"
+placeholder="Registration Number">
+
+</div>
+
+<input
+type="text"
+name="currentHospitalLab"
+placeholder="Current Hospital">
+
+<br><br>
+
+<label>
+Lab Certificate
+</label>
+
+<input
+type="file"
+name="labCertificate">
+
+</div>
+
+<div id="pharmacist"
+class="hidden">
+
+<label>
+Pharmacist Photograph
+</label>
+
+<input
+type="file"
+name="pharmacistPhoto">
+
+<br><br>
+
+<div class="grid">
+
+<input
+type="text"
+name="pharmacistQualification"
+placeholder="Qualification">
+
+<input
+type="text"
+name="licenseNumber"
+placeholder="License Number">
+
+</div>
+
+<input
+type="text"
+name="currentHospitalPharmacist"
+placeholder="Current Hospital">
+
+<br><br>
+
+<label>
+Pharmacist Certificate
+</label>
+
+<input
+type="file"
+name="pharmacistCertificate">
+
+</div>
+
+<div class="footer">
+
+<button
+type="button"
+class="secondary-btn"
+onclick="showStep(1)">
+
+Back
+
+</button>
+
+<button
+type="button"
+class="btn"
+id="roleBtn"
+onclick="nextRoleStep()">
+
+Next
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div id="step3"
+class="step-card">
+
+<div class="card">
+
+<div class="card-header">
+Professional Experience
+</div>
+
+<div class="card-body">
+
+<div id="experienceList">
+
+</div>
+
+<button
+type="button"
+class="btn"
+onclick="addExperience()">
+
++ Add Experience
+
+</button>
+
+<div class="footer">
+
+<button
+type="button"
+class="secondary-btn"
+onclick="showStep(2)">
+
+Back
+
+</button>
+
+<button
+type="submit"
+class="btn">
+
+Register
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+<script>
+
+let expCount = 0;
+
+function showStep(step){
+
+document
+.querySelectorAll(".step-card")
+.forEach(card=>{
+
+card.classList.remove("active");
+
+});
+
+document
+.getElementById("step"+step)
+.classList.add("active");
+
+}
+
+function nextStep(){
+
+const role =
+document
+.getElementById("role")
+.value;
+
+if(role===""){
+
+alert("Please select a role");
+
+return;
+
+}
+
+const roles = [
+"patient",
+"doctor",
+"nurse",
+"lab",
+"pharmacist"
+];
+
+roles.forEach(r=>{
+
+document
+.getElementById(r)
+.classList.add("hidden");
+
+});
+
+document
+.getElementById(role)
+.classList.remove("hidden");
+
+showStep(2);
+const roleBtn =
+document.getElementById("roleBtn");
+
+if(role==="patient"){
+
+roleBtn.innerText = "Register";
+
+}
+else{
+
+roleBtn.innerText = "Next";
+
+}
+
+}
+
+function nextRoleStep(){
+
+const role =
+document.getElementById("role").value;
+
+if(
+role==="doctor" ||
+role==="nurse" ||
+role==="lab" ||
+role==="pharmacist"
+){
+
+showStep(3);
+
+}
+else{
+
+document
+.getElementById("registerForm")
+.requestSubmit();
+
+}
+
+}
+
+function addExperience(){
+
+expCount++;
+
+const card =
+document.createElement("div");
+
+card.className = "exp-card";
+
+card.innerHTML = `
+
+<h3
+style="
+margin-bottom:15px;
+color:#1a4fa3;
+">
+
+Experience ${expCount}
+
+</h3>
+
+<div class="grid">
+
+<input
+type="text"
+name="hospitalName[]"
+placeholder="Hospital / Lab / Pharmacy Name">
+
+<input
+type="text"
+name="department[]"
+placeholder="Department">
+
+</div>
+
+<div class="grid">
+
+<input
+type="text"
+name="designation[]"
+placeholder="Designation">
+
+<input
+type="number"
+name="yearsExperience[]"
+placeholder="Years of Experience">
+
+</div>
+
+<div class="grid">
+
+<input
+type="date"
+name="startDate[]">
+
+<input
+type="date"
+name="endDate[]">
+
+</div>
+
+<button
+type="button"
+class="secondary-btn"
+onclick="removeExperience(this)">
+
+Remove
+
+</button>
+
+`;
+
+document
+.getElementById("experienceList")
+.appendChild(card);
+
+}
+
+function removeExperience(btn){
+
+btn
+.parentElement
+.remove();
+
+}
+
+async function verifyOTP(){
+
+const otp =
+document
+.getElementById("otp")
+.value;
+
+if(otp===""){
+
+alert("Enter OTP");
+
+return;
+
+}
+
+try{
+
+const res =
+await fetch("/verify-otp",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+otp
+})
+
+});
+
+const data =
+await res.json();
+
+if(data.success){
+
+alert(
+"OTP Verified Successfully"
+);
+
+window.location =
+"login.html";
+
+}
+else{
+
+alert(
+"Invalid OTP"
+);
+
+}
+
+}
+catch(err){
+
+console.error(err);
+
+alert(
+"Verification Failed"
+);
+
+}
+
+}
+
+document
+.getElementById("registerForm")
+.addEventListener(
+"submit",
+function(e){
+
+const role =
+document
+.getElementById("role")
+.value;
+
+const mobile =
+document
+.querySelector(
+'input[name="mobile"]'
+)
+.value;
+
+if(mobile.length < 10){
+
+e.preventDefault();
+
+alert(
+"Enter Valid Mobile Number"
+);
+
+return;
+
+}
+
+if(role===""){
+
+e.preventDefault();
+
+alert(
+"Select Role"
+);
+
+return;
+
+}
+
+});
+document.getElementById("registerForm")
+.addEventListener("submit",function(e){
+
+const role =
+document.getElementById("role").value;
+
+const commonFields = [
+
+'name',
+'email',
+'mobile',
+'password',
+'dob',
+'age',
+'gender',
+'address'
+
+];
+
+for(let field of commonFields){
+
+const input =
+document.querySelector(`[name="${field}"]`);
+
+if(!input || input.value.trim()===""){
+
+e.preventDefault();
+
+alert(field + " is required");
+
+return;
+
+}
+
+}
+
+if(role==="patient"){
+
+const photo =
+document.querySelector('[name="patientPhoto"]');
+
+const blood =
+document.querySelector('[name="bloodGroup"]').value;
+
+const weight =
+document.querySelector('[name="weight"]').value;
+
+const allergies =
+document.querySelector('[name="allergies"]').value;
+
+if(
+!photo.files.length ||
+blood==="" ||
+weight==="" ||
+allergies===""){
+
+e.preventDefault();
+
+alert("Please complete all patient details");
+
+return;
+
+}
+
+}
+
+if(role==="doctor"){
+
+const photo =
+document.querySelector('[name="doctorPhoto"]');
+
+const certificate =
+document.querySelector('[name="doctorCertificate"]');
+
+const degree =
+document.querySelector('[name="degree"]').value;
+
+const college =
+document.querySelector('[name="college"]').value;
+
+const medical =
+document.querySelector('[name="medicalNumber"]').value;
+
+const specialisation =
+document.querySelector('[name="specialisation"]').value;
+
+const hospital =
+document.querySelector('[name="currentHospitalDoctor"]').value;
+
+if(
+!photo.files.length ||
+!certificate.files.length ||
+degree==="" ||
+college==="" ||
+medical==="" ||
+specialisation==="" ||
+hospital===""){
+
+e.preventDefault();
+
+alert("Please complete all doctor details");
+
+return;
+
+}
+
+}
+
+if(role==="nurse"){
+
+const photo =
+document.querySelector('[name="nursePhoto"]');
+
+const certificate =
+document.querySelector('[name="nurseCertificate"]');
+
+const qualification =
+document.querySelector('[name="nurseQualification"]').value;
+
+const college =
+document.querySelector('[name="nurseCollege"]').value;
+
+const hospital =
+document.querySelector('[name="currentHospitalNurse"]').value;
+
+if(
+!photo.files.length ||
+!certificate.files.length ||
+qualification==="" ||
+college==="" ||
+hospital===""){
+
+e.preventDefault();
+
+alert("Please complete all nurse details");
+
+return;
+
+}
+
+}
+
+if(role==="lab"){
+
+const photo =
+document.querySelector('[name="labPhoto"]');
+
+const certificate =
+document.querySelector('[name="labCertificate"]');
+
+const qualification =
+document.querySelector('[name="labQualification"]').value;
+
+const registration =
+document.querySelector('[name="labRegistration"]').value;
+
+const hospital =
+document.querySelector('[name="currentHospitalLab"]').value;
+
+if(
+!photo.files.length ||
+!certificate.files.length ||
+qualification==="" ||
+registration==="" ||
+hospital===""){
+
+e.preventDefault();
+
+alert("Please complete all lab details");
+
+return;
+
+}
+
+}
+
+if(role==="pharmacist"){
+
+const photo =
+document.querySelector('[name="pharmacistPhoto"]');
+
+const certificate =
+document.querySelector('[name="pharmacistCertificate"]');
+
+const qualification =
+document.querySelector('[name="pharmacistQualification"]').value;
+
+const license =
+document.querySelector('[name="licenseNumber"]').value;
+
+const hospital =
+document.querySelector('[name="currentHospitalPharmacist"]').value;
+
+if(
+!photo.files.length ||
+!certificate.files.length ||
+qualification==="" ||
+license==="" ||
+hospital===""){
+
+e.preventDefault();
+
+alert("Please complete all pharmacist details");
+
+return;
+
+}
+
+}
+
+});
+</script>
+</body>
+</html>

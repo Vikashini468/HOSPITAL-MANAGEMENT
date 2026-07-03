@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Healthcare Portal</title>
+
+<style>
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* BODY */
+body {
+    background: linear-gradient(to right, #eef2ff, #f8fafc);
+}
+
+/* TOPBAR */
+.topbar {
+    background: #f1f5f9;
+    padding: 8px 20px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* NAVBAR */
+.navbar {
+    background: #1e3a8a;
+    color: white;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* LOGIN CARD */
+.form-card {
+    width: 400px;
+    margin: 80px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* TITLE */
+h2 {
+    text-align: center;
+    color: #1e3a8a;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* INPUT */
+label {
+    font-size: 13px;
+    color: #374151;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0 15px 0;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+/* INPUT FOCUS */
+input:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0px 0px 5px rgba(37, 99, 235, 0.3);
+}
+
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(to right, #1e3a8a, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #f97316;
+}
+
+/* LINKS */
+.link {
+    color: #2563eb;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+/* FOOT TEXT */
+.bottom-text {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div>NALAM AI</div>
+    <div>Support: 24/7</div>
+</div>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    Login
+</div>
+
+<!-- LOGIN CARD -->
+<div class="form-card">
+
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Sign in to your healthcare portal</p>
+
+    <form id="form">
+
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required>
+
+        <div style="text-align:right; margin-top:-10px;">
+            <a href="#" class="link">Forgot password?</a>
+        </div>
+
+        <button type="submit">🔐 Sign In</button>
+
+        <div class="bottom-text">
+            Don't have an account?
+            <a href="/register.html" class="link">Register here</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+const form = document.getElementById("form");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: email.value,
+            password: password.value
+        })
+    });
+
+    if (res.redirected) {
+        window.location.href = res.url;
+    } else {
+        alert(await res.text());
+    }
+});
+</script>
+
+</body>
+</html>

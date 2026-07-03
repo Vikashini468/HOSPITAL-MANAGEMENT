@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Maintenance Manager</title>
+
+
+<style>
+
+
+*{
+box-sizing:border-box;
+font-family:"Segoe UI";
+}
+
+
+body{
+
+margin:0;
+background:#f4f8ff;
+
+}
+
+
+.sidebar{
+
+position:fixed;
+width:250px;
+height:100vh;
+
+background:linear-gradient(
+135deg,
+#134f8f,
+#1a6fc4
+);
+
+color:white;
+padding:25px;
+
+}
+
+
+
+.sidebar h1{
+
+text-align:center;
+
+}
+
+
+
+.menu,
+.nav-item{
+
+
+padding:15px;
+
+margin:15px 0;
+
+background:#ffffff33;
+
+border-radius:12px;
+
+cursor:pointer;
+
+}
+
+
+
+.main{
+
+margin-left:270px;
+
+padding:30px;
+
+}
+
+
+
+.card{
+
+
+background:white;
+
+padding:25px;
+
+border-radius:18px;
+
+box-shadow:0 5px 20px #ddd;
+
+margin-bottom:20px;
+
+}
+
+
+
+.item{
+
+
+background:#eef4ff;
+
+padding:20px;
+
+border-radius:15px;
+
+margin:15px 0;
+
+border-left:5px solid #1565c0;
+
+
+}
+
+
+
+button{
+
+
+padding:10px 20px;
+
+border:none;
+
+border-radius:10px;
+
+background:#1565c0;
+
+color:white;
+
+cursor:pointer;
+
+margin:5px;
+
+
+}
+
+
+.reject{
+
+background:#e74c3c;
+
+}
+
+
+
+.badge{
+
+
+padding:5px 15px;
+
+border-radius:20px;
+
+background:#ffeaa7;
+
+}
+
+
+
+.approved{
+
+background:#c8f7c5;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<div class="sidebar">
+
+
+<h1>
+Manager
+</h1>
+
+
+
+<div class="menu"
+onclick="showPending()">
+
+New Requests
+
+</div>
+
+
+
+<div class="menu"
+onclick="showApproved()">
+
+Approved Maintenance
+
+</div>
+
+
+
+<div class="menu"
+onclick="loadCompleted()">
+
+Completed Maintenance
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="main">
+
+
+<div class="card">
+
+
+<h2>
+Maintenance Manager Dashboard
+</h2>
+
+
+<div id="content">
+
+
+Loading...
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<script>
+
+
+const BASE="http://localhost:5000";
+
+
+
+
+// NEW REQUESTS
+
+
+async function showPending(){
+
+
+let res =
+await fetch(
+BASE+"/maintenance/manager/pending"
+);
+
+let data =
+await res.json();
+
+
+
+
+let pending = data;
+
+
+
+content.innerHTML =
+
+
+pending.map(x=>`
+
+
+
+<div class="item">
+
+
+<h3>
+
+${x.category}
+
+</h3>
+
+
+
+<p>
+
+Department :
+${x.department}
+
+</p>
+
+
+
+<p>
+
+Asset :
+${x.asset_name}
+
+</p>
+
+
+
+<p>
+
+Problem :
+${x.problem}
+
+</p>
+
+
+
+<p>
+
+Requested By :
+${x.requested_by}
+
+</p>
+
+
+
+<span class="badge">
+
+${x.status}
+
+</span>
+
+
+
+<br>
+
+
+
+<button onclick="approve(${x.id})">
+
+Approve
+
+</button>
+
+
+<button class="reject"
+onclick="rejectRequest(${x.id})">
+
+Reject
+
+</button>
+
+
+
+</div>
+
+
+`).join("")
+||
+"<h3>No New Requests</h3>";
+
+
+
+}
+
+
+
+
+
+// APPROVE
+
+
+async function approve(id){
+
+
+let res = await fetch(
+BASE+"/maintenance/approve/"+id,
+{
+
+method:"PUT",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+approved_by:"Maintenance Manager",
+technician:"Technician 1"
+
+})
+
+});
+
+
+let data = await res.json();
+
+
+alert(
+"Approved Token : "+data.token
+);
+
+
+showPending();
+
+}
+
+
+
+
+// REJECT
+
+
+async function rejectRequest(id){
+
+
+await fetch(
+BASE+"/maintenance/reject/"+id,
+{
+
+method:"PUT"
+
+});
+
+
+alert("Rejected");
+
+showPending();
+
+}
+
+
+
+
+
+
+// APPROVED LIST
+
+
+async function showApproved(){
+
+
+
+let res =
+await fetch(
+
+BASE+"/maintenance/approved"
+
+);
+
+
+if(!res.ok){
+alert("Cannot load requests");
+return;
+}
+
+let data = await res.json();
+
+
+
+content.innerHTML =
+
+
+data.map(x=>`
+
+
+<div class="item">
+
+
+<h3>
+
+${x.category}
+
+<span class="approved badge">
+
+Approved
+
+</span>
+
+
+</h3>
+
+
+
+<p>
+
+Asset :
+${x.asset_name}
+
+</p>
+
+
+
+<p>
+
+Problem :
+${x.problem}
+
+</p>
+
+
+
+<p>
+
+Approved By :
+${x.approved_by}
+
+</p>
+
+
+
+<p>
+
+Approved Date :
+
+${new Date(x.approved_date)
+.toLocaleString()}
+
+</p>
+
+
+<button onclick="markComplete(${x.id})">
+Mark Complete
+</button>
+
+
+
+</div>
+
+
+
+`).join("")
+||
+"No Approved Requests";
+
+
+
+}
+
+
+
+
+
+
+
+
+// COMPLETED
+
+
+async function loadCompleted(){
+
+let res = await fetch(BASE+"/maintenance/tokens");
+let data = await res.json();
+
+content.innerHTML = data.map(x=>`
+<div class="item">
+<h3>🎫 Token : ${x.token_no}</h3>
+<p>${x.asset_name}</p>
+<p>Work : ${x.work_done}</p>
+<p>Completed : ${new Date(x.completed_at).toLocaleString()}</p>
+</div>
+`).join("") || "No Completed Work";
+
+}
+
+
+async function markComplete(id){
+    const work_done = prompt("Enter work done description:");
+    if(!work_done) return;
+
+    const res = await fetch(BASE+"/maintenance/complete/"+id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ work_done })
+    });
+
+    const data = await res.json();
+    if(data.success){
+        alert("Marked as Completed");
+        showApproved();
+    }
+}
+
+
+showPending();
+
+
+
+</script>
+
+
+</body>
+
+</html>

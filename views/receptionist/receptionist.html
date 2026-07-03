@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receptionist Dashboard — NALAM AI</title>
+
+<style>
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI",sans-serif; }
+
+body { display:flex; background:#f0f4ff; min-height:100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: linear-gradient(180deg,#0d3b7a,#1565c0);
+    color: white;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: fixed;
+    top: 0; left: 0;
+}
+
+.sidebar .brand {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    margin-bottom: 12px;
+}
+
+.menu {
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.08);
+    transition: background 0.2s;
+}
+
+.menu:hover  { background: rgba(255,255,255,0.2); }
+.menu.active { background: white; color: #1565c0; font-weight: 600; }
+
+/* ── MAIN ── */
+.main { margin-left:240px; flex:1; padding:28px 32px; }
+
+/* ── TOPBAR ── */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.topbar h2 { color:#0d3b7a; font-size:24px; }
+
+/* ── STAT CARDS ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.stat {
+    background: white;
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+}
+
+.stat-icon { font-size: 32px; }
+.stat-label { font-size: 13px; color:#888; margin-bottom:4px; }
+.stat-value { font-size: 26px; font-weight:700; color:#1565c0; }
+.stat.green .stat-value { color:#2e7d32; }
+.stat.orange .stat-value { color:#e65100; }
+
+/* ── SECTION CARD ── */
+.section {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+    display: none;
+}
+
+.section.active { display: block; }
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.section-header h3 { color:#0d3b7a; font-size:17px; }
+
+.search-box {
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 220px;
+    outline: none;
+}
+
+/* ── TABLE ── */
+table { width:100%; border-collapse:collapse; }
+
+thead { background:#1565c0; color:white; }
+
+th { padding:11px 14px; text-align:left; font-size:13px; }
+
+td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+tbody tr:hover { background:#f5f9ff; }
+
+/* ── BADGES ── */
+.badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-pending    { background:#fff3e0; color:#e65100; }
+.badge-waiting    { background:#e3f2fd; color:#1565c0; }
+.badge-ready      { background:#e8f5e9; color:#2e7d32; }
+.badge-inprogress { background:#f3e5f5; color:#6a1b9a; }
+.badge-completed  { background:#e0f2f1; color:#00695c; }
+
+/* ── TOKEN CHIP ── */
+.token {
+    display: inline-block;
+    background: #1565c0;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    min-width: 44px;
+    text-align: center;
+}
+
+/* ── EMPTY ── */
+.empty {
+    text-align: center;
+    color: #aaa;
+    padding: 40px 0;
+    font-size: 14px;
+}
+
+/* ── REPORT LINK ── */
+.report-link {
+    color: #1565c0;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.report-link:hover { text-decoration: underline; }
+
+</style>
+</head>
+
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<div class="sidebar">
+
+    <div class="brand">NALAM AI</div>
+
+    <div class="menu active" onclick="showSection('appointments', this)">
+        🗓 Appointments
+    </div>
+
+    <div class="menu" onclick="showSection('labWaiting', this)">
+        🧪 Waiting for Lab
+    </div>
+
+    <div class="menu" onclick="showSection('labCompleted', this)">
+        📄 Lab Reports Ready
+    </div>
+
+    <div class="menu" onclick="showSection('patients', this)">
+        👥 Patients
+    </div>
+
+</div>
+
+<!-- ===================== MAIN ===================== -->
+<div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <h2>Reception Dashboard</h2>
+        <span id="clock" style="color:#888;font-size:14px;"></span>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+
+        <div class="stat">
+            <div class="stat-icon">🗓</div>
+            <div>
+                <div class="stat-label">Today's Appointments</div>
+                <div class="stat-value" id="statAppt">—</div>
+            </div>
+        </div>
+
+        <div class="stat orange">
+            <div class="stat-icon">🧪</div>
+            <div>
+                <div class="stat-label">Waiting for Lab</div>
+                <div class="stat-value" id="statWaiting">—</div>
+            </div>
+        </div>
+
+        <div class="stat green">
+            <div class="stat-icon">📄</div>
+            <div>
+                <div class="stat-label">Lab Reports Ready</div>
+                <div class="stat-value" id="statReady">—</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── APPOINTMENTS ── -->
+    <div id="appointments" class="section active">
+
+        <div class="section-header">
+            <h3>All Appointments</h3>
+            <input
+                class="search-box"
+                type="text"
+                placeholder="Search patient / doctor..."
+                oninput="filterTable('apptTable', this.value)"
+            >
+        </div>
+
+        <div id="apptBody">
+            <div class="empty">Loading...</div>
+        </div>
+
+    </div>
+
+    <!-- ── WAITING FOR LAB ── -->
+    <div id="labWaiting" class="section">
+
+        <div class="section-header">
+            <h3>Patients Waiting for Lab Report</h3>
+            <input
+                class="search-box"
+                type="text"
+                placeholder="Search patient..."
+                oninput="filterTable('waitTable', this.value)"
+            >
+        </div>
+
+        <div id="waitBody">
+            <div class="empty">Loading...</div>
+        </div>
+
+    </div>
+
+    <!-- ── LAB REPORTS READY ── -->
+    <div id="labCompleted" class="section">
+
+        <div class="section-header">
+            <h3>Lab Reports Ready</h3>
+            <input
+                class="search-box"
+                type="text"
+                placeholder="Search patient..."
+                oninput="filterTable('doneTable', this.value)"
+            >
+        </div>
+
+        <div id="doneBody">
+            <div class="empty">Loading...</div>
+        </div>
+
+    </div>
+
+    <!-- ── PATIENTS ── -->
+    <div id="patients" class="section">
+
+        <div class="section-header">
+            <h3>All Patients</h3>
+            <input
+                class="search-box"
+                type="text"
+                placeholder="Search patient..."
+                oninput="filterTable('patTable', this.value)"
+            >
+        </div>
+
+        <div id="patBody">
+            <div class="empty">Loading...</div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const BASE = "http://localhost:5000";
+
+/* ── CLOCK ── */
+function updateClock() {
+    document.getElementById("clock").textContent =
+        new Date().toLocaleString("en-IN", {
+            weekday:"short", day:"2-digit",
+            month:"short", year:"numeric",
+            hour:"2-digit", minute:"2-digit"
+        });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ── SECTION SWITCH ── */
+function showSection(id, el) {
+
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".menu").forEach(m => m.classList.remove("active"));
+
+    document.getElementById(id).classList.add("active");
+    el.classList.add("active");
+
+    if (id === "appointments") loadAppointments();
+    if (id === "labWaiting")   loadLabWaiting();
+    if (id === "labCompleted") loadLabCompleted();
+    if (id === "patients")     loadPatients();
+}
+
+/* ── INIT ── */
+window.onload = () => {
+    loadStats();
+    loadAppointments();
+    setInterval(loadStats, 30000);
+};
+
+/* ── STATS ── */
+async function loadStats() {
+    try {
+        const res  = await fetch(BASE + "/receptionist/stats");
+        const data = await res.json();
+        document.getElementById("statAppt").textContent    = data.today_appointments ?? 0;
+        document.getElementById("statWaiting").textContent = data.lab_waiting        ?? 0;
+        document.getElementById("statReady").textContent   = data.lab_completed      ?? 0;
+    } catch (err) { console.error(err); }
+}
+
+/* ── STATUS BADGE ── */
+function badge(status) {
+    const s = (status || "").toUpperCase();
+    const map = {
+        PENDING:     ["badge-pending",    "Pending"],
+        WAITING_LAB: ["badge-waiting",    "Waiting Lab"],
+        LAB_READY:   ["badge-ready",      "Lab Ready"],
+        INPROGRESS:  ["badge-inprogress", "In Progress"],
+        COMPLETED:   ["badge-completed",  "Completed"],
+        REVIEWED:    ["badge-completed",  "Reviewed"]
+    };
+    const [cls, label] = map[s] || ["badge-pending", status];
+    return `<span class="badge ${cls}">${label}</span>`;
+}
+
+/* ── FORMAT DATE ── */
+function fmtDate(d) {
+    if (!d) return "-";
+    return new Date(d).toLocaleDateString("en-IN", {
+        day:"2-digit", month:"short", year:"numeric"
+    });
+}
+
+/* ── FORMAT TESTS ── */
+function fmtTests(tests) {
+    if (!tests) return "-";
+    if (Array.isArray(tests)) return tests.join(", ");
+    return tests;
+}
+
+/* ── SEARCH FILTER ── */
+function filterTable(tableId, query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? "" : "none";
+    });
+}
+
+/* =====================================================
+   APPOINTMENTS
+===================================================== */
+async function loadAppointments() {
+
+    const container = document.getElementById("apptBody");
+    container.innerHTML = `<div class="empty">Loading...</div>`;
+
+    try {
+
+        const res  = await fetch(BASE + "/receptionist/appointments");
+        const data = await res.json();
+
+        if (!data.length) {
+            container.innerHTML = `<div class="empty">No appointments found.</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+        <table id="apptTable">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Patient</th>
+                    <th>Age / Gender</th>
+                    <th>Mobile</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Symptoms</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(a => `
+                <tr>
+                    <td><span class="token">#${a.token}</span></td>
+                    <td>${a.patient_name}</td>
+                    <td>${a.age} / ${a.gender}</td>
+                    <td>${a.patient_mobile || "-"}</td>
+                    <td>${a.doctor_name}</td>
+                    <td>${fmtDate(a.appointment_date)}</td>
+                    <td>${a.symptoms || "-"}</td>
+                    <td>${badge(a.status)}</td>
+                </tr>`).join("")}
+            </tbody>
+        </table>`;
+
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="empty">Unable to load appointments.</div>`;
+    }
+
+}
+
+/* =====================================================
+   WAITING FOR LAB
+===================================================== */
+async function loadLabWaiting() {
+
+    const container = document.getElementById("waitBody");
+    container.innerHTML = `<div class="empty">Loading...</div>`;
+
+    try {
+
+        const res  = await fetch(BASE + "/receptionist/lab/waiting");
+        const data = await res.json();
+
+        if (!data.length) {
+            container.innerHTML = `<div class="empty">No patients currently waiting for lab report.</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+        <table id="waitTable">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Patient</th>
+                    <th>Mobile</th>
+                    <th>Doctor</th>
+                    <th>Tests Requested</th>
+                    <th>Requested At</th>
+                    <th>Lab Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(r => `
+                <tr>
+                    <td><span class="token">#${r.token}</span></td>
+                    <td>${r.patient_name}</td>
+                    <td>${r.patient_mobile || "-"}</td>
+                    <td>${r.doctor_name}</td>
+                    <td>${fmtTests(r.tests)}</td>
+                    <td>${fmtDate(r.requested_at)}</td>
+                    <td>${badge(r.lab_status)}</td>
+                </tr>`).join("")}
+            </tbody>
+        </table>`;
+
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="empty">Unable to load data.</div>`;
+    }
+
+}
+
+/* =====================================================
+   LAB REPORTS READY
+===================================================== */
+async function loadLabCompleted() {
+
+    const container = document.getElementById("doneBody");
+    container.innerHTML = `<div class="empty">Loading...</div>`;
+
+    try {
+
+        const res  = await fetch(BASE + "/receptionist/lab/completed");
+        const data = await res.json();
+
+        if (!data.length) {
+            container.innerHTML = `<div class="empty">No completed lab reports yet.</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+        <table id="doneTable">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Patient</th>
+                    <th>Mobile</th>
+                    <th>Doctor</th>
+                    <th>Tests Done</th>
+                    <th>Completed At</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(r => `
+                <tr>
+                    <td><span class="token">#${r.token}</span></td>
+                    <td>${r.patient_name}</td>
+                    <td>${r.patient_mobile || "-"}</td>
+                    <td>${r.doctor_name}</td>
+                    <td>${fmtTests(r.tests)}</td>
+                    <td>${fmtDate(r.completed_at)}</td>
+                    <td>
+                        ${r.report_file
+                            ? `<a class="report-link"
+                                  href="http://localhost:5000/uploads/${r.report_file}"
+                                  target="_blank">📄 View Report</a>`
+                            : "-"}
+                    </td>
+                </tr>`).join("")}
+            </tbody>
+        </table>`;
+
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="empty">Unable to load data.</div>`;
+    }
+
+}
+
+/* =====================================================
+   PATIENTS
+===================================================== */
+async function loadPatients() {
+
+    const container = document.getElementById("patBody");
+    container.innerHTML = `<div class="empty">Loading...</div>`;
+
+    try {
+
+        const res  = await fetch(BASE + "/receptionist/patients");
+        const data = await res.json();
+
+        if (!data.length) {
+            container.innerHTML = `<div class="empty">No patients found.</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+        <table id="patTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Blood Group</th>
+                    <th>Mobile</th>
+                    <th>Email</th>
+                    <th>Appointments</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(p => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td>${p.name}</td>
+                    <td>${p.age}</td>
+                    <td>${p.gender}</td>
+                    <td>${p.blood_group}</td>
+                    <td>${p.mobile || "-"}</td>
+                    <td>${p.email || "-"}</td>
+                    <td>${p.total_appointments}</td>
+                </tr>`).join("")}
+            </tbody>
+        </table>`;
+
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="empty">Unable to load patients.</div>`;
+    }
+
+}
+
+</script>
+</body>
+</html>

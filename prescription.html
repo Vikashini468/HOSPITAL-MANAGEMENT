@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Medical Research Window</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #eef2ff, #f8fafc);
+}
+
+/* CENTER BOX (MAIN FIX) */
+.box {
+    width: 400px;
+    margin: 60px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* TITLE */
+h3 {
+    color: #1e3a8a;
+}
+
+/* INPUT */
+input {
+    width: 90%;   /* centered */
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+}
+
+input:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+/* BUTTON */
+button {
+    width: 90%;   /* centered */
+    padding: 12px;
+    margin-top: 15px;
+    background: linear-gradient(to right, #1e3a8a, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #f97316;
+}
+
+/* PREVIEW */
+#previewBox {
+    margin-top: 15px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    text-align: left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h3>Prescription window</h3>
+
+    <!-- <input type="text" id="search" placeholder="Search Medicine"> -->
+     <input type="text" id="search" list="medicineList" placeholder="Search Medicine">
+     <datalist id="medicineList"></datalist>
+
+     <input type="text" id="type" placeholder="Type" readonly>
+     <input type="text" id="power" placeholder="Composition" readonly>
+     <input type="text" id="rate" placeholder="Price" readonly>
+     <input type="number" id="quantity" placeholder="Quantity">
+    <input type="number" id="days" placeholder="Enter Days">
+
+    <button onclick="previewData()">Submit</button>
+
+    <div id="previewBox"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+
+const patientId = params.get("patientId");
+const doctorId = params.get("doctorId");
+const appointmentId = params.get("appointmentId");
+
+console.log("patientId =", patientId);
+console.log("doctorId =", doctorId);
+console.log("appointmentId =", appointmentId);
+
+let medicines = [];
+
+/* ==============================
+   LOAD CSV
+============================== */
+
+Papa.parse("medicine.csv", {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+
+    complete: function(results) {
+
+        medicines = results.data.filter(m => m.medicine);
+
+        const list = document.getElementById("medicineList");
+
+        medicines.forEach(med => {
+
+            const option = document.createElement("option");
+            option.value = med.medicine;
+            list.appendChild(option);
+
+        });
+
+        console.log("Medicines Loaded :", medicines.length);
+    }
+});
+
+/* ==============================
+   AUTO FILL
+============================== */
+
+document.getElementById("search").addEventListener("change", function () {
+
+    const selected = this.value.trim().toLowerCase();
+
+    const med = medicines.find(m =>
+        m.medicine &&
+        m.medicine.toLowerCase() === selected
+    );
+
+    if (!med) {
+
+        alert("Medicine not found");
+
+        document.getElementById("type").value = "";
+        document.getElementById("power").value = "";
+        document.getElementById("rate").value = "";
+
+        return;
+    }
+
+    document.getElementById("type").value = med.type;
+    document.getElementById("power").value = med.composition;
+    document.getElementById("rate").value = "₹" + med.price;
+
+});
+
+
+/* ==============================
+   PREVIEW
+============================== */
+
+function previewData() {
+
+    const medicine = document.getElementById("search").value;
+    const type = document.getElementById("type").value;
+    const composition = document.getElementById("power").value;
+    const price = document.getElementById("rate").value;
+    const quantity = document.getElementById("quantity").value;
+    const days = document.getElementById("days").value;
+
+    if (
+        !medicine ||
+        !type ||
+        !composition ||
+        !price ||
+        !quantity ||
+        !days
+    ) {
+
+        alert("Please fill all fields");
+        return;
+
+    }
+
+    const today = new Date();
+
+    const end = new Date();
+
+    end.setDate(today.getDate() + Number(days));
+
+    document.getElementById("previewBox").innerHTML = `
+        <h3>Prescription Preview</h3>
+
+        <p><b>Medicine :</b> ${medicine}</p>
+        <p><b>Type :</b> ${type}</p>
+        <p><b>Composition :</b> ${composition}</p>
+        <p><b>Price :</b> ${price}</p>
+        <p><b>Quantity :</b> ${quantity}</p>
+        <p><b>Days :</b> ${days}</p>
+
+        <p><b>Start :</b> ${today.toDateString()}</p>
+        <p><b>End :</b> ${end.toDateString()}</p>
+
+        <button onclick="verifyPrescription()">
+            Verify Prescription
+        </button>
+    `;
+}
+
+
+/* ==============================
+   SAVE PRESCRIPTION
+============================== */
+
+async function verifyPrescription() {
+
+    try {
+
+        const patientRes = await fetch(`/patient/details/${patientId}`);
+        if (!patientRes.ok) throw new Error("Failed to load patient details");
+        const patient = await patientRes.json();
+
+        const doctorRes = await fetch(`/doctor/profile/${doctorId}`);
+        if (!doctorRes.ok) throw new Error("Failed to load doctor details");
+        const doctor = await doctorRes.json();
+
+        const prescription = {
+            patientId,
+            doctorId,
+            appointmentId,
+            patientName: patient.name,
+            doctorName: doctor.name,
+            medicines: [
+                {
+                    name: document.getElementById("search").value,
+                    type: document.getElementById("type").value,
+                    composition: document.getElementById("power").value,
+                    price: parseFloat(document.getElementById("rate").value.replace("₹", "")),
+                    quantity: parseInt(document.getElementById("quantity").value),
+                    days: parseInt(document.getElementById("days").value)
+                }
+            ]
+        };
+
+        /* Deduct Stock */
+        await fetch("/medicine/deduct-stock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: document.getElementById("search").value,
+                quantity: parseInt(document.getElementById("quantity").value)
+            })
+        });
+
+        /* Save Prescription */
+        const saveRes = await fetch("/pharmacy/prescriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(prescription)
+        });
+
+        if (!saveRes.ok) throw new Error("Failed to save prescription");
+
+        /* Complete Appointment only if NOT from lab report flow */
+        const fromLab = new URLSearchParams(window.location.search).get("fromLab");
+        if (!fromLab) {
+            await fetch(`/appointment/complete/${appointmentId}`, { method: "POST" });
+        }
+
+        alert("Prescription Saved Successfully");
+        window.close();
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to save prescription: " + err.message);
+    }
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Patient Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body { display: flex; background: #f4f7fb; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: linear-gradient(180deg, #0d47a1, #1565c0);
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100vh;
+    }
+
+    .sidebar h2 { margin-bottom: 16px; font-size: 20px; }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      transition: 0.2s;
+      color: white;
+      user-select: none;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.22); }
+    .nav-item.active { background: rgba(255,255,255,0.3); font-weight: bold; }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .topbar input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 260px;
+      font-size: 14px;
+    }
+
+    .topbar .profile { font-weight: bold; color: #0d47a1; }
+
+    .content { padding: 20px; flex: 1; }
+
+    /* SECTIONS */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* WELCOME CARD */
+    .welcome-card {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-card h2 { font-size: 26px; margin-bottom: 6px; }
+    .welcome-card p { font-size: 14px; opacity: 0.85; }
+
+    /* PROFILE */
+    .profile-card {
+      background: white;
+      border-radius: 14px;
+      padding: 30px 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .profile-card h2 { color: #0d47a1; margin-bottom: 20px; }
+
+    .profile-photo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #e3eaf5;
+      display: block;
+      margin: 0 auto 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0d47a1;
+      margin-bottom: 4px;
+    }
+
+    .profile-username {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+      color: #333;
+      text-align: left;
+    }
+
+    .profile-row:last-child { border: none; }
+    .profile-row b { color: #0d47a1; min-width: 130px; }
+
+    /* CARDS */
+    .p-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      margin-bottom: 16px;
+      border: 1px solid #e3eaf5;
+    }
+
+    .p-card h3 { color: #0d47a1; margin-bottom: 10px; font-size: 16px; }
+    .p-card p { font-size: 14px; color: #444; margin: 5px 0; }
+    .p-card hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+
+    /* DOCTOR GRID */
+    .doctor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .doctor-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      border: 1px solid #e3eaf5;
+    }
+
+    .doctor-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+      border: 3px solid #e3eaf5;
+    }
+
+    .doctor-card h3 { color: #0d47a1; font-size: 15px; margin-bottom: 6px; }
+    .doctor-card p { font-size: 13px; color: #555; margin: 3px 0; }
+
+    .view-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 9px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .view-btn:hover { background: #1565c0; }
+
+    /* DOCTOR DETAILS CARD */
+    .doctor-details-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      max-width: 560px;
+    }
+
+    .doctor-details-card h2 { color: #0d47a1; margin-bottom: 14px; }
+    .doctor-details-card label { font-size: 13px; font-weight: 600; color: #333; display: block; margin: 12px 0 4px; }
+    .doctor-details-card select,
+    .doctor-details-card input[type="date"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .symptom-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .symptom-grid label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef4ff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: normal;
+      color: #333;
+    }
+
+    .book-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 11px;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .book-btn:hover { background: #1e8449; }
+
+    /* TOKEN BADGE */
+    .token-badge {
+      background: #0d47a1;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    /* WAITING TIME BOX */
+    .waiting-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #eef4ff;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1565c0;
+    }
+
+    /* SECTION TITLE */
+    .sec-title {
+      color: #0d47a1;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    /* REPORT BADGE */
+    .badge-green {
+      background: #dcfce7;
+      color: #166534;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    /* BILLING */
+    .bill-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+      border: 1px solid #e3eaf5;
+    }
+
+    .bill-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .bill-header h3 { color: #0d47a1; font-size: 16px; }
+    .bill-date { font-size: 12px; color: #888; }
+
+    .bill-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .bill-table th {
+      background: #f0f4ff;
+      color: #0d47a1;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .bill-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+
+    .bill-table tr:last-child td { border: none; }
+
+    .bill-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 10px;
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 9px 18px;
+      background: #0d47a1;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+}
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Patient Panel</h2>
+  <div class="nav-item active" onclick="showProfile(this)">Profile</div>
+  <div class="nav-item" onclick="showSection('doctors', this)">Doctors</div>
+  <div class="nav-item" onclick="showSection('prescriptions', this); loadPrescriptions();">Prescriptions</div>
+  <div class="nav-item" onclick="showSection('reports', this); loadReports();">Reports</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <input placeholder="Search doctor">
+    <div class="profile">Patient</div>
+  </div>
+
+  <div class="content">
+
+    <!-- WELCOME -->
+    <div class="welcome-card">
+      <h2 id="welcomeText">Welcome</h2>
+      <p>Book doctors and view your reports here</p>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="profileSection">
+      <div class="profile-card">
+        <h2>My Profile</h2>
+        <img id="p_photo" class="profile-photo" src="/uploads/default.png">
+        <div class="profile-name" id="p_name"></div>
+        <div class="profile-username" id="p_username"></div>
+        <div class="profile-row"><b>Email:</b> <span id="p_email"></span></div>
+        <div class="profile-row"><b>Mobile:</b> <span id="p_mobile"></span></div>
+        <div class="profile-row"><b>Age:</b> <span id="p_age"></span></div>
+        <div class="profile-row"><b>Gender:</b> <span id="p_gender"></span></div>
+        <div class="profile-row"><b>Blood Group:</b> <span id="p_blood"></span></div>
+        <div class="profile-row"><b>Weight:</b> <span id="p_weight"></span></div>
+        <div class="profile-row"><b>Allergies:</b> <span id="p_allergies"></span></div>
+        <div class="profile-row"><b>Previous Hospital:</b> <span id="p_hospital"></span></div>
+        <div class="profile-row"><b>Address:</b> <span id="p_address"></span></div>
+      </div>
+    </div>
+
+    <!-- DOCTORS -->
+    <div id="doctors" class="section">
+      <p class="sec-title">Available Doctors</p>
+      <div id="doctorList" class="doctor-grid"></div>
+      <div id="doctorDetails"></div>
+    </div>
+
+
+    <!-- PRESCRIPTIONS -->
+    <div id="prescriptions" class="section">
+      <p class="sec-title">My Prescriptions</p>
+      <div id="prescriptionSection"></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="reports" class="section">
+      <p class="sec-title">My Lab Reports</p>
+      <div id="reportsList"></div>
+    </div>
+
+
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const userId = params.get("id");
+
+function showSection(id, el) {
+    document.getElementById("profileSection").style.display = "none";
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    if (el) el.classList.add("active");
+}
+
+function showProfile(el) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById("profileSection").style.display = "block";
+    if (el) el.classList.add("active");
+}
+
+async function loadProfile() {
+    try {
+        const res = await fetch(`/api/patient/profile/${userId}`);
+        const data = await res.json();
+        const user = data.user;
+        const patient = data.patient;
+        document.getElementById("welcomeText").innerText = `Welcome, ${user.username}`;
+        document.getElementById("p_name").innerText = user.name || "-";
+        document.getElementById("p_username").innerText = `@${user.username}` || "-";
+        document.getElementById("p_email").innerText = user.email || "-";
+        document.getElementById("p_mobile").innerText = user.mobile || "-";
+        document.getElementById("p_age").innerText = patient.age || "-";
+        document.getElementById("p_gender").innerText = patient.gender || "-";
+        document.getElementById("p_blood").innerText = patient.blood_group || "-";
+        document.getElementById("p_weight").innerText = patient.weight || "-";
+        document.getElementById("p_allergies").innerText = patient.allergies || "-";
+        document.getElementById("p_hospital").innerText = patient.previous_hospital || "-";
+        document.getElementById("p_address").innerText = patient.address || "-";
+        document.getElementById("p_photo").src = patient.photo ? `/uploads/${patient.photo}` : "/uploads/default.png";
+    } catch(err) {
+        console.error(err);
+    }
+}
+
+async function loadDoctors() {
+    try {
+        const res = await fetch("/doctors");
+        const doctors = await res.json();
+        const list = document.getElementById("doctorList");
+        list.innerHTML = doctors.map(d => {
+            let photo;
+            if (d.photo) {
+                photo = `/uploads/${d.photo}`;
+            } else if (d.gender && d.gender.toLowerCase() === 'female') {
+                photo = `/uploads/female-doctor.webp`;
+            } else {
+                photo = `/uploads/boy-doctor.webp`;
+            }
+            return `
+            <div class="doctor-card">
+                <img src="${photo}" class="doctor-photo" onerror="this.src='/uploads/${d.gender && d.gender.toLowerCase()==='female' ? 'female-doctor.webp' : 'boy-doctor.webp'}'">
+                <h3>${d.name}</h3>
+                <p>${d.specialization || "General"}</p>
+                <p style="color:#0d47a1;font-weight:600;">₹${d.consultation_fee || 0} / visit</p>
+                <button class="view-btn" onclick="viewDoctor(${d.id})">View Details</button>
+            </div>`;
+        }).join("");
+    } catch(err) { console.error(err); }
+}
+
+let currentDoctor = 0;
+
+async function viewDoctor(id) {
+    currentDoctor = id;
+    const res = await fetch(`/doctor/schedule/${id}`);
+    const s = await res.json();
+    document.getElementById("doctorDetails").innerHTML = `
+        <div class="doctor-details-card">
+            <h2>${s.name}</h2>
+            <p><b>Specialization:</b> ${s.specialisation || "-"}</p>
+            <p><b>Fee:</b> ₹${s.consultation_fee || 0}</p>
+            <hr style="margin:14px 0;border:none;border-top:1px solid #eee;">
+            <label>Available Day</label>
+            <select id="daySelect" onchange="loadSlots()"></select>
+            <label>Available Time</label>
+            <select id="slotSelect"></select>
+            <label>Appointment Date</label>
+            <input type="date" id="appointmentDate">
+            <label>Symptoms</label>
+            <div class="symptom-grid">
+                <label><input type="checkbox" value="Fever"> Fever</label>
+                <label><input type="checkbox" value="Cold"> Cold</label>
+                <label><input type="checkbox" value="Headache"> Headache</label>
+                <label><input type="checkbox" value="Diabetes"> Diabetes</label>
+                <label><input type="checkbox" value="Blood Pressure"> Blood Pressure</label>
+                <label><input type="checkbox" value="Skin Allergy"> Skin Allergy</label>
+                <label><input type="checkbox" value="Vomiting"> Vomiting</label>
+            </div>
+            <button class="book-btn" onclick="bookAppointment()">Book Appointment</button>
+        </div>`;
+    const daySelect = document.getElementById("daySelect");
+    (s.available_days || "").split(",").forEach(day => {
+        daySelect.innerHTML += `<option value="${day.trim()}">${day.trim()}</option>`;
+    });
+    loadSlots();
+}
+
+async function loadSlots() {
+    const day = document.getElementById("daySelect").value;
+    const res = await fetch(`/doctor/slots/${currentDoctor}/${day}`);
+    const slots = await res.json();
+    const select = document.getElementById("slotSelect");
+    select.innerHTML = slots.map(s => `<option value="${s}">${s}</option>`).join("");
+}
+
+async function bookAppointment() {
+    const res = await fetch("/patient/book-appointment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            doctorId: currentDoctor,
+            patientId: userId,
+            appointmentDate: document.getElementById("appointmentDate").value,
+            appointmentDay: document.getElementById("daySelect").value,
+            appointmentTime: document.getElementById("slotSelect").value,
+            symptoms: [...document.querySelectorAll("#symptoms input:checked")].map(x => x.value).join(",")
+        })
+    });
+    const data = await res.json();
+    alert(data.message || `Appointment Booked. Token No: ${data.token}`);
+}
+
+async function loadAppointments() {
+    try {
+        const res = await fetch(`/patient/appointments/${userId}`);
+        const appointments = await res.json();
+        const list = document.getElementById("appointmentList");
+        if (!appointments || !appointments.length) { list.innerHTML = "<p>No appointments booked.</p>"; return; }
+        list.innerHTML = appointments.map((a, i) => {
+            const token = a.token_no || i + 1;
+            const waitMins = (token - 1) * 15;
+            const statusMap = {
+                LAB_IN_PROGRESS: "Lab Report In Progress",
+                LAB_COMPLETED: "Lab Report Ready",
+                PENDING: "Pending",
+                CONSULTING: "Consultation In Progress",
+                Completed: "Completed",
+                Waiting: "Waiting"
+            };
+            const status = statusMap[a.status] || a.status;
+            return `
+            <div class="p-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3>${a.doctor_name}</h3>
+                    <span class="token-badge">Token #${token}</span>
+                </div>
+                <hr>
+                <p><b>Date:</b> ${a.appointment_date}</p>
+                <p><b>Time:</b> ${a.appointment_time}</p>
+                <p><b>Status:</b> ${status}</p>
+                <p><b>Symptoms:</b> ${a.symptoms || "-"}</p>
+                <div class="waiting-box">⏳ Estimated Wait: ${waitMins} mins</div>
+            </div>`;
+        }).join("");
+    } catch(err) { console.error(err); }
+}
+
+async function loadPrescriptions() {
+    const box = document.getElementById("prescriptionSection");
+    const res = await fetch(`/patient/prescriptions/${userId}`);
+    const prescriptions = await res.json();
+    if (!prescriptions.length) { box.innerHTML = "<p>No prescriptions yet.</p>"; return; }
+    box.innerHTML = prescriptions.map(p => {
+        const days = parseInt(p.duration) || 0;
+        const start = new Date(p.created_at);
+        const end = new Date(p.created_at);
+        end.setDate(end.getDate() + days);
+        const fmt = d => d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+        return `
+        <div class="p-card">
+            <h3>${p.medicine_name}</h3>
+            <p><b>Doctor:</b> ${p.doctor_name || "-"}</p>
+            <p><b>Dosage:</b> ${p.dosage || "-"}</p>
+            <p><b>Quantity:</b> ${p.quantity || "-"}</p>
+            <p><b>Start Date:</b> ${fmt(start)}</p>
+            <p><b>End Date:</b> ${fmt(end)}</p>
+        </div>`;
+    }).join("");
+}
+
+async function loadReports() {
+    const box = document.getElementById("reportsList");
+    const res = await fetch(`/lab/patient-reports/${userId}`);
+    const reports = await res.json();
+    if (!reports.length) { box.innerHTML = "<p>No lab reports yet.</p>"; return; }
+    box.innerHTML = reports.map(r => {
+        let tests = [];
+        try { tests = typeof r.tests === "string" ? JSON.parse(r.tests) : r.tests; } catch(e) {}
+        return `
+        <div class="p-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3>Lab Report</h3>
+                <span class="badge-green">Reviewed</span>
+            </div>
+            <hr>
+            <p><b>Doctor:</b> ${r.doctor_name || "-"}</p>
+            <p><b>Tests:</b> ${tests.join(", ")}</p>
+            <p><b>Date:</b> ${new Date(r.created_at).toLocaleDateString()}</p>
+            <a href="/uploads/${r.report_file}" target="_blank" class="dl-btn">📄 View / Download Report</a>
+        </div>`;
+    }).join("");
+}
+
+async function loadBilling() {
+    const box = document.getElementById("billingList");
+    const res = await fetch(`/patient/billing/${userId}`);
+    const bills = await res.json();
+    if (!bills.length) { box.innerHTML = "<p>No billing records found.</p>"; return; }
+    box.innerHTML = bills.map(b => {
+        const medicines = Array.isArray(b.medicines) ? b.medicines : [];
+        const medTotal = medicines.reduce((sum, m) => sum + (parseFloat(m.total) || 0), 0);
+        const consultFee = parseFloat(b.consultation_fee) || 0;
+        const grandTotal = consultFee + medTotal;
+        const date = new Date(b.appointment_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+        const medRows = medicines.length > 0 ? medicines.map(m => `
+            <tr>
+                <td>${m.medicine}</td>
+                <td style="text-align:center;">${m.quantity}</td>
+                <td style="text-align:right;">₹${parseFloat(m.price).toFixed(2)}</td>
+                <td style="text-align:right;">₹${parseFloat(m.total).toFixed(2)}</td>
+            </tr>`).join("") : `<tr><td colspan="4" style="color:#aaa;font-style:italic;">No medicines prescribed</td></tr>`;
+        return `
+        <div class="bill-card">
+            <div class="bill-header">
+                <h3>Dr. ${b.doctor_name}</h3>
+                <span class="bill-date">${date}</span>
+            </div>
+            <table class="bill-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th style="text-align:center;">Qty</th>
+                        <th style="text-align:right;">Rate</th>
+                        <th style="text-align:right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Consultation Fee</td>
+                        <td style="text-align:center;">1</td>
+                        <td style="text-align:right;">₹${consultFee.toFixed(2)}</td>
+                        <td style="text-align:right;">₹${consultFee.toFixed(2)}</td>
+                    </tr>
+                    ${medRows}
+                </tbody>
+            </table>
+            <div class="bill-total">
+                <span>Grand Total</span>
+                <span>₹${grandTotal.toFixed(2)}</span>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+window.onload = function () {
+    loadProfile();
+    loadDoctors();
+    setInterval(() => {
+        loadAppointments();
+    }, 15000);
+};
+</script>
+</body>
+</html>

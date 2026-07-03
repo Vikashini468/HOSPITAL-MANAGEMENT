@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Doctor Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body { display: flex; background: #f4f7fb; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: linear-gradient(180deg, #0d47a1, #1565c0);
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100vh;
+    }
+
+    .sidebar h2 { margin-bottom: 16px; font-size: 20px; }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      transition: 0.2s;
+      color: white;
+      user-select: none;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.22); }
+    .nav-item.active { background: rgba(255,255,255,0.3); font-weight: bold; }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .topbar input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 260px;
+      font-size: 14px;
+    }
+
+    .topbar .profile {
+      font-weight: bold;
+      color: #0d47a1;
+    }
+
+    .content { padding: 20px; flex: 1; }
+
+    /* SECTIONS */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* PANEL */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+
+    .panel h3 { color: #0d47a1; margin-bottom: 16px; }
+
+    /* PATIENT GRID */
+    #patientList {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    /* CARD */
+    .d-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 1px solid #e3eaf5;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .d-card h3 { color: #0d47a1; margin-bottom: 6px; }
+    .d-card p { color: #333; font-size: 14px; }
+
+    .d-card button {
+      margin-top: 10px;
+      padding: 9px;
+      background: #1565c0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .d-card button:hover { background: #0d47a1; }
+
+    /* STOCK GRID */
+    #stockList {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    /* SCHEDULE FORM */
+    .form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      max-width: 700px;
+    }
+
+    .form-card h2 { color: #0d47a1; margin-bottom: 20px; }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .day-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef4ff;
+      border: 1px solid #d0e0ff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .day-box input { width: 16px; height: 16px; cursor: pointer; }
+
+    .form-row { margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+    .form-row label { font-size: 14px; font-weight: 600; color: #333; }
+
+    .form-row input,
+    .form-row textarea {
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+    }
+
+    .form-row input:focus,
+    .form-row textarea:focus { border-color: #1565c0; }
+
+    .form-row textarea { height: 100px; resize: vertical; }
+
+    .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+
+    .primary-btn {
+      padding: 10px 20px;
+      background: #1565c0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .primary-btn:hover { background: #0d47a1; }
+
+    /* SAVED SCHEDULE */
+    .info-box {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      max-width: 600px;
+    }
+
+    .info-box h2 { color: #0d47a1; margin-bottom: 16px; }
+
+    .info-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .info-row:last-of-type { border: none; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>Doctor Panel</h2>
+
+    <div class="nav-item active" onclick="showSection('patients', this)">Patients</div>
+    <div class="nav-item" onclick="showSection('schedule', this)">Schedule</div>
+    <div class="nav-item" onclick="showSection('savedSchedule', this)">Saved Schedule</div>
+</div>
+
+<div class="main">
+
+    <div class="topbar">
+        <input placeholder="Search patient">
+        <div class="profile">Doctor</div>
+    </div>
+
+    <div class="content">
+
+        <!-- ================= PATIENTS ================= -->
+        <div id="patients" class="section active">
+            <div class="panel">
+                <h3>Today's Patients</h3>
+                <div id="patientList"></div>
+            </div>
+        </div>
+
+        <!-- ================= SCHEDULE ================= -->
+        <div id="schedule" class="section">
+            <div class="form-card">
+
+                <h2>Doctor Schedule</h2>
+
+                <p style="margin-bottom:14px;font-size:14px;color:#555;">
+                    Available Days
+                </p>
+
+                <div class="days-grid">
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Monday"> Monday</label>
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Tuesday"> Tuesday</label>
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Wednesday"> Wednesday</label>
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Thursday"> Thursday</label>
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Friday"> Friday</label>
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Saturday"> Saturday</label>
+                    <label class="day-box"><input type="checkbox" class="dayCheck" value="Sunday"> Sunday</label>
+                </div>
+
+                <div class="form-row">
+                    <label>Start Time</label>
+                    <input type="time" id="startTime">
+                </div>
+
+                <div class="form-row">
+                    <label>End Time</label>
+                    <input type="time" id="endTime">
+                </div>
+
+                <div class="form-row">
+                    <label>Maximum Tokens</label>
+                    <input type="number" id="maxTokens" placeholder="25">
+                </div>
+
+                <div class="form-row">
+                    <label>Consultation Fee (₹)</label>
+                    <input type="number" id="consultationFee">
+                </div>
+
+                <div class="form-row">
+                    <label>Languages</label>
+                    <input type="text" id="languages" placeholder="English, Tamil">
+                </div>
+
+                <div class="form-row">
+                    <label>Doctor Bio</label>
+                    <textarea id="bio"></textarea>
+                </div>
+
+                <div class="btn-row">
+                    <button class="primary-btn" onclick="saveSchedule()">
+                        Save Schedule
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= STOCK ================= -->
+
+        <!-- ================= CONSULTATION ================= -->
+        <div id="consultation" class="section">
+            <div class="panel">
+                <h3>Consultation</h3>
+                <div id="consultationDetails"></div>
+            </div>
+        </div>
+
+        <!-- ================= PRESCRIPTION ================= -->
+        <div id="prescription" class="section">
+            <div class="form-card">
+
+                <h2>Write Prescription</h2>
+
+                <div class="form-row">
+                    <label>Medicine</label>
+                    <input id="medName" placeholder="Medicine name">
+                </div>
+
+                <div class="form-row">
+                    <label>Dosage</label>
+                    <input id="dose" placeholder="Dosage">
+                </div>
+
+                <div class="btn-row">
+                    <button class="primary-btn" onclick="createPrescription()">
+                        Send
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= SAVED SCHEDULE ================= -->
+        <div id="savedSchedule" class="section">
+            <div class="info-box">
+                <h2>Saved Schedule</h2>
+                <div id="savedScheduleCard">Loading...</div>
+            </div>
+        </div>
+
+        <!-- ================= LAB REPORTS ================= -->
+        <div id="labReports" class="section">
+            <div class="panel">
+                <h3 style="color:#0d47a1;margin-bottom:20px;">⏳ Waiting for Lab Reports</h3>
+                <div id="waitingLab" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div>
+
+                <hr style="margin:30px 0;border:none;border-top:2px solid #e3eaf5;">
+
+                <h3 style="color:#1b5e20;margin-bottom:20px;">✅ Lab Reports Ready</h3>
+                <div id="completedLab"></div>
+
+                <!-- EXPANDED DETAIL PANEL -->
+                <div id="labDetailPanel" style="display:none;margin-top:20px;background:#f8fbff;border-radius:12px;padding:24px;border:1px solid #d0e4ff;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 id="labDetailName" style="color:#0d47a1;"></h3>
+                        <button onclick="closeLabDetail()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+                    </div>
+                    <p id="labDetailTests" style="margin-bottom:16px;color:#555;"></p>
+                    <a id="labDetailPdf" href="#" target="_blank"
+                       style="display:inline-block;padding:10px 20px;background:#0d47a1;color:white;border-radius:8px;text-decoration:none;margin-bottom:20px;">
+                        📄 View / Download Report
+                    </a>
+
+                    <hr style="margin:16px 0;">
+                    <h4 style="color:#0d47a1;margin-bottom:12px;">💊 Prescription (optional)</h4>
+                    <button onclick="openPrescription()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">📋 Open Prescription Window</button>
+
+                    <div style="margin-top:20px;">
+                        <button onclick="confirmLabReport()" style="padding:10px 24px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">✅ Confirm & Complete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+// =====================================================
+// GLOBAL VARIABLES
+// =====================================================
+
+const doctorId = new URLSearchParams(window.location.search).get("id");
+
+let currentAppointmentId = null;
+let currentPatientId = null;
+
+// =====================================================
+// SECTION NAVIGATION
+// =====================================================
+
+function showSection(id, element = null) {
+
+    document.querySelectorAll(".section").forEach(section => {
+        section.classList.remove("active");
+    });
+
+    document.querySelectorAll(".nav-item").forEach(item => {
+        item.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+
+    if (element) {
+        element.classList.add("active");
+    }
+
+}
+
+// =====================================================
+// SAVE DOCTOR SCHEDULE
+// =====================================================
+
+async function saveSchedule() {
+
+    try {
+
+        const availableDays = [...document.querySelectorAll(".dayCheck:checked")]
+            .map(day => day.value)
+            .join(",");
+
+        const payload = {
+
+            doctorId,
+
+            availableDays,
+
+            startTime: document.getElementById("startTime").value,
+
+            endTime: document.getElementById("endTime").value,
+
+            maxTokens: document.getElementById("maxTokens").value,
+
+            consultationFee: document.getElementById("consultationFee").value,
+
+            languages: document.getElementById("languages").value,
+
+            bio: document.getElementById("bio").value
+
+        };
+
+        const res = await fetch("/doctor/save-schedule", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(payload)
+
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+
+            alert("Schedule saved successfully.");
+
+            loadSchedule();
+
+            showSection(
+                "savedSchedule",
+                document.querySelectorAll(".nav-item")[2]
+            );
+
+        } else {
+
+            alert(result.message || "Unable to save schedule.");
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Something went wrong.");
+
+    }
+
+}
+
+// =====================================================
+// LOAD SAVED SCHEDULE
+// =====================================================
+
+async function loadSchedule() {
+
+    try {
+
+        const res = await fetch(`/doctor/schedule/${doctorId}`);
+
+        const data = await res.json();
+
+        const card = document.getElementById("savedScheduleCard");
+
+        if (!data || Object.keys(data).length === 0) {
+
+            card.innerHTML = `
+                <p>No schedule has been created.</p>
+            `;
+
+            return;
+
+        }
+
+        card.innerHTML = `
+
+            <div class="info-row">
+
+                <b>Available Days :</b>
+
+                ${data.available_days || "-"}
+
+            </div>
+
+            <div class="info-row">
+
+                <b>Time :</b>
+
+                ${data.start_time || "-"} - ${data.end_time || "-"}
+
+            </div>
+
+            <div class="info-row">
+
+                <b>Maximum Tokens :</b>
+
+                ${data.max_tokens || "-"}
+
+            </div>
+
+            <div class="info-row">
+
+                <b>Consultation Fee :</b>
+
+                ₹${data.consultation_fee || "-"}
+
+            </div>
+
+            <div class="info-row">
+
+                <b>Languages :</b>
+
+                ${data.languages || "-"}
+
+            </div>
+
+            <div class="info-row">
+
+                <b>Bio :</b>
+
+                ${data.bio || "-"}
+
+            </div>
+
+            <div class="btn-row">
+
+                <button
+                    class="primary-btn"
+                    onclick="editSchedule()">
+
+                    Edit Schedule
+
+                </button>
+
+            </div>
+
+        `;
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+// =====================================================
+// EDIT SCHEDULE
+// =====================================================
+
+async function editSchedule() {
+
+    try {
+
+        const res = await fetch(`/doctor/schedule/${doctorId}`);
+
+        const data = await res.json();
+
+        if (!data) {
+
+            alert("Schedule not found.");
+
+            return;
+
+        }
+
+        showSection(
+            "schedule",
+            document.querySelectorAll(".nav-item")[1]
+        );
+
+        document.getElementById("startTime").value =
+            data.start_time || "";
+
+        document.getElementById("endTime").value =
+            data.end_time || "";
+
+        document.getElementById("maxTokens").value =
+            data.max_tokens || "";
+
+        document.getElementById("consultationFee").value =
+            data.consultation_fee || "";
+
+        document.getElementById("languages").value =
+            data.languages || "";
+
+        document.getElementById("bio").value =
+            data.bio || "";
+
+        document.querySelectorAll(".dayCheck").forEach(box => {
+
+            box.checked = false;
+
+        });
+
+        if (data.available_days) {
+
+            const days = data.available_days
+                .split(",")
+                .map(day => day.trim());
+
+            document.querySelectorAll(".dayCheck").forEach(box => {
+
+                if (days.includes(box.value)) {
+
+                    box.checked = true;
+
+                }
+
+            });
+
+        }
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+// =====================================================
+// LOAD TODAY'S APPOINTMENTS
+// =====================================================
+
+async function loadAppointments() {
+
+    try {
+
+        const res = await fetch(`/doctor/appointments/${doctorId}`);
+        const appointments = await res.json();
+
+        const patientList = document.getElementById("patientList");
+
+        patientList.innerHTML = "";
+
+        if (!appointments || appointments.length === 0) {
+
+            patientList.innerHTML = `
+                <p>No patients scheduled for today.</p>
+            `;
+
+            return;
+
+        }
+
+        appointments.forEach(appointment => {
+
+            let statusBadge = "";
+
+            let actionButtons = "";
+
+            // ----------------------------------------
+            // LAB REPORT READY
+            // ----------------------------------------
+
+            if (appointment.status === "LAB_READY") {
+
+                statusBadge = `
+
+                    <div
+                        style="
+                            display:inline-block;
+                            background:#2e7d32;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:20px;
+                            font-size:13px;
+                            margin-bottom:12px;
+                        ">
+
+                        🧪 Lab Report Ready
+
+                    </div>
+
+                `;
+
+                actionButtons = `
+
+                    <button
+                        class="primary-btn"
+                        onclick="reviewLabReport(${appointment.id})">
+
+                        Review Lab Report
+
+                    </button>
+
+                `;
+
+            }
+
+            // ----------------------------------------
+            // NORMAL CONSULTATION
+            // ----------------------------------------
+
+            else {
+
+                statusBadge = `
+
+                    <div
+                        style="
+                            display:inline-block;
+                            background:#1565c0;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:20px;
+                            font-size:13px;
+                            margin-bottom:12px;
+                        ">
+
+                        👨‍⚕ Consultation Pending
+
+                    </div>
+
+                `;
+
+                actionButtons = `
+
+                    <button
+                        class="primary-btn"
+                        onclick="startConsultation(${appointment.id})">
+
+                        Start Consultation
+
+                    </button>
+
+                `;
+
+            }
+
+            patientList.innerHTML += `
+
+                <div class="d-card">
+
+                    ${statusBadge}
+
+                    <h3>${appointment.patient_name}</h3>
+
+                    <hr style="border:none;border-top:1px solid #eee;margin:8px 0;">
+
+                    <p><b>Token :</b> ${appointment.token_no ?? "-"}</p>
+
+                    <p><b>Date :</b> ${appointment.appointment_date ?? "-"}</p>
+
+                    <p><b>Time :</b> ${appointment.appointment_time ?? "-"}</p>
+
+                    <p><b>Age :</b> ${appointment.age ?? "-"}</p>
+
+                    <p><b>Gender :</b> ${appointment.gender ?? "-"}</p>
+
+                    <p><b>Blood Group :</b> ${appointment.blood_group ?? "-"}</p>
+
+                    <p><b>Symptoms :</b> ${appointment.symptoms ?? "-"}</p>
+
+                    <p><b>Status :</b> ${appointment.status}</p>
+
+                    <div
+                        style="
+                            margin-top:15px;
+                            display:flex;
+                            flex-direction:column;
+                            gap:10px;
+                        ">
+
+                        ${actionButtons}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+        alert("Unable to load today's appointments.");
+
+    }
+
+}
+// =====================================================
+// START CONSULTATION
+// =====================================================
+
+async function startConsultation(appointmentId) {
+
+    try {
+
+        currentAppointmentId = appointmentId;
+
+        // Update appointment status
+        await fetch(`/appointment/start/${appointmentId}`, {
+            method: "POST"
+        });
+
+        // Load patient details
+        const res = await fetch(`/appointment/details/${appointmentId}`);
+        const data = await res.json();
+
+        currentPatientId = data.patient_id;
+
+        document.getElementById("consultationDetails").innerHTML = `
+
+            <div class="d-card">
+
+                <h2>${data.patient_name}</h2>
+
+                <hr style="margin:15px 0;">
+
+                <p><b>Age :</b> ${data.age}</p>
+
+                <p><b>Gender :</b> ${data.gender}</p>
+
+                <p><b>Blood Group :</b> ${data.blood_group}</p>
+
+                <p><b>Symptoms :</b> ${data.symptoms}</p>
+
+                <div
+                    style="
+                        margin-top:25px;
+                        display:flex;
+                        flex-direction:column;
+                        gap:12px;
+                    ">
+
+                    <button
+                        class="primary-btn"
+                        onclick="openPrescription()">
+
+                        💊 Prescribe Medicine
+
+                    </button>
+
+                    <button
+                        class="primary-btn"
+                        onclick="requestLabTest()">
+
+                        🧪 Request Lab Test
+
+                    </button>
+
+                    <button
+                        class="primary-btn"
+                        style="background:green;"
+                        onclick="completeAppointment(currentAppointmentId)">
+
+                        ✅ Complete Consultation
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+        showSection("consultation");
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+// =====================================================
+// REVIEW LAB REPORT
+// =====================================================
+
+async function reviewLabReport(appointmentId){
+
+    try{
+
+        currentAppointmentId = appointmentId;
+
+        const res = await fetch(`/appointment/details/${appointmentId}`);
+
+        const data = await res.json();
+
+        currentPatientId = data.patient_id;
+
+        document.getElementById("consultationDetails").innerHTML = `
+
+        <div class="d-card">
+
+            <h2>${data.patient_name}</h2>
+
+            <hr style="margin:15px 0;">
+
+            <p><b>Age :</b> ${data.age}</p>
+
+            <p><b>Gender :</b> ${data.gender}</p>
+
+            <p><b>Blood Group :</b> ${data.blood_group}</p>
+
+            <p><b>Symptoms :</b> ${data.symptoms}</p>
+
+            <div
+                style="
+                    margin-top:25px;
+                    display:flex;
+                    flex-direction:column;
+                    gap:12px;
+                ">
+
+                <a
+                    href="/uploads/${data.report_file}"
+                    target="_blank"
+                    class="primary-btn"
+                    style="
+                        text-align:center;
+                        text-decoration:none;
+                    ">
+
+                    📄 Download Lab Report
+
+                </a>
+
+                <button
+                    class="primary-btn"
+                    onclick="openPrescription()">
+
+                    💊 Prescribe Medicine
+
+                </button>
+
+                <button
+                    class="primary-btn"
+                    style="background:green;"
+                    onclick="confirmLabConsultation()">
+
+                    ✅ Confirm Consultation
+
+                </button>
+
+            </div>
+
+        </div>
+
+        `;
+
+        showSection("consultation");
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+// =====================================================
+// OPEN PRESCRIPTION
+// =====================================================
+
+function openPrescription(){
+
+    window.open(
+
+        `/prescription.html?appointmentId=${currentAppointmentId}&patientId=${currentPatientId}&doctorId=${doctorId}`,
+
+        "_blank",
+
+        "width=700,height=800"
+
+    );
+
+}
+
+// =====================================================
+// REQUEST LAB TEST
+// =====================================================
+
+function requestLabTest(){
+
+    window.location.href =
+
+    `/lab_selection.html?appointmentId=${currentAppointmentId}&patientId=${currentPatientId}&doctorId=${doctorId}`;
+
+}
+// =====================================================
+// COMPLETE NORMAL CONSULTATION
+// =====================================================
+
+async function completeAppointment(appointmentId){
+
+    try{
+
+        const res = await fetch(
+
+            `/appointment/complete/${appointmentId}`,
+
+            {
+                method:"POST"
+            }
+
+        );
+
+        const result = await res.json();
+
+        if(result.success){
+
+            alert("Consultation completed successfully.");
+
+            showSection(
+                "patients",
+                document.querySelectorAll(".nav-item")[0]
+            );
+
+            loadAppointments();
+
+        }
+
+        else{
+
+            alert(result.message || "Unable to complete consultation.");
+
+        }
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+// =====================================================
+// CONFIRM CONSULTATION AFTER LAB REPORT
+// =====================================================
+
+async function confirmLabConsultation(){
+
+    try{
+
+        const res = await fetch(
+
+            `/appointment/confirm-lab/${currentAppointmentId}`,
+
+            {
+                method:"POST"
+            }
+
+        );
+
+        const result = await res.json();
+
+        if(result.success){
+
+            alert("Consultation completed.");
+
+            showSection(
+                "patients",
+                document.querySelectorAll(".nav-item")[0]
+            );
+
+            loadAppointments();
+
+        }
+
+        else{
+
+            alert(result.message || "Unable to complete consultation.");
+
+        }
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+// =====================================================
+// LOAD MEDICINE STOCK
+// =====================================================
+
+async function loadStock(){
+
+    try{
+
+        const res = await fetch("/medicines");
+
+        const medicines = await res.json();
+
+        const stockList = document.getElementById("stockList");
+
+        if(!stockList){
+
+            return;
+
+        }
+
+        stockList.innerHTML = "";
+
+        medicines.forEach(medicine=>{
+
+            stockList.innerHTML += `
+
+            <div class="d-card">
+
+                <h3>${medicine.name}</h3>
+
+                <p>
+
+                    <b>Type :</b>
+
+                    ${medicine.type}
+
+                </p>
+
+                <p>
+
+                    <b>Stock :</b>
+
+                    ${medicine.stock_quantity}
+
+                </p>
+
+                <div
+                    style="
+                        margin-top:10px;
+                        background:#e5e5e5;
+                        height:8px;
+                        border-radius:5px;
+                    ">
+
+                    <div
+                        style="
+                            width:${Math.min(medicine.stock_quantity,100)}%;
+                            height:100%;
+                            background:${medicine.stock_quantity<10 ? "red":"green"};
+                            border-radius:5px;
+                        ">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            `;
+
+        });
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+// =====================================================
+// PAGE LOAD
+// =====================================================
+
+window.onload = function(){
+
+    loadAppointments();
+
+    loadSchedule();
+
+    loadStock();
+
+};
+
+// =====================================================
+// AUTO REFRESH EVERY 30 SECONDS
+// =====================================================
+
+setInterval(function(){
+
+    loadAppointments();
+
+},30000);
+</script>
+</body>
+</html>

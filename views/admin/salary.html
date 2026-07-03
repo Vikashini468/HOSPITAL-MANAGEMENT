@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Salary Management</title>
+
+<link rel="stylesheet" href="salary.css">
+
+</head>
+
+<body>
+
+<!-- ===========================================
+SIDEBAR
+=========================================== -->
+
+<div class="sidebar">
+
+    <h2>NALAM AI</h2>
+
+    <div class="menu" onclick="location.href='admin.html'">
+        🏠 Dashboard
+    </div>
+
+    <div class="menu" onclick="location.href='admin.html#profile'">
+        👤 Admin Profile
+    </div>
+
+    <div class="menu" onclick="location.href='admin.html#approval'">
+        ✅ User Approval
+    </div>
+
+    <div class="menu" onclick="location.href='admin.html#purchase'">
+        📦 Purchase Management
+    </div>
+
+    <div class="menu" onclick="location.href='admin.html#maintenance'">
+        🛠 Maintenance Management
+    </div>
+
+    <div class="menu active">
+        💰 Salary Management
+    </div>
+
+    <div class="menu" onclick="location.href='revenue.html'">
+        📈 Revenue Analytics
+    </div>
+
+</div>
+
+
+<!-- ===========================================
+MAIN
+=========================================== -->
+
+<div class="main">
+
+    <!-- TOPBAR -->
+
+    <div class="topbar">
+
+        <h2>Salary Management</h2>
+
+        <div class="profile">
+            Administrator
+        </div>
+
+    </div>
+
+
+    <!-- CONTENT -->
+
+    <div class="content">
+
+
+        <!-- ==========================
+        DASHBOARD CARDS
+        =========================== -->
+
+        <div class="card">
+
+            <h2>Payroll Overview</h2>
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <h1 id="totalEmployees">
+                        0
+                    </h1>
+
+                    <p>Total Employees</p>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <h1 id="monthlyPayroll">
+                        ₹0
+                    </h1>
+
+                    <p>Monthly Payroll</p>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <h1 id="paidEmployees">
+                        0
+                    </h1>
+
+                    <p>Salary Paid</p>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <h1 id="pendingEmployees">
+                        0
+                    </h1>
+
+                    <p>Pending Salary</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ==========================
+        EMPLOYEE LIST
+        =========================== -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h2>Employee Salary List</h2>
+
+                <input
+                    type="text"
+                    id="searchEmployee"
+                    placeholder="Search employee..."
+                    onkeyup="searchEmployee()"
+                >
+
+            </div>
+
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Name</th>
+
+                        <th>Role</th>
+
+                        <th>Basic Salary</th>
+
+                        <th>Net Salary</th>
+
+                        <th>Status</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="employeeTable">
+
+                    <!-- Loaded by JavaScript -->
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <!-- ==========================
+        EMPLOYEE DETAILS
+        =========================== -->
+
+        <div
+            id="employeeDetails"
+            class="card"
+            style="display:none;"
+        >
+
+            <h2>Employee Details</h2>
+
+            <br>
+
+            <table class="detail-table">
+
+                <tr>
+
+                    <td>Name</td>
+
+                    <td id="empName"></td>
+
+                </tr>
+
+                <tr>
+
+                    <td>Role</td>
+
+                    <td id="empRole"></td>
+
+                </tr>
+
+                <tr>
+
+                    <td>Department</td>
+
+                    <td id="empDepartment"></td>
+
+                </tr>
+
+                <tr>
+
+                    <td>Email</td>
+
+                    <td id="empEmail"></td>
+
+                </tr>
+
+                <tr>
+
+                    <td>Phone</td>
+
+                    <td id="empMobile"></td>
+
+                </tr>
+
+            </table>
+
+            <br>
+
+            <button
+                class="btn primary"
+                onclick="openSalaryForm()"
+            >
+                Edit Salary
+            </button>
+
+            <button
+                class="btn success"
+                onclick="paySalary()"
+            >
+                Pay Salary
+            </button>
+
+            <button
+                class="btn secondary"
+                onclick="viewHistory()"
+            >
+                Salary History
+            </button>
+
+        </div>
+
+
+    </div>
+<!-- ===========================================
+SALARY EDIT FORM
+=========================================== -->
+
+<div
+    id="salaryFormCard"
+    class="card"
+    style="display:none;"
+>
+
+    <h2>Update Employee Salary</h2>
+
+    <br>
+
+    <table class="detail-table">
+
+        <tr>
+            <td>Employee</td>
+            <td id="salaryEmployeeName"></td>
+        </tr>
+
+        <tr>
+            <td>Role</td>
+            <td id="salaryEmployeeRole"></td>
+        </tr>
+
+    </table>
+
+    <br>
+
+    <div class="form-grid">
+
+        <div class="form-group">
+            <label>Basic Salary</label>
+            <input
+                type="number"
+                id="basicSalary"
+                oninput="calculateSalary()"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>HRA</label>
+            <input
+                type="number"
+                id="hra"
+                value="0"
+                oninput="calculateSalary()"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Allowance</label>
+            <input
+                type="number"
+                id="allowance"
+                value="0"
+                oninput="calculateSalary()"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Bonus</label>
+            <input
+                type="number"
+                id="bonus"
+                value="0"
+                oninput="calculateSalary()"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Deduction</label>
+            <input
+                type="number"
+                id="deduction"
+                value="0"
+                oninput="calculateSalary()"
+            >
+        </div>
+
+        <div class="form-group">
+
+            <label>Net Salary</label>
+
+            <input
+                type="number"
+                id="netSalary"
+                readonly
+            >
+
+        </div>
+
+    </div>
+
+    <br>
+
+    <button
+        class="btn success"
+        onclick="saveSalary()"
+    >
+        💾 Save Salary
+    </button>
+
+    <button
+        class="btn secondary"
+        onclick="cancelSalaryEdit()"
+    >
+        Cancel
+    </button>
+
+</div>
+
+
+
+<!-- ===========================================
+SALARY PAYMENT
+=========================================== -->
+
+<div
+    id="paymentCard"
+    class="card"
+    style="display:none;"
+>
+
+    <h2>Salary Payment</h2>
+
+    <br>
+
+    <table class="detail-table">
+
+        <tr>
+            <td>Employee</td>
+            <td id="paymentEmployee"></td>
+        </tr>
+
+        <tr>
+            <td>Role</td>
+            <td id="paymentRole"></td>
+        </tr>
+
+        <tr>
+            <td>Net Salary</td>
+            <td id="paymentSalary"></td>
+        </tr>
+
+    </table>
+
+    <br>
+
+    <div class="form-grid">
+
+        <div class="form-group">
+
+            <label>Month</label>
+
+            <select id="salaryMonth">
+
+                <option>January</option>
+                <option>February</option>
+                <option>March</option>
+                <option>April</option>
+                <option>May</option>
+                <option>June</option>
+                <option>July</option>
+                <option>August</option>
+                <option>September</option>
+                <option>October</option>
+                <option>November</option>
+                <option>December</option>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Year</label>
+
+            <input
+                type="number"
+                id="salaryYear"
+                value="2026"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Payment Status</label>
+
+            <select id="paymentStatus">
+
+                <option value="Paid">
+                    Paid
+                </option>
+
+                <option value="Pending">
+                    Pending
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+    <br>
+
+    <button
+        class="btn success"
+        onclick="confirmSalaryPayment()"
+    >
+        💰 Confirm Payment
+    </button>
+
+    <button
+        class="btn secondary"
+        onclick="cancelPayment()"
+    >
+        Cancel
+    </button>
+
+</div>
+
+
+
+<!-- ===========================================
+SALARY HISTORY
+=========================================== -->
+
+<div
+    id="historyCard"
+    class="card"
+    style="display:none;"
+>
+
+    <div class="card-header">
+
+        <h2>Salary Payment History</h2>
+
+        <button
+            class="btn primary"
+            onclick="downloadSalaryHistory()"
+        >
+            Download Report
+        </button>
+
+    </div>
+
+    <br>
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>Month</th>
+
+                <th>Year</th>
+
+                <th>Salary</th>
+
+                <th>Payment Date</th>
+
+                <th>Status</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="salaryHistoryTable">
+
+            <!-- Loaded from salary.js -->
+
+        </tbody>
+
+    </table>
+
+</div>
+</div>
+
+
+<script src="salary.js"></script>
+
+</body>
+
+</html>

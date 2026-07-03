@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>OTP Verification</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI';
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#f4f8fd;
+}
+
+.card{
+
+width:450px;
+
+background:white;
+
+padding:40px;
+
+border-radius:15px;
+
+box-shadow:0 0 20px rgba(0,0,0,0.1);
+
+}
+
+h2{
+
+text-align:center;
+
+margin-bottom:25px;
+
+color:#1a6fc4;
+
+}
+
+input{
+
+width:100%;
+
+padding:12px;
+
+margin:10px 0;
+
+border:1px solid #ccc;
+
+border-radius:8px;
+
+}
+
+button{
+
+width:100%;
+
+padding:12px;
+
+background:#1a6fc4;
+
+color:white;
+
+border:none;
+
+border-radius:8px;
+
+cursor:pointer;
+
+font-size:16px;
+
+}
+
+button:hover{
+
+background:#14589d;
+
+}
+
+p{
+
+text-align:center;
+
+margin-bottom:15px;
+
+color:#666;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>OTP Verification</h2>
+
+<p>
+Enter the OTP sent to your mobile number
+</p>
+
+<input
+type="text"
+id="email"
+readonly>
+
+<input
+type="text"
+id="otp"
+placeholder="Enter OTP">
+
+<button onclick="verifyOTP()">
+Verify OTP
+</button>
+
+</div>
+
+<script>
+
+const params =
+new URLSearchParams(
+window.location.search
+);
+document.getElementById("email").value = params.get("email");
+
+async function verifyOTP() {
+    const email = document.getElementById("email").value;
+    const otp = document.getElementById("otp").value;
+
+    const res = await fetch("/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+        alert("OTP Verified Successfully");
+        window.location.href = "/login.html";
+    } else {
+        alert(data.message || "Invalid OTP");
+    }
+}
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lab Dashboard</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial;
+    }
+
+    body {
+      display: flex;
+      background: #f4f7fb;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      background: #0d47a1;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      margin-bottom: 20px;
+    }
+
+    .nav-item {
+      padding: 10px;
+      margin: 8px 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .topbar {
+      background: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .profile {
+      color: #0d47a1;
+      font-weight: bold;
+    }
+
+    /* CARDS */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      color: #0d47a1;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      margin-top: 10px;
+      padding: 8px;
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #1565c0;
+      color: white;
+    }
+
+    .btn:hover {
+      background: #0d47a1;
+    }
+
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 25px;
+      width: 500px;
+      border-radius: 12px;
+    }
+
+    .close {
+      float: right;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .upload {
+      margin-top: 15px;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>Lab Panel</h2>
+  <div class="nav-item">Test Requests</div>
+  <div class="nav-item">Completed Reports</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="topbar">
+    <input placeholder="Search patient">
+    <div class="profile">Lab Technician</div>
+  </div>
+
+  <h2 style="margin-bottom:15px;">Pending Lab Requests</h2>
+
+  <div id="labGrid" class="grid"></div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+
+    <span class="close" onclick="closeModal()">&times;</span>
+
+    <h3 id="mPatient">Patient</h3>
+    <p id="mDoctor"></p>
+    <p id="mTests"></p>
+
+    <hr style="margin:15px 0;">
+
+    <h4>Upload Report (PDF)</h4>
+
+    <input type="file" id="reportFile">
+
+    <button class="btn" onclick="uploadReport()">Upload</button>
+
+  </div>
+</div>
+
+<script>
+  let currentRequestId = null;
+
+/* ===========================
+   LOAD PENDING LAB REQUESTS
+=========================== */
+
+async function loadLabRequests() {
+
+    try {
+
+        const response = await fetch("/lab/requests");
+        const requests = await response.json();
+
+        const grid = document.getElementById("labGrid");
+        grid.innerHTML = "";
+
+        if (!Array.isArray(requests) || requests.length === 0) {
+
+            grid.innerHTML = `
+                <div class="card">
+                    <h3>No Pending Lab Requests</h3>
+                </div>
+            `;
+            return;
+        }
+
+        requests.forEach(item => {
+
+            let tests = [];
+
+            if (Array.isArray(item.tests)) {
+
+                tests = item.tests;
+
+            } else {
+
+                try {
+                    tests = JSON.parse(item.tests);
+                } catch {
+                    tests = [];
+                }
+
+            }
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+                <h3>${item.patient_name || "Unknown Patient"}</h3>
+
+                <p>
+                    <b>Doctor :</b>
+                    ${item.doctor_name || "-"}
+                </p>
+
+                <p>
+                    <b>Status :</b>
+                    ${item.status}
+                </p>
+
+                <p>
+                    <b>Tests :</b><br>
+                    ${tests.join("<br>")}
+                </p>
+
+                <button class="btn">
+                    View
+                </button>
+            `;
+
+            card.querySelector("button").addEventListener("click", () => {
+
+                openRequest(
+                    item.id,
+                    item.patient_name || "Unknown Patient",
+                    item.doctor_name || "-",
+                    tests
+                );
+
+            });
+
+            grid.appendChild(card);
+
+        });
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+        document.getElementById("labGrid").innerHTML =
+            "<p>Unable to load requests.</p>";
+
+    }
+
+}
+
+/* ===========================
+   OPEN MODAL
+=========================== */
+
+function openRequest(id, patient, doctor, tests) {
+
+    currentRequestId = id;
+
+    document.getElementById("mPatient").innerText =
+        "Patient : " + patient;
+
+    document.getElementById("mDoctor").innerText =
+        "Doctor : " + doctor;
+
+    document.getElementById("mTests").innerHTML =
+        "<b>Requested Tests</b><br><br>" +
+        tests.map(test => "✔ " + test).join("<br>");
+
+    document.getElementById("modal").style.display = "flex";
+
+}
+
+/* ===========================
+   CLOSE MODAL
+=========================== */
+
+function closeModal() {
+
+    document.getElementById("modal").style.display = "none";
+
+    currentRequestId = null;
+
+    document.getElementById("reportFile").value = "";
+
+}
+
+/* ===========================
+   UPLOAD PDF REPORT
+=========================== */
+
+async function uploadReport() {
+
+    const file = document.getElementById("reportFile").files[0];
+
+    if (!file) {
+
+        alert("Please select a PDF report.");
+
+        return;
+
+    }
+
+    const formData = new FormData();
+
+    formData.append("report", file);
+
+    try {
+
+        const response = await fetch(
+            `/lab/upload/${currentRequestId}`,
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const result = await response.json();
+
+        if (result.success) {
+
+            alert("Report uploaded successfully.");
+
+            closeModal();
+
+            loadLabRequests();
+
+        }
+
+        else {
+
+            alert(result.message);
+
+        }
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+        alert("Upload failed.");
+
+    }
+
+}
+
+/* ===========================
+   INITIAL LOAD
+=========================== */
+
+window.addEventListener("load", () => {
+
+    loadLabRequests();
+
+});
+</script>
+
+</body>
+</html>

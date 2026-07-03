@@ -1,0 +1,36 @@
+test_id,test_name,category,department
+T001,Complete Blood Count (CBC),Blood,Haematology
+T002,ESR Test,Blood,Haematology
+T003,Blood Group Test,Blood,Haematology
+T004,Hemoglobin Test,Blood,Haematology
+T005,Platelet Count,Blood,Haematology
+T006,Fasting Blood Sugar,Blood,Biochemistry
+T007,Lipid Profile,Blood,Biochemistry
+T008,Liver Function Test (LFT),Blood,Biochemistry
+T009,Kidney Function Test (KFT),Blood,Biochemistry
+T010,Creatinine Test,Blood,Biochemistry
+T011,Thyroid Profile,Blood,Endocrinology
+T012,TSH Test,Blood,Endocrinology
+T013,T3 Test,Blood,Endocrinology
+T014,T4 Test,Blood,Endocrinology
+T015,Urine Routine Test,Urine,Pathology
+T016,Urine Culture,Urine,Microbiology
+T017,Stool Examination,Stool,Pathology
+T018,Dengue Test,Blood,Infectious Disease
+T019,Malaria Test,Blood,Infectious Disease
+T020,COVID Test,Swab,Infectious Disease
+T021,X-Ray Chest,Scan,Radiology
+T022,X-Ray Bone,Scan,Radiology
+T023,Ultrasound Abdomen,Scan,Radiology
+T024,CT Brain,Scan,Radiology
+T025,CT Chest,Scan,Radiology
+T026,MRI Brain,Scan,Radiology
+T027,MRI Spine,Scan,Radiology
+T028,ECG,Procedure,Cardiology
+T029,Echocardiogram,Procedure,Cardiology
+T030,Treadmill Test,Procedure,Cardiology
+T031,Spirometry,Procedure,Pulmonology
+T032,Mammography,Scan,Radiology
+T033,Bone Density Scan (DEXA),Scan,Radiology
+T034,Endoscopy,Procedure,Gastroenterology
+T035,Colonoscopy,Procedure,Gastroenterology

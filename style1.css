@@ -1,0 +1,998 @@
+/* =========================
+   GLOBAL RESET
+========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* =========================
+   THEME COLORS
+========================= */
+:root {
+  --blue: #1a6fc4;
+  --blue-dark: #134f8f;
+  --green: #27ae60;
+  --bg: #f4f8fd;
+  --text: #1c2b3a;
+  --card-shadow: 0 4px 24px rgba(26,111,196,0.10);
+}
+
+/* =========================
+   BODY
+========================= */
+body {
+  background: var(--bg);
+  display: flex;
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, var(--blue-dark), var(--blue));
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+}
+
+/* NAV ITEMS */
+.nav-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.08);
+  transition: 0.2s;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* =========================
+   MAIN AREA
+========================= */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 260px;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: white;
+  border-bottom: 1px solid rgba(26,111,196,0.15);
+}
+
+.topbar input {
+  width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* =========================
+   CARDS
+========================= */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+.panel {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  height: 450px;
+  overflow-y: auto;
+}
+
+/* =========================
+   PATIENT LIST
+========================= */
+.patient {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.patient:hover {
+  background: #f0f6ff;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.primary-btn {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.primary-btn:hover {
+  background: var(--blue-dark);
+}
+
+.small-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* =========================
+   SECTIONS
+========================= */
+.section {
+  display: none;
+  padding: 20px;
+}
+
+.section.active {
+  display: block;
+}
+/* =====================================================
+   DOCTOR SCHEDULE
+===================================================== */
+
+.settings-card{
+    background:#ffffff;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+.section-title{
+    color:#1a6fc4;
+    font-size:28px;
+    font-weight:700;
+    margin-bottom:25px;
+}
+
+/* Available Days */
+
+.days-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(220px,1fr));
+    gap:20px;
+    margin-bottom:30px;
+}
+
+.day-box{
+    display:flex;
+    align-items:center;
+
+    background:#eef4ff;
+
+    border:1px solid #d8e6ff;
+
+    border-radius:14px;
+
+    padding:18px;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.day-box:hover{
+    background:#e3efff;
+    border-color:#1a6fc4;
+}
+
+.day-box input{
+    width:20px;
+    height:20px;
+    margin-right:12px;
+}
+
+.day-box span{
+    font-size:18px;
+    font-weight:500;
+}
+
+/* Selected */
+
+.day-box.active{
+    background:#1a6fc4;
+    color:white;
+    border-color:#1a6fc4;
+}
+
+/* Inputs */
+
+.input-group{
+    margin-bottom:22px;
+}
+
+.input-group label{
+    display:block;
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:8px;
+}
+
+.input-group input,
+.input-group textarea{
+
+    width:100%;
+
+    padding:15px;
+
+    border:1px solid #d8e6ff;
+
+    border-radius:12px;
+
+    font-size:16px;
+
+    outline:none;
+
+    background:white;
+}
+
+.input-group textarea{
+    height:120px;
+    resize:vertical;
+}
+
+.input-group input:focus,
+.input-group textarea:focus{
+    border-color:#1a6fc4;
+}
+
+/* Buttons */
+
+.button-row{
+    display:flex;
+    gap:15px;
+    margin-top:25px;
+}
+
+.secondary-btn{
+    background:#27ae60;
+    color:white;
+    border:none;
+    padding:12px 22px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.secondary-btn:hover{
+    background:#1d8d4e;
+}
+#doctorList{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+
+    gap:25px;
+
+    margin-top:20px;
+
+}
+.doctor-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+}
+
+.doctor-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+
+}
+.doctor-photo{
+
+    width:110px;
+
+    height:110px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    margin-bottom:15px;
+
+}
+.doctor-details-card{
+
+    background:white;
+
+    margin-top:35px;
+
+    padding:30px;
+
+    border-radius:20px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+}
+.symptom-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:12px;
+
+    margin:20px 0;
+
+}
+#doctors select{
+
+    width:100%;
+
+    padding:12px;
+
+    border-radius:10px;
+
+    border:1px solid #ccc;
+
+    margin-top:8px;
+
+}
+#doctors input[type="date"]{
+
+    width:100%;
+
+    padding:12px;
+
+    border-radius:10px;
+
+    border:1px solid #ccc;
+
+}
+
+/*====================================================
+                PATIENT DASHBOARD UI
+====================================================*/
+
+/* Main */
+.main{
+    background:#f5f8fc;
+}
+
+/* Welcome Card */
+
+.welcome-card,
+.card{
+    background:linear-gradient(135deg,#1a73e8,#4f9cf9);
+    color:white;
+    border-radius:22px;
+    padding:35px;
+    box-shadow:0 15px 35px rgba(26,111,196,.18);
+}
+
+#welcomeText{
+    font-size:34px;
+    font-weight:700;
+}
+
+.card p{
+    font-size:18px;
+    margin-top:10px;
+}
+
+/*====================================================
+                PROFILE
+====================================================*/
+
+#profileSection{
+
+    background:white;
+
+    margin-top:25px;
+
+    border-radius:20px;
+
+    padding:35px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+}
+
+#profileSection h2{
+
+    color:#1565c0;
+
+    margin-bottom:25px;
+
+    font-size:30px;
+
+}
+
+#p_photo{
+
+    width:160px;
+
+    height:160px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    border:6px solid #eaf3ff;
+
+    display:block;
+
+    margin:0 auto 25px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+
+}
+
+#profileSection p{
+
+    background:#f8fbff;
+
+    padding:14px 18px;
+
+    border-radius:12px;
+
+    margin-bottom:14px;
+
+    font-size:17px;
+
+    border-left:5px solid #1976d2;
+
+}
+
+/*====================================================
+                DOCTOR LIST
+====================================================*/
+
+#doctors{
+
+    padding:25px;
+
+}
+
+#doctors h2{
+
+    font-size:32px;
+
+    color:#1565c0;
+
+    margin-bottom:30px;
+
+}
+
+/* Doctor Grid */
+
+#doctorList{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+
+    gap:30px;
+
+}
+
+/* Card */
+
+.doctor-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    box-shadow:0 12px 28px rgba(0,0,0,.08);
+
+    transition:.35s;
+
+    position:relative;
+
+}
+
+.doctor-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 18px 35px rgba(0,0,0,.16);
+
+}
+
+/* Top */
+
+.doctor-header{
+
+    height:90px;
+
+    background:linear-gradient(135deg,#1976d2,#4dabff);
+
+}
+
+/* Photo */
+
+.doctor-photo{
+
+    width:120px;
+
+    height:120px;
+
+    object-fit:cover;
+
+    border-radius:50%;
+
+    border:6px solid white;
+
+    margin:-60px auto 15px;
+
+    display:block;
+
+    background:white;
+
+}
+
+/* Name */
+
+.doctor-name{
+
+    text-align:center;
+
+    font-size:24px;
+
+    font-weight:700;
+
+    color:#1565c0;
+
+}
+
+/* Specialization */
+
+.specialization{
+
+    text-align:center;
+
+    color:#666;
+
+    margin-top:8px;
+
+    font-size:17px;
+
+}
+
+/* Info */
+
+.doctor-info{
+
+    padding:20px 25px;
+
+}
+
+.info-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    padding:10px 0;
+
+    border-bottom:1px solid #eee;
+
+    font-size:16px;
+
+}
+
+.info-row:last-child{
+
+    border:none;
+
+}
+
+/* View Button */
+
+.view-btn{
+
+    width:100%;
+
+    margin-top:20px;
+
+    background:#1976d2;
+
+    color:white;
+
+    border:none;
+
+    padding:15px;
+
+    font-size:17px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.view-btn:hover{
+
+    background:#1257a6;
+
+}
+
+/*====================================================
+            DETAILS CARD
+====================================================*/
+
+.doctor-details-card{
+
+    margin-top:40px;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:35px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+
+}
+
+.doctor-details-card h2{
+
+    color:#1565c0;
+
+    margin-bottom:20px;
+
+}
+
+.schedule-box{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:25px;
+
+    margin-top:20px;
+
+}
+
+/*====================================================
+                LABELS
+====================================================*/
+
+.doctor-details-card label{
+
+    display:block;
+
+    font-weight:600;
+
+    margin-bottom:10px;
+
+    color:#444;
+
+    font-size:17px;
+
+}
+
+/*====================================================
+            INPUTS
+====================================================*/
+
+#doctors select,
+#doctors input[type="date"]{
+
+    width:100%;
+
+    padding:15px;
+
+    border-radius:12px;
+
+    border:1px solid #d6d6d6;
+
+    font-size:16px;
+
+    background:white;
+
+    transition:.25s;
+
+}
+
+#doctors select:focus,
+#doctors input:focus{
+
+    outline:none;
+
+    border-color:#1976d2;
+
+    box-shadow:0 0 0 3px rgba(25,118,210,.15);
+
+}
+
+/*====================================================
+            SYMPTOMS
+====================================================*/
+
+.symptom-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+
+    gap:15px;
+
+    margin:30px 0;
+
+}
+
+.symptom-grid label{
+
+    background:#eef5ff;
+
+    padding:14px;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    border:1px solid transparent;
+
+}
+
+.symptom-grid label:hover{
+
+    border-color:#1976d2;
+
+    background:#e2efff;
+
+}
+
+.symptom-grid input{
+
+    margin-right:10px;
+
+}
+
+/*====================================================
+            BOOK BUTTON
+====================================================*/
+
+.book-btn{
+
+    width:100%;
+
+    padding:18px;
+
+    background:#28a745;
+
+    color:white;
+
+    border:none;
+
+    border-radius:14px;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.book-btn:hover{
+
+    background:#218838;
+
+}
+
+/*====================================================
+            APPOINTMENT SUCCESS
+====================================================*/
+
+.success-box{
+
+    margin-top:25px;
+
+    background:#d4edda;
+
+    color:#155724;
+
+    border-left:5px solid #28a745;
+
+    padding:15px;
+
+    border-radius:10px;
+
+}
+
+/*====================================================
+            RESPONSIVE
+====================================================*/
+
+@media(max-width:900px){
+
+#doctorList{
+
+grid-template-columns:1fr;
+
+}
+
+.schedule-box{
+
+grid-template-columns:1fr;
+
+}
+
+.symptom-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+@media(max-width:600px){
+
+.sidebar{
+
+width:210px;
+
+}
+
+#welcomeText{
+
+font-size:26px;
+
+}
+
+.doctor-name{
+
+font-size:21px;
+
+}
+
+#profileSection{
+
+padding:20px;
+
+}
+
+}
+.doctor-grid{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+
+gap:25px;
+
+margin-top:20px;
+
+}
+
+.doctor-card{
+
+background:#fff;
+
+border-radius:15px;
+
+padding:20px;
+
+text-align:center;
+
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+}
+
+.doctor-photo{
+
+width:120px;
+
+height:120px;
+
+border-radius:50%;
+
+object-fit:cover;
+
+margin-bottom:15px;
+
+}
+
+.view-btn,.book-btn{
+
+background:linear-gradient(90deg,#0b73d9,#2ab66f);
+
+color:white;
+
+border:none;
+
+padding:12px 30px;
+
+border-radius:8px;
+
+cursor:pointer;
+
+font-size:16px;
+
+}
+
+.doctor-details-card{
+
+margin-top:30px;
+
+padding:25px;
+
+background:white;
+
+border-radius:15px;
+
+box-shadow:0 5px 20px rgba(0,0,0,.1);
+
+}
+
+.doctor-details-card select,
+.doctor-details-card input{
+
+width:100%;
+
+padding:10px;
+
+margin-top:5px;
+
+border:1px solid #ccc;
+
+border-radius:6px;
+
+}
+
+#symptoms{
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:8px;
+
+margin-top:10px;
+
+}

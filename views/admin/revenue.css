@@ -1,0 +1,319 @@
+/* =====================================================
+   RESET
+===================================================== */
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body {
+    background: #f0f4ff;
+    color: #333;
+}
+
+/* =====================================================
+   LAYOUT
+===================================================== */
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0d3b7a, #1565c0);
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.brand {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar nav a {
+    text-decoration: none;
+    color: rgba(255,255,255,0.85);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.sidebar nav a:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.sidebar nav a.active {
+    background: white;
+    color: #1565c0;
+    font-weight: 600;
+}
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 28px 32px;
+}
+
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.topbar h1 {
+    font-size: 26px;
+    color: #0d3b7a;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.last-updated {
+    font-size: 13px;
+    color: #888;
+}
+
+.btn-refresh {
+    background: #1565c0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-refresh:hover {
+    background: #0d47a1;
+}
+
+/* =====================================================
+   SUMMARY CARDS
+===================================================== */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    border-left: 5px solid #1565c0;
+}
+
+.card-icon {
+    font-size: 36px;
+}
+
+.card-body p {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.card-body h2 {
+    font-size: 28px;
+    color: #1565c0;
+}
+
+.card-revenue { border-left-color: #1565c0; }
+.card-expense { border-left-color: #e53935; }
+.card-expense .card-body h2 { color: #e53935; }
+
+.card-profit  { border-left-color: #2e7d32; }
+.card-profit .card-body h2  { color: #2e7d32; }
+.card-profit.loss { border-left-color: #e53935; }
+.card-profit.loss .card-body h2 { color: #e53935; }
+
+/* =====================================================
+   CHARTS
+===================================================== */
+
+.charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.chart-box {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+.chart-box h3 {
+    font-size: 15px;
+    color: #0d3b7a;
+    margin-bottom: 18px;
+}
+
+.chart-wide canvas {
+    max-height: 280px;
+}
+
+.chart-box canvas {
+    max-height: 240px;
+}
+
+.empty-msg {
+    text-align: center;
+    color: #aaa;
+    font-size: 14px;
+    padding: 60px 0;
+}
+
+/* =====================================================
+   TABLES
+===================================================== */
+
+.tables-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.table-box {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    overflow-x: auto;
+}
+
+.table-box h3 {
+    font-size: 15px;
+    color: #0d3b7a;
+    margin-bottom: 16px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #1565c0;
+    color: white;
+}
+
+th {
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 13px;
+}
+
+td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+tbody tr:hover {
+    background: #f5f9ff;
+}
+
+.badge-revenue {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.badge-expense {
+    background: #fce4ec;
+    color: #c62828;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1100px) {
+    .charts-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .chart-wide {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        min-height: auto;
+    }
+    .main {
+        margin-left: 0;
+        padding: 20px;
+    }
+    .layout {
+        flex-direction: column;
+    }
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+    .chart-wide {
+        grid-column: span 1;
+    }
+    .tables-row {
+        grid-template-columns: 1fr;
+    }
+}
