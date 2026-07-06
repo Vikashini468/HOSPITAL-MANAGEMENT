@@ -63,6 +63,7 @@ router.get("/appointments", async (req, res) => {
             JOIN users u1   ON u1.id = a.patient_id
             JOIN users u2   ON u2.id = a.doctor_id
             LEFT JOIN patients p ON p.user_id = a.patient_id
+            WHERE UPPER(a.status) IN ('PENDING','WAITING','CHECKED_IN','WAITING_LAB')
             ORDER BY a.appointment_date DESC
         `);
 
@@ -181,20 +182,12 @@ router.get("/patients", async (req, res) => {
 
         const result = await pool.query(`
             SELECT
-                u.id,
-                u.name,
-                u.email,
-                u.mobile,
-                COALESCE(p.age::TEXT, '-')  AS age,
-                COALESCE(p.gender, '-')     AS gender,
-                COALESCE(p.blood_group, '-') AS blood_group,
-                COUNT(a.id)                 AS total_appointments
-            FROM users u
-            LEFT JOIN patients p    ON p.user_id = u.id
-            LEFT JOIN appointments a ON a.patient_id = u.id
-            WHERE LOWER(u.role) = 'patient'
-            GROUP BY u.id, u.name, u.email, u.mobile, p.age, p.gender, p.blood_group
-            ORDER BY u.name
+                DATE(appointment_date)      AS date,
+                COUNT(*)                    AS consulted
+            FROM appointments
+            WHERE UPPER(status) IN ('COMPLETED','REVIEWED','DISCHARGED')
+            GROUP BY DATE(appointment_date)
+            ORDER BY DATE(appointment_date) DESC
         `);
 
         res.json(result.rows);
