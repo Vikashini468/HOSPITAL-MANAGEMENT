@@ -1,0 +1,398 @@
+/* ==========================================================
+   NALAM AI
+   In-Patient Dashboard
+   dashboard.css
+========================================================== */
+
+/* ==========================================================
+   PAGE LAYOUT
+========================================================== */
+
+.dashboard-section{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+    padding:24px;
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:20px;
+}
+
+.page-header h2{
+    margin:0;
+    color:#0f172a;
+    font-size:28px;
+    font-weight:700;
+}
+
+.page-header p{
+    margin-top:6px;
+    color:#64748b;
+}
+
+.page-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+/* ==========================================================
+   DASHBOARD CARDS
+========================================================== */
+
+.dashboard-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.dashboard-card{
+    background:#fff;
+    border-radius:16px;
+    padding:22px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+    transition:.3s;
+    border:1px solid #edf2f7;
+}
+
+.dashboard-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 18px 35px rgba(0,0,0,.10);
+}
+
+.card-icon{
+    width:65px;
+    height:65px;
+    border-radius:18px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#fff;
+    font-size:24px;
+    flex-shrink:0;
+}
+
+.card-content{
+    flex:1;
+}
+
+.card-content h3{
+    margin:0;
+    font-size:30px;
+    color:#0f172a;
+    font-weight:700;
+}
+
+.card-content p{
+    margin-top:6px;
+    color:#64748b;
+    font-size:14px;
+}
+
+/* ==========================================================
+   ICON COLORS
+========================================================== */
+
+.blue{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+.green{
+    background:linear-gradient(135deg,#16a34a,#15803d);
+}
+
+.orange{
+    background:linear-gradient(135deg,#ea580c,#c2410c);
+}
+
+.purple{
+    background:linear-gradient(135deg,#9333ea,#7e22ce);
+}
+
+.red{
+    background:linear-gradient(135deg,#dc2626,#b91c1c);
+}
+
+.teal{
+    background:linear-gradient(135deg,#0891b2,#0e7490);
+}
+
+/* ==========================================================
+   GRID
+========================================================== */
+
+.dashboard-grid{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:24px;
+}
+
+@media(max-width:1200px){
+
+    .dashboard-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+/* ==========================================================
+   CARD
+========================================================== */
+
+.card{
+    background:#fff;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 8px 25px rgba(0,0,0,.05);
+    border:1px solid #edf2f7;
+}
+
+.card-header{
+    padding:18px 22px;
+    border-bottom:1px solid #e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.card-header h3{
+    margin:0;
+    font-size:18px;
+    color:#0f172a;
+}
+
+.card-body{
+    padding:20px;
+}
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+.table-responsive{
+    overflow-x:auto;
+}
+
+.data-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.data-table th{
+    background:#eff6ff;
+    color:#1e40af;
+    padding:14px;
+    text-align:left;
+    font-size:14px;
+}
+
+.data-table td{
+    padding:14px;
+    border-bottom:1px solid #edf2f7;
+    font-size:14px;
+}
+
+.data-table tbody tr:hover{
+    background:#f8fafc;
+}
+
+/* ==========================================================
+   STATUS BADGES
+========================================================== */
+
+.status{
+    padding:6px 12px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.status.admitted{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.status.icu{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.status.discharged{
+    background:#e2e8f0;
+    color:#475569;
+}
+
+/* ==========================================================
+   CRITICAL PATIENT LIST
+========================================================== */
+
+.patient-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding:20px;
+}
+
+.patient-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+}
+
+.patient-info h4{
+    margin:0;
+    font-size:15px;
+    color:#0f172a;
+}
+
+.patient-info p{
+    margin:4px 0 0;
+    color:#64748b;
+    font-size:13px;
+}
+
+/* ==========================================================
+   BED OCCUPANCY
+========================================================== */
+
+.progress-wrapper{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.progress-header{
+    display:flex;
+    justify-content:space-between;
+    font-weight:600;
+}
+
+.progress-bar{
+    width:100%;
+    height:14px;
+    background:#e2e8f0;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg,#2563eb,#38bdf8);
+    transition:.5s;
+}
+
+/* ==========================================================
+   ACTIVITY FEED
+========================================================== */
+
+.activity-feed{
+    max-height:420px;
+    overflow-y:auto;
+    padding:18px;
+}
+
+.activity-item{
+    display:flex;
+    gap:15px;
+    margin-bottom:18px;
+}
+
+.activity-icon{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    background:#dbeafe;
+    color:#2563eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+}
+
+.activity-content{
+    flex:1;
+}
+
+.activity-content h4{
+    margin:0;
+    font-size:15px;
+}
+
+.activity-content p{
+    margin:4px 0;
+    color:#64748b;
+    font-size:13px;
+}
+
+.activity-time{
+    font-size:12px;
+    color:#94a3b8;
+}
+
+/* ==========================================================
+   EMPTY STATE
+========================================================== */
+
+.empty-state{
+    padding:40px;
+    text-align:center;
+    color:#94a3b8;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:768px){
+
+    .dashboard-section{
+        padding:16px;
+    }
+
+    .page-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .dashboard-cards{
+        grid-template-columns:1fr;
+    }
+
+    .card-content h3{
+        font-size:24px;
+    }
+
+    .card-icon{
+        width:55px;
+        height:55px;
+        font-size:20px;
+    }
+
+    .card-header{
+        padding:16px;
+    }
+
+    .card-body{
+        padding:16px;
+    }
+
+}

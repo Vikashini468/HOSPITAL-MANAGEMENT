@@ -1,0 +1,98 @@
+<section class="treatment-section">
+
+    <div class="page-header">
+        <div>
+            <h2><i class="fa-solid fa-notes-medical"></i> Treatment Progress</h2>
+            <p>Record and track treatment history for admitted patients.</p>
+        </div>
+    </div>
+
+    <!-- Patient Selector -->
+    <div class="card">
+        <div class="card-header"><h3>Select Patient</h3></div>
+        <div class="card-body">
+            <div class="search-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="treatmentPatientSearch" placeholder="Search patient..." />
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Patient</th><th>Doctor</th>
+                            <th>Ward</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="treatmentPatientBody">
+                        <tr><td colspan="6" class="text-center">Loading patients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Treatment History -->
+    <div class="card" id="treatmentHistoryCard" style="display:none;">
+        <div class="card-header">
+            <h3 id="treatmentPatientTitle"><i class="fa-solid fa-notes-medical"></i> Treatment History</h3>
+            <div class="card-actions">
+                <button class="btn btn-primary btn-sm" onclick="openAddTreatmentModal()">
+                    <i class="fa-solid fa-plus"></i> Add Entry
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Date</th><th>Time</th>
+                            <th>Doctor</th><th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="treatmentHistoryBody">
+                        <tr><td colspan="5" class="text-center">No records.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Treatment Modal -->
+    <div class="modal" id="addTreatmentModal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-notes-medical"></i> Add Treatment Entry</h3>
+                <button class="modal-close" onclick="closeAddTreatmentModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="treatmentPatientId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="treatmentDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" id="treatmentTime">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description <span class="required">*</span></label>
+                    <textarea id="treatmentDescription" rows="4" placeholder="Describe the treatment..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddTreatmentModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitTreatment()">
+                    <i class="fa-solid fa-check"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+</section>

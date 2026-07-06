@@ -1,0 +1,104 @@
+<section class="discharge-section">
+
+    <div class="page-header">
+        <div>
+            <h2><i class="fa-solid fa-file-waveform"></i> Discharge Summary</h2>
+            <p>Complete discharge process and generate discharge summaries.</p>
+        </div>
+    </div>
+
+    <!-- Patient Selector -->
+    <div class="card">
+        <div class="card-header"><h3>Select Patient to Discharge</h3></div>
+        <div class="card-body">
+            <div class="search-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="dischargePatientSearch" placeholder="Search patient..." />
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Patient</th><th>Doctor</th>
+                            <th>Ward</th><th>Admission Date</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dischargePatientBody">
+                        <tr><td colspan="7" class="text-center">Loading patients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discharge Form -->
+    <div class="card" id="dischargeFormCard" style="display:none;">
+        <div class="card-header">
+            <h3 id="dischargePatientTitle"><i class="fa-solid fa-file-waveform"></i> Discharge Summary</h3>
+        </div>
+        <div class="card-body">
+            <input type="hidden" id="dischargeFormPatientId">
+            <input type="hidden" id="dischargeFormDoctorId">
+
+            <!-- Patient Info -->
+            <div class="detail-grid" id="dischargePatientInfo"></div>
+
+            <hr class="section-divider">
+
+            <div class="form-group">
+                <label>Discharge Summary <span class="required">*</span></label>
+                <textarea id="dischargeSummary" rows="4" placeholder="Clinical summary..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Instructions / Advice</label>
+                <textarea id="dischargeInstructions" rows="3" placeholder="Post-discharge instructions..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Follow-up Date</label>
+                <input type="date" id="dischargeFollowUp">
+            </div>
+
+            <hr class="section-divider">
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Total Bill (₹)</label>
+                    <input type="number" step="0.01" id="dischargeTotalBill" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Amount Paid (₹)</label>
+                    <input type="number" step="0.01" id="dischargePaidAmount" value="0">
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <button class="btn btn-danger" onclick="submitDischarge()">
+                    <i class="fa-solid fa-check"></i> Confirm Discharge
+                </button>
+                <button class="btn btn-secondary" onclick="cancelDischargeForm()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discharge Confirmation Modal -->
+    <div class="modal" id="dischargeConfirmModal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-question"></i> Confirm Discharge</h3>
+                <button class="modal-close" onclick="closeDischargeConfirmModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to discharge this patient? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDischargeConfirmModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmDischargeBtn">Discharge</button>
+            </div>
+        </div>
+    </div>
+
+</section>

@@ -1,0 +1,393 @@
+/* ==========================================================
+   NALAM AI
+   In-Patient Dashboard
+   inpatient.css
+========================================================== */
+
+/* ===============================
+   BODY
+================================= */
+
+body{
+    background:#eef3fb;
+}
+
+/* ===============================
+   PAGE TITLE
+================================= */
+
+#pageTitle{
+    color:var(--primary-dark);
+    font-size:24px;
+    font-weight:700;
+}
+
+/* ===============================
+   MAIN CONTENT
+================================= */
+
+.page-content{
+
+    display:flex;
+    flex-direction:column;
+    gap:25px;
+
+}
+
+/* ===============================
+   CONTENT LOADER
+================================= */
+
+.content-area{
+
+    position:relative;
+
+    animation:fadeIn .35s ease;
+
+}
+
+/* ===============================
+   DASHBOARD SECTION
+================================= */
+
+#dashboardCards{
+
+    animation:fadeIn .4s ease;
+
+}
+
+/* ===============================
+   RECENT ADMISSION TABLE
+================================= */
+
+.patient-summary{
+
+    background:#ffffff;
+
+    border-radius:var(--radius);
+
+    box-shadow:var(--card-shadow);
+
+    padding:25px;
+
+}
+
+.patient-summary table{
+
+    margin-top:15px;
+
+}
+
+/* ===============================
+   STATUS COLORS
+================================= */
+
+.status-admitted{
+
+    color:#15803d;
+
+    font-weight:600;
+
+}
+
+.status-discharged{
+
+    color:#dc2626;
+
+    font-weight:600;
+
+}
+
+.status-icu{
+
+    color:#b91c1c;
+
+    font-weight:700;
+
+}
+
+/* ===============================
+   LIVE ACTIVITY
+================================= */
+
+.activity-panel{
+
+    min-height:250px;
+
+}
+
+.activity-feed{
+
+    padding-right:5px;
+
+}
+
+.activity-item{
+
+    transition:.25s;
+
+}
+
+.activity-item:hover{
+
+    transform:translateX(4px);
+
+}
+
+/* ===============================
+   HEADER ACTIONS
+================================= */
+
+.header-actions{
+
+    display:flex;
+
+    gap:12px;
+
+    align-items:center;
+
+}
+
+/* ===============================
+   QUICK INFO BOX
+================================= */
+
+.info-box{
+
+    background:#ffffff;
+
+    border-radius:12px;
+
+    padding:20px;
+
+    box-shadow:var(--card-shadow);
+
+}
+
+.info-box h4{
+
+    margin-bottom:8px;
+
+    color:var(--primary);
+
+}
+
+.info-box p{
+
+    color:#6b7280;
+
+}
+
+/* ===============================
+   PATIENT PROFILE
+================================= */
+
+.patient-profile{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+.patient-avatar{
+
+    width:70px;
+
+    height:70px;
+
+    border-radius:50%;
+
+    background:var(--primary);
+
+    color:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:30px;
+
+}
+
+.patient-profile h3{
+
+    margin-bottom:5px;
+
+}
+
+.patient-profile small{
+
+    color:#6b7280;
+
+}
+
+/* ===============================
+   ROOM STATUS
+================================= */
+
+.room-box{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+
+    gap:15px;
+
+}
+
+.room-card{
+
+    background:#fff;
+
+    border-radius:12px;
+
+    padding:18px;
+
+    text-align:center;
+
+    box-shadow:var(--card-shadow);
+
+    transition:.3s;
+
+}
+
+.room-card:hover{
+
+    transform:translateY(-4px);
+
+}
+
+.room-card.available{
+
+    border-top:5px solid #16a34a;
+
+}
+
+.room-card.occupied{
+
+    border-top:5px solid #dc2626;
+
+}
+
+.room-card.maintenance{
+
+    border-top:5px solid #f59e0b;
+
+}
+
+/* ===============================
+   SEARCH + FILTER BAR
+================================= */
+
+.toolbar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:20px;
+
+    margin-bottom:20px;
+
+    flex-wrap:wrap;
+
+}
+
+.filter-group{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+}
+
+/* ===============================
+   SECTION ANIMATION
+================================= */
+
+.section-enter{
+
+    animation:fadeIn .35s ease;
+
+}
+
+/* ===============================
+   FOOTER
+================================= */
+
+.dashboard-footer{
+
+    margin-top:25px;
+
+    text-align:center;
+
+    color:#6b7280;
+
+    font-size:13px;
+
+}
+
+/* ===============================
+   MOBILE
+================================= */
+
+@media(max-width:992px){
+
+    .toolbar{
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    #pageTitle{
+
+        font-size:20px;
+
+    }
+
+    .patient-profile{
+
+        flex-direction:column;
+
+        text-align:center;
+
+    }
+
+    .room-box{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+@media(max-width:480px){
+
+    .patient-summary{
+
+        padding:15px;
+
+    }
+
+    .activity-panel{
+
+        padding:15px;
+
+    }
+
+}

@@ -1,0 +1,370 @@
+<!-- ==========================================================
+     NALAM AI
+     In-Patient Dashboard
+=========================================================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+</head>
+<body>
+    
+</body>
+</html>
+<section class="dashboard-section">
+
+    <!-- ==========================================
+         PAGE HEADER
+    =========================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>
+                <i class="fa-solid fa-hospital-user"></i>
+                In-Patient Dashboard
+            </h2>
+
+            <p>
+                Monitor admissions, beds, treatments and patient activities.
+            </p>
+
+        </div>
+
+        <div class="page-actions">
+
+            <button
+                class="btn btn-primary"
+                onclick="loadSection('admission')">
+
+                <i class="fa-solid fa-user-plus"></i>
+
+                Admit Patient
+
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                onclick="refreshDashboard()">
+
+                <i class="fa-solid fa-rotate"></i>
+
+                Refresh
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         DASHBOARD CARDS
+    =========================================== -->
+
+    <div class="dashboard-cards">
+
+        <div class="dashboard-card">
+
+            <div class="card-icon blue">
+
+                <i class="fa-solid fa-users"></i>
+
+            </div>
+
+            <div class="card-content">
+
+                <h3 id="totalPatients">0</h3>
+
+                <p>Total Patients</p>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div class="card-icon green">
+
+                <i class="fa-solid fa-bed"></i>
+
+            </div>
+
+            <div class="card-content">
+
+                <h3 id="availableBeds">0</h3>
+
+                <p>Available Beds</p>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div class="card-icon orange">
+
+                <i class="fa-solid fa-bed-pulse"></i>
+
+            </div>
+
+            <div class="card-content">
+
+                <h3 id="occupiedBeds">0</h3>
+
+                <p>Occupied Beds</p>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div class="card-icon purple">
+
+                <i class="fa-solid fa-user-plus"></i>
+
+            </div>
+
+            <div class="card-content">
+
+                <h3 id="todayAdmissions">0</h3>
+
+                <p>Today's Admissions</p>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div class="card-icon teal">
+
+                <i class="fa-solid fa-user-check"></i>
+
+            </div>
+
+            <div class="card-content">
+
+                <h3 id="todayDischarges">0</h3>
+
+                <p>Today's Discharges</p>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div class="card-icon red">
+
+                <i class="fa-solid fa-heart-pulse"></i>
+
+            </div>
+
+            <div class="card-content">
+
+                <h3 id="criticalPatients">0</h3>
+
+                <p>Critical Patients</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         CONTENT GRID
+    =========================================== -->
+
+    <div class="dashboard-grid">
+
+        <!-- ===========================
+             RECENT ADMISSIONS
+        ============================ -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-user-clock"></i>
+
+                    Recent Admissions
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+
+                    <table
+                        id="recentAdmissionsTable"
+                        class="data-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Patient</th>
+
+                                <th>Ward</th>
+
+                                <th>Room</th>
+
+                                <th>Doctor</th>
+
+                                <th>Status</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="recentAdmissionsBody">
+
+                            <tr>
+
+                                <td colspan="5" class="text-center">
+
+                                    Loading...
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===========================
+             CRITICAL PATIENTS
+        ============================ -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    ICU / Critical Patients
+
+                </h3>
+
+            </div>
+
+            <div
+                id="criticalPatientList"
+                class="patient-list">
+
+                <div class="empty-state">
+
+                    Loading...
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         SECOND GRID
+    =========================================== -->
+
+    <div class="dashboard-grid">
+
+        <!-- ===========================
+             BED STATUS
+        ============================ -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-bed"></i>
+
+                    Bed Occupancy
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="progress-wrapper">
+
+                    <div class="progress-header">
+
+                        <span>Occupied</span>
+
+                        <span id="bedPercent">0%</span>
+
+                    </div>
+
+                    <div class="progress-bar">
+
+                        <div
+                            id="bedProgress"
+                            class="progress-fill">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===========================
+             ACTIVITY FEED
+        ============================ -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+
+                    Live Activity
+
+                </h3>
+
+            </div>
+
+            <div
+                id="activityFeed"
+                class="activity-feed">
+
+                <div class="empty-state">
+
+                    No recent activity.
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+

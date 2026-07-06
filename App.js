@@ -57,6 +57,13 @@ const adminRoutes = require("./routes/adminRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const revenueRoutes = require("./routes/revenueRoutes");
 const receptionistRoutes = require("./routes/receptionistRoutes");
+const inpatientRoutes = require("./routes/inpatientRoutes")(io);
+app.use("/api/inpatient", inpatientRoutes);
+
+/* Init inpatient DB tables */
+pool.connect().then(() => {
+    inpatientRoutes.initTables(pool).catch(console.error);
+});
 app.use("/receptionist", receptionistRoutes);
 app.use("/revenue", revenueRoutes);
 app.use("/salary", salaryRoutes);

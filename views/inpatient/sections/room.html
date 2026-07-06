@@ -1,0 +1,693 @@
+<!-- ==========================================================
+     NALAM AI
+     room.html
+     PART 1
+========================================================== -->
+
+<section id="roomSection" class="room-section">
+
+    <!-- ======================================================
+         PAGE HEADER
+    ======================================================= -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>
+
+                <i class="fa-solid fa-bed"></i>
+
+                Room Allocation
+
+            </h2>
+
+            <p>
+
+                Manage wards, rooms, bed allocation and patient transfers.
+
+            </p>
+
+        </div>
+
+        <div class="page-actions">
+
+            <button
+                class="btn btn-primary"
+                id="refreshRoomsBtn">
+
+                <i class="fa-solid fa-rotate"></i>
+
+                Refresh
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         SUMMARY CARDS
+    ======================================================= -->
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+
+            <div class="summary-icon blue">
+
+                <i class="fa-solid fa-bed"></i>
+
+            </div>
+
+            <div>
+
+                <p>Total Beds</p>
+
+                <h3 id="totalBeds">
+
+                    0
+
+                </h3>
+
+            </div>
+
+        </div>
+
+        <div class="summary-card">
+
+            <div class="summary-icon green">
+
+                <i class="fa-solid fa-check"></i>
+
+            </div>
+
+            <div>
+
+                <p>Available Beds</p>
+
+                <h3 id="availableBeds">
+
+                    0
+
+                </h3>
+
+            </div>
+
+        </div>
+
+        <div class="summary-card">
+
+            <div class="summary-icon orange">
+
+                <i class="fa-solid fa-user-injured"></i>
+
+            </div>
+
+            <div>
+
+                <p>Occupied Beds</p>
+
+                <h3 id="occupiedBeds">
+
+                    0
+
+                </h3>
+
+            </div>
+
+        </div>
+
+        <div class="summary-card">
+
+            <div class="summary-icon red">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+            </div>
+
+            <div>
+
+                <p>ICU Patients</p>
+
+                <h3 id="icuBeds">
+
+                    0
+
+                </h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         FILTER BAR
+    ======================================================= -->
+
+    <div class="card">
+
+        <div class="card-header">
+
+            <h3>
+
+                Room Allocation
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="search-bar">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-search"></i>
+
+                    <input
+                        type="text"
+                        id="roomSearch"
+                        placeholder="Search patient, ward, room, doctor..." />
+
+                </div>
+
+                <select id="wardFilter">
+
+                    <option value="">
+
+                        All Wards
+
+                    </option>
+
+                    <option value="General">
+
+                        General
+
+                    </option>
+
+                    <option value="Male">
+
+                        Male Ward
+
+                    </option>
+
+                    <option value="Female">
+
+                        Female Ward
+
+                    </option>
+
+                    <option value="ICU">
+
+                        ICU
+
+                    </option>
+
+                    <option value="Emergency">
+
+                        Emergency
+
+                    </option>
+
+                </select>
+
+                <select id="bedStatusFilter">
+
+                    <option value="">
+
+                        All Status
+
+                    </option>
+
+                    <option value="Occupied">
+
+                        Occupied
+
+                    </option>
+
+                    <option value="Available">
+
+                        Available
+
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         ROOM TABLE
+    ======================================================= -->
+
+    <div class="card">
+
+        <div class="card-header">
+
+            <h3>
+
+                Patient Room Allocation
+
+            </h3>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="data-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Patient</th>
+
+                        <th>Ward</th>
+
+                        <th>Room</th>
+
+                        <th>Bed</th>
+
+                        <th>Doctor</th>
+
+                        <th>Admission Type</th>
+
+                        <th>Status</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="roomTableBody">
+
+                    <tr>
+
+                        <td colspan="9" class="text-center">
+
+                            Loading room allocation...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+        <!-- ======================================================
+         TRANSFER ROOM MODAL
+    ======================================================= -->
+
+    <div class="modal" id="transferRoomModal">
+
+        <div class="modal-content modal-md">
+
+            <div class="modal-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-bed"></i>
+
+                    Transfer Patient
+
+                </h3>
+
+                <button
+                    class="modal-close"
+                    onclick="closeTransferModal()">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <input
+                    type="hidden"
+                    id="transferPatientId">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label>
+
+                            Ward
+
+                        </label>
+
+                        <select id="transferWard">
+
+                            <option value="">Select Ward</option>
+
+                            <option value="General">General</option>
+
+                            <option value="Male">Male Ward</option>
+
+                            <option value="Female">Female Ward</option>
+
+                            <option value="ICU">ICU</option>
+
+                            <option value="Emergency">Emergency</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+
+                            Room Number
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="transferRoom"
+                            placeholder="Room Number">
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+
+                            Bed Number
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="transferBed"
+                            placeholder="Bed Number">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="closeTransferModal()">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="transferPatientRoom()">
+
+                    Save Changes
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         CHANGE ROOM MODAL
+    ======================================================= -->
+
+    <div class="modal" id="changeRoomModal">
+
+        <div class="modal-content modal-md">
+
+            <div class="modal-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-hospital"></i>
+
+                    Change Room
+
+                </h3>
+
+                <button
+                    class="modal-close"
+                    onclick="closeChangeRoomModal()">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <input
+                    type="hidden"
+                    id="changePatientId">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label>
+
+                            New Ward
+
+                        </label>
+
+                        <select id="changeWard">
+
+                            <option value="">Select Ward</option>
+
+                            <option value="General">General</option>
+
+                            <option value="Male">Male Ward</option>
+
+                            <option value="Female">Female Ward</option>
+
+                            <option value="ICU">ICU</option>
+
+                            <option value="Emergency">Emergency</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+
+                            New Room
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="changeRoomNo"
+                            placeholder="Room Number">
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+
+                            New Bed
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="changeBedNo"
+                            placeholder="Bed Number">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="closeChangeRoomModal()">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="changePatientRoom()">
+
+                    Update Room
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         RELEASE BED MODAL
+    ======================================================= -->
+
+    <div class="modal" id="releaseBedModal">
+
+        <div class="modal-content modal-sm">
+
+            <div class="modal-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-circle-question"></i>
+
+                    Release Bed
+
+                </h3>
+
+                <button
+                    class="modal-close"
+                    onclick="closeReleaseModal()">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <input
+                    type="hidden"
+                    id="releasePatientId">
+
+                <p>
+
+                    Are you sure you want to release this patient's bed?
+
+                </p>
+
+                <p class="text-muted">
+
+                    This should normally be done only after the patient has been discharged.
+
+                </p>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="closeReleaseModal()">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    class="btn btn-danger"
+                    onclick="releaseBed()">
+
+                    Release Bed
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+        <!-- ======================================================
+         LOADING OVERLAY
+    ======================================================= -->
+
+    <div
+        id="roomLoadingOverlay"
+        class="loading-overlay d-none">
+
+        <div class="loading-box">
+
+            <div class="spinner"></div>
+
+            <h3>
+
+                Processing...
+
+            </h3>
+
+            <p>
+
+                Please wait while updating room allocation.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         EMPTY STATE
+    ======================================================= -->
+
+    <div
+        id="roomEmptyState"
+        class="empty-state d-none">
+
+        <i class="fa-solid fa-bed"></i>
+
+        <h3>
+
+            No Room Allocation Found
+
+        </h3>
+
+        <p>
+
+            No admitted patients are currently available for room allocation.
+
+        </p>
+
+    </div>
+
+    <!-- ======================================================
+         HIDDEN TEMPLATE VALUES
+    ======================================================= -->
+
+    <input
+        type="hidden"
+        id="selectedPatientId">
+
+    <input
+        type="hidden"
+        id="selectedWard">
+
+    <input
+        type="hidden"
+        id="selectedRoom">
+
+    <input
+        type="hidden"
+        id="selectedBed">
+
+</section>
+

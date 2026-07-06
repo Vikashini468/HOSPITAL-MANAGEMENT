@@ -1,0 +1,111 @@
+<section class="medicine-section">
+
+    <div class="page-header">
+        <div>
+            <h2><i class="fa-solid fa-pills"></i> Medicine Schedule</h2>
+            <p>Manage medicine schedules for admitted patients.</p>
+        </div>
+    </div>
+
+    <!-- Patient Selector -->
+    <div class="card">
+        <div class="card-header"><h3>Select Patient</h3></div>
+        <div class="card-body">
+            <div class="search-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="medicinePatientSearch" placeholder="Search patient..." />
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Patient</th><th>Doctor</th>
+                            <th>Ward</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicinePatientBody">
+                        <tr><td colspan="6" class="text-center">Loading patients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medicine Schedule -->
+    <div class="card" id="medicineScheduleCard" style="display:none;">
+        <div class="card-header">
+            <h3 id="medicinePatientTitle"><i class="fa-solid fa-pills"></i> Medicine Schedule</h3>
+            <div class="card-actions">
+                <button class="btn btn-primary btn-sm" onclick="openAddMedicineModal()">
+                    <i class="fa-solid fa-plus"></i> Add Medicine
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Medicine</th><th>Morning</th>
+                            <th>Afternoon</th><th>Night</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicineScheduleBody">
+                        <tr><td colspan="7" class="text-center">No medicines added.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Medicine Modal -->
+    <div class="modal" id="addMedicineModal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pills"></i> Add Medicine</h3>
+                <button class="modal-close" onclick="closeAddMedicineModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="medicinePatientId">
+                <div class="form-group">
+                    <label>Medicine Name <span class="required">*</span></label>
+                    <input type="text" id="medicineName" placeholder="e.g. Paracetamol 500mg">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Morning</label>
+                        <select id="medicineMorning">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Afternoon</label>
+                        <select id="medicineAfternoon">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Night</label>
+                        <select id="medicineNight">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddMedicineModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitMedicine()">
+                    <i class="fa-solid fa-check"></i> Add
+                </button>
+            </div>
+        </div>
+    </div>
+
+</section>

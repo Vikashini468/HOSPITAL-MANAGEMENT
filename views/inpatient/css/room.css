@@ -1,0 +1,989 @@
+/* ==========================================================
+   NALAM AI
+   room.css
+   PART 1
+========================================================== */
+
+/* ==========================================================
+   ROOM SECTION
+========================================================== */
+
+.room-section{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+    padding:24px;
+    animation:fadeIn .3s ease-in-out;
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.page-header h2{
+    margin:0;
+    font-size:28px;
+    font-weight:700;
+    color:#1e3a8a;
+}
+
+.page-header p{
+    margin-top:6px;
+    color:#64748b;
+    font-size:14px;
+}
+
+.page-actions{
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+/* ==========================================================
+   SUMMARY GRID
+========================================================== */
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.summary-card{
+    background:#fff;
+    border-radius:14px;
+    padding:22px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    box-shadow:0 6px 18px rgba(15,23,42,.08);
+    transition:.25s ease;
+    border:1px solid #e2e8f0;
+}
+
+.summary-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 12px 25px rgba(15,23,42,.12);
+}
+
+.summary-icon{
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:22px;
+}
+
+.summary-icon.blue{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+}
+
+.summary-icon.green{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+}
+
+.summary-icon.orange{
+    background:linear-gradient(135deg,#ea580c,#f97316);
+}
+
+.summary-icon.red{
+    background:linear-gradient(135deg,#dc2626,#ef4444);
+}
+
+.summary-card p{
+    margin:0;
+    color:#64748b;
+    font-size:13px;
+}
+
+.summary-card h3{
+    margin-top:6px;
+    font-size:30px;
+    color:#0f172a;
+}
+
+/* ==========================================================
+   CARD
+========================================================== */
+
+.card{
+    background:#fff;
+    border-radius:14px;
+    border:1px solid #e2e8f0;
+    box-shadow:0 5px 14px rgba(15,23,42,.06);
+    overflow:hidden;
+}
+
+.card-header{
+    padding:18px 22px;
+    border-bottom:1px solid #e2e8f0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.card-header h3{
+    margin:0;
+    font-size:18px;
+    color:#1e293b;
+}
+
+.card-body{
+    padding:20px;
+}
+
+/* ==========================================================
+   SEARCH BAR
+========================================================== */
+
+.search-bar{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+    align-items:center;
+}
+
+.search-box{
+    flex:1;
+    min-width:260px;
+    position:relative;
+}
+
+.search-box i{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#64748b;
+}
+
+.search-box input{
+    width:100%;
+    padding:12px 16px 12px 44px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    font-size:14px;
+    transition:.2s;
+}
+
+.search-box input:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.search-bar select{
+    min-width:180px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #cbd5e1;
+    background:#fff;
+    font-size:14px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.search-bar select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+/* ==========================================================
+   FADE ANIMATION
+========================================================== */
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+/* ==========================================================
+   NALAM AI
+   room.css
+   PART 2
+========================================================== */
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+.table-responsive{
+    width:100%;
+    overflow-x:auto;
+}
+
+.data-table{
+    width:100%;
+    min-width:1100px;
+    border-collapse:collapse;
+    background:#fff;
+}
+
+.data-table thead{
+    background:#eff6ff;
+}
+
+.data-table thead th{
+    padding:16px;
+    text-align:left;
+    font-size:13px;
+    font-weight:700;
+    color:#1e3a8a;
+    border-bottom:2px solid #dbeafe;
+    white-space:nowrap;
+}
+
+.data-table tbody td{
+    padding:15px;
+    border-bottom:1px solid #e5e7eb;
+    vertical-align:middle;
+    color:#334155;
+    font-size:14px;
+}
+
+.data-table tbody tr{
+    transition:.25s;
+}
+
+.data-table tbody tr:hover{
+    background:#f8fbff;
+}
+
+/* ==========================================================
+   PATIENT CELL
+========================================================== */
+
+.patient-info{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.patient-info strong{
+    color:#0f172a;
+    font-size:14px;
+    font-weight:600;
+}
+
+.patient-info small{
+    color:#64748b;
+    font-size:12px;
+}
+
+.room-info{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.room-info strong{
+    color:#0f172a;
+}
+
+.room-info span{
+    font-size:12px;
+    color:#64748b;
+}
+
+/* ==========================================================
+   STATUS BADGES
+========================================================== */
+
+.status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.status-badge.occupied{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.status-badge.available{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.status-badge.icu{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.status-badge.general{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-badge.emergency{
+    background:#fde68a;
+    color:#92400e;
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.btn{
+    border:none;
+    border-radius:8px;
+    padding:10px 16px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+    transition:.25s;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+}
+
+.btn:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+}
+
+.btn-primary{
+    background:#2563eb;
+    color:#fff;
+}
+
+.btn-primary:hover{
+    background:#1d4ed8;
+}
+
+.btn-success{
+    background:#16a34a;
+    color:#fff;
+}
+
+.btn-success:hover{
+    background:#15803d;
+}
+
+.btn-warning{
+    background:#f59e0b;
+    color:#fff;
+}
+
+.btn-warning:hover{
+    background:#d97706;
+}
+
+.btn-danger{
+    background:#dc2626;
+    color:#fff;
+}
+
+.btn-danger:hover{
+    background:#b91c1c;
+}
+
+.btn-secondary{
+    background:#64748b;
+    color:#fff;
+}
+
+.btn-secondary:hover{
+    background:#475569;
+}
+
+.btn-sm{
+    padding:8px 12px;
+    font-size:12px;
+}
+
+/* ==========================================================
+   ACTION BUTTONS
+========================================================== */
+
+.action-buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.action-buttons .btn{
+    min-width:38px;
+    min-height:38px;
+    padding:0 12px;
+}
+
+.action-buttons .btn i{
+    font-size:14px;
+}
+
+/* ==========================================================
+   BED STATUS INDICATOR
+========================================================== */
+
+.bed-status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.bed-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+}
+
+.bed-dot.available{
+    background:#22c55e;
+}
+
+.bed-dot.occupied{
+    background:#ef4444;
+}
+
+.bed-dot.maintenance{
+    background:#f59e0b;
+}
+
+/* ==========================================================
+   TABLE EMPTY ROW
+========================================================== */
+
+.data-table tbody td.text-center{
+    text-align:center;
+    padding:30px;
+    color:#64748b;
+    font-style:italic;
+}
+/* ==========================================================
+   NALAM AI
+   room.css
+   PART 3
+========================================================== */
+
+/* ==========================================================
+   MODAL OVERLAY
+========================================================== */
+
+.modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    background:rgba(15,23,42,.55);
+    backdrop-filter:blur(3px);
+    z-index:1000;
+}
+
+.modal.show{
+    display:flex;
+    animation:fadeIn .25s ease;
+}
+
+/* ==========================================================
+   MODAL CONTENT
+========================================================== */
+
+.modal-content{
+    width:100%;
+    background:#fff;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 20px 45px rgba(15,23,42,.22);
+    animation:modalPop .25s ease;
+}
+
+.modal-sm{
+    max-width:420px;
+}
+
+.modal-md{
+    max-width:650px;
+}
+
+.modal-lg{
+    max-width:900px;
+}
+
+@keyframes modalPop{
+
+    from{
+        opacity:0;
+        transform:translateY(20px) scale(.98);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+}
+
+/* ==========================================================
+   MODAL HEADER
+========================================================== */
+
+.modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 22px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+}
+
+.modal-header h3{
+    margin:0;
+    font-size:18px;
+    font-weight:600;
+}
+
+.modal-close{
+    border:none;
+    background:transparent;
+    color:#fff;
+    font-size:20px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.modal-close:hover{
+    transform:rotate(90deg);
+}
+
+/* ==========================================================
+   MODAL BODY
+========================================================== */
+
+.modal-body{
+    padding:24px;
+}
+
+.modal-body p{
+    margin:0 0 14px;
+    color:#475569;
+    line-height:1.6;
+}
+
+/* ==========================================================
+   MODAL FOOTER
+========================================================== */
+
+.modal-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    padding:18px 22px;
+    border-top:1px solid #e2e8f0;
+    background:#f8fafc;
+}
+
+/* ==========================================================
+   FORM GRID
+========================================================== */
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group label{
+    margin-bottom:8px;
+    font-size:13px;
+    font-weight:600;
+    color:#334155;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    font-size:14px;
+    transition:.2s;
+    background:#fff;
+}
+
+.form-group textarea{
+    resize:vertical;
+    min-height:90px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+/* ==========================================================
+   LOADING OVERLAY
+========================================================== */
+
+.loading-overlay{
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:rgba(255,255,255,.75);
+    backdrop-filter:blur(2px);
+    z-index:1100;
+}
+
+.loading-overlay.d-none{
+    display:none;
+}
+
+.loading-box{
+    width:280px;
+    background:#fff;
+    border-radius:14px;
+    padding:28px;
+    text-align:center;
+    box-shadow:0 15px 35px rgba(15,23,42,.15);
+}
+
+.loading-box h3{
+    margin:16px 0 8px;
+    color:#1e293b;
+}
+
+.loading-box p{
+    margin:0;
+    color:#64748b;
+    font-size:14px;
+}
+
+/* ==========================================================
+   SPINNER
+========================================================== */
+
+.spinner{
+    width:46px;
+    height:46px;
+    margin:auto;
+    border:4px solid #dbeafe;
+    border-top:4px solid #2563eb;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+/* ==========================================================
+   VALIDATION
+========================================================== */
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error{
+    border-color:#dc2626 !important;
+    box-shadow:0 0 0 4px rgba(220,38,38,.12);
+}
+
+.error-text{
+    margin-top:6px;
+    color:#dc2626;
+    font-size:12px;
+}
+/* ==========================================================
+   NALAM AI
+   room.css
+   PART 4 (FINAL)
+========================================================== */
+
+/* ==========================================================
+   EMPTY STATE
+========================================================== */
+
+.empty-state{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:60px 20px;
+    background:#fff;
+    border:1px dashed #cbd5e1;
+    border-radius:14px;
+}
+
+.empty-state.d-none{
+    display:none;
+}
+
+.empty-state i{
+    font-size:64px;
+    color:#94a3b8;
+    margin-bottom:18px;
+}
+
+.empty-state h3{
+    margin:0 0 10px;
+    font-size:24px;
+    color:#1e293b;
+}
+
+.empty-state p{
+    margin:0;
+    max-width:500px;
+    color:#64748b;
+    line-height:1.7;
+}
+
+/* ==========================================================
+   TEXT UTILITIES
+========================================================== */
+
+.text-center{
+    text-align:center;
+}
+
+.text-left{
+    text-align:left;
+}
+
+.text-right{
+    text-align:right;
+}
+
+.text-muted{
+    color:#64748b;
+}
+
+.d-none{
+    display:none !important;
+}
+
+.w-100{
+    width:100%;
+}
+
+.mt-10{
+    margin-top:10px;
+}
+
+.mt-20{
+    margin-top:20px;
+}
+
+.mt-30{
+    margin-top:30px;
+}
+
+.mb-10{
+    margin-bottom:10px;
+}
+
+.mb-20{
+    margin-bottom:20px;
+}
+
+.mb-30{
+    margin-bottom:30px;
+}
+
+/* ==========================================================
+   RESPONSIVE (TABLET)
+========================================================== */
+
+@media (max-width:992px){
+
+    .page-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .page-actions{
+        width:100%;
+    }
+
+    .page-actions .btn{
+        width:100%;
+    }
+
+    .summary-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .modal-md,
+    .modal-lg{
+        max-width:95%;
+    }
+
+}
+
+/* ==========================================================
+   RESPONSIVE (MOBILE)
+========================================================== */
+
+@media (max-width:768px){
+
+    .room-section{
+        padding:16px;
+    }
+
+    .summary-grid{
+        grid-template-columns:1fr;
+    }
+
+    .summary-card{
+        padding:18px;
+    }
+
+    .summary-icon{
+        width:52px;
+        height:52px;
+        font-size:20px;
+    }
+
+    .summary-card h3{
+        font-size:26px;
+    }
+
+    .search-bar{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .search-box,
+    .search-bar select{
+        width:100%;
+    }
+
+    .action-buttons{
+        flex-wrap:wrap;
+    }
+
+    .action-buttons .btn{
+        flex:1;
+        min-width:42px;
+    }
+
+    .modal{
+        padding:15px;
+    }
+
+    .modal-footer{
+        flex-direction:column;
+    }
+
+    .modal-footer .btn{
+        width:100%;
+    }
+
+}
+
+/* ==========================================================
+   SMALL MOBILE
+========================================================== */
+
+@media (max-width:480px){
+
+    .page-header h2{
+        font-size:22px;
+    }
+
+    .card-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:12px;
+    }
+
+    .card-header h3{
+        font-size:16px;
+    }
+
+    .data-table{
+        min-width:900px;
+    }
+
+    .modal-header h3{
+        font-size:16px;
+    }
+
+    .empty-state i{
+        font-size:48px;
+    }
+
+    .empty-state h3{
+        font-size:20px;
+    }
+
+}
+
+/* ==========================================================
+   PRINT
+========================================================== */
+
+@media print{
+
+    .page-actions,
+    .search-bar,
+    .action-buttons,
+    .modal,
+    .loading-overlay{
+        display:none !important;
+    }
+
+    .card,
+    .summary-card{
+        box-shadow:none;
+        border:1px solid #cbd5e1;
+    }
+
+    .room-section{
+        padding:0;
+    }
+
+    .data-table{
+        min-width:100%;
+    }
+
+}

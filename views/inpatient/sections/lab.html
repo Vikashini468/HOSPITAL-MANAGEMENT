@@ -1,0 +1,105 @@
+<section class="lab-section">
+
+    <div class="page-header">
+        <div>
+            <h2><i class="fa-solid fa-flask"></i> Laboratory Reports</h2>
+            <p>Upload and manage lab reports for admitted patients.</p>
+        </div>
+    </div>
+
+    <!-- Patient Selector -->
+    <div class="card">
+        <div class="card-header"><h3>Select Patient</h3></div>
+        <div class="card-body">
+            <div class="search-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="labPatientSearch" placeholder="Search patient..." />
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Patient</th><th>Doctor</th>
+                            <th>Ward</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labPatientBody">
+                        <tr><td colspan="6" class="text-center">Loading patients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab Reports -->
+    <div class="card" id="labReportsCard" style="display:none;">
+        <div class="card-header">
+            <h3 id="labPatientTitle"><i class="fa-solid fa-flask"></i> Lab Reports</h3>
+            <div class="card-actions">
+                <button class="btn btn-primary btn-sm" onclick="openUploadLabModal()">
+                    <i class="fa-solid fa-upload"></i> Upload Report
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Report Type</th><th>Report Name</th>
+                            <th>Uploaded At</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labReportsBody">
+                        <tr><td colspan="5" class="text-center">No reports found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadLabModal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-upload"></i> Upload Lab Report</h3>
+                <button class="modal-close" onclick="closeUploadLabModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="labUploadPatientId">
+                <div class="form-group">
+                    <label>Report Type <span class="required">*</span></label>
+                    <select id="labReportType">
+                        <option value="">Select Type</option>
+                        <option>Blood Test</option>
+                        <option>Urine Test</option>
+                        <option>X-Ray</option>
+                        <option>MRI</option>
+                        <option>CT Scan</option>
+                        <option>ECG</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Report Name <span class="required">*</span></label>
+                    <input type="text" id="labReportName" placeholder="e.g. CBC Report">
+                </div>
+                <div class="form-group">
+                    <label>Report File URL / Path</label>
+                    <input type="text" id="labReportFile" placeholder="File path or URL">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeUploadLabModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitLabReport()">
+                    <i class="fa-solid fa-check"></i> Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+</section>
