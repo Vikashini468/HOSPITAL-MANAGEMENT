@@ -356,88 +356,6 @@
 
             </section>
 
-            <!-- ==========================================
-                    QUICK PATIENT SUMMARY
-            =========================================== -->
-
-            <section class="patient-summary">
-
-                <div class="section-header">
-
-                    <h3>
-
-                        <i class="fa-solid fa-user-injured"></i>
-
-                        Recent Admissions
-
-                    </h3>
-
-                </div>
-
-                <div class="table-responsive">
-
-                    <table class="summary-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>Patient</th>
-
-                                <th>Doctor</th>
-
-                                <th>Ward</th>
-
-                                <th>Room</th>
-
-                                <th>Bed</th>
-
-                                <th>Status</th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="recentAdmissionsBody">
-
-                            <!-- Loaded using JS -->
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-            <!-- ==========================================
-                    LIVE ACTIVITY PANEL
-            =========================================== -->
-
-            <section class="activity-panel">
-
-                <div class="section-header">
-
-                    <h3>
-
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-
-                        Live Activity
-
-                    </h3>
-
-                </div>
-
-                <div
-                    id="activityFeed"
-                    class="activity-feed">
-
-                    <!-- Socket.IO notifications -->
-
-                </div>
-
-            </section>
-
         </main>
 
     </div>
@@ -591,7 +509,11 @@
 
                 /* Initialize Socket.IO listeners */
                 if (typeof initializeSocket === "function") {
-                    initializeSocket();
+                    initializeSocket();              /* socket.js */
+                }
+
+                if (typeof registerInpatientSocketEvents === "function") {
+                    registerInpatientSocketEvents(); /* inpatient.js */
                 }
 
                 /* Register sidebar navigation */
@@ -599,19 +521,9 @@
                     initializeSidebar();
                 }
 
-                /* Load dashboard by default */
+                /* Load dashboard section first, then stats are populated inside initializeDashboard */
                 if (typeof loadSection === "function") {
                     await loadSection("dashboard");
-                }
-
-                /* Load dashboard statistics */
-                if (typeof loadDashboardStats === "function") {
-                    await loadDashboardStats();
-                }
-
-                /* Load recent admissions */
-                if (typeof loadRecentAdmissions === "function") {
-                    await loadRecentAdmissions();
                 }
 
             } catch (error) {

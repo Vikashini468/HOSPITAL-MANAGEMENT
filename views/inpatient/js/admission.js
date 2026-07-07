@@ -50,6 +50,8 @@ async function initializeAdmission() {
 
         startAdmissionAutoRefresh();
 
+        registerAdmissionSocketEvents();
+
         console.log("Admission Module Loaded");
 
     }
@@ -1371,15 +1373,20 @@ document.addEventListener("click", (event) => {
 
 /* ==========================================================
    SOCKET REFRESH
+   Called after socket is ready (from initializeAdmission)
 ========================================================== */
 
-if (typeof socket !== "undefined") {
+function registerAdmissionSocketEvents() {
 
-    socket.on("roomChanged", refreshPatientDetails);
+    const s = window.socket;
 
-    socket.on("doctorAssigned", refreshPatientDetails);
+    if (!s) return;
 
-    socket.on("patientDischarged", closePatientModal);
+    s.on("roomChanged", refreshPatientDetails);
+
+    s.on("doctorAssigned", refreshPatientDetails);
+
+    s.on("patientDischarged", closePatientModal);
 
 }
 

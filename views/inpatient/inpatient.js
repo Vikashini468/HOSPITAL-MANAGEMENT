@@ -323,135 +323,6 @@ window.addEventListener("resize", () => {
 
 });
 /* ==========================================================
-   DASHBOARD STATISTICS
-========================================================== */
-
-async function loadDashboardStats() {
-
-    try {
-
-        const response = await fetch(`${API_BASE}/dashboard`);
-
-        if (!response.ok) {
-            throw new Error("Failed to load dashboard");
-        }
-
-        const data = await response.json();
-
-        const total = document.getElementById("totalPatients");
-        const available = document.getElementById("availableBeds");
-        const occupied = document.getElementById("occupiedBeds");
-        const admissions = document.getElementById("todayAdmissions");
-        const discharges = document.getElementById("todayDischarges");
-        const critical = document.getElementById("criticalPatients");
-
-        if (total) total.textContent = data.total_patients ?? 0;
-        if (available) available.textContent = data.available_beds ?? 0;
-        if (occupied) occupied.textContent = data.occupied_beds ?? 0;
-        if (admissions) admissions.textContent = data.today_admissions ?? 0;
-        if (discharges) discharges.textContent = data.today_discharges ?? 0;
-        if (critical) critical.textContent = data.critical_patients ?? 0;
-
-    }
-    catch (error) {
-
-        console.error("Dashboard Error:", error);
-
-        showAlert(
-            "Unable to load dashboard statistics.",
-            "error"
-        );
-
-    }
-
-}
-
-/* ==========================================================
-   RECENT ADMISSIONS
-========================================================== */
-
-async function loadRecentAdmissions() {
-
-    try {
-
-        const response = await fetch(`${API_BASE}/patients`);
-
-        if (!response.ok) {
-
-            throw new Error("Unable to fetch patients");
-
-        }
-
-        const patients = await response.json();
-
-        const tbody =
-            document.getElementById("recentAdmissionsBody");
-
-        if (!tbody) return;
-
-        tbody.innerHTML = "";
-
-        if (!patients.length) {
-
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align:center;">
-                        No admitted patients found.
-                    </td>
-                </tr>
-            `;
-
-            return;
-
-        }
-
-        patients.slice(0, 10).forEach(patient => {
-
-            tbody.innerHTML += `
-
-                <tr>
-
-                    <td>${patient.patient_name}</td>
-
-                    <td>${patient.doctor_name ?? "-"}</td>
-
-                    <td>${patient.ward}</td>
-
-                    <td>${patient.room_no}</td>
-
-                    <td>${patient.bed_no}</td>
-
-                    <td>
-
-                        <span class="badge ${getStatusBadge(patient.status)}">
-
-                            ${patient.status}
-
-                        </span>
-
-                    </td>
-
-                </tr>
-
-            `;
-
-        });
-
-    }
-    catch (error) {
-
-        console.error(error);
-
-        showAlert(
-            "Unable to load recent admissions.",
-            "error"
-        );
-
-    }
-
-}
-
-/* ==========================================================
    LOADING OVERLAY
 ========================================================== */
 
@@ -545,35 +416,6 @@ function getStatusBadge(status) {
 }
 
 /* ==========================================================
-   REFRESH DASHBOARD
-========================================================== */
-
-async function refreshDashboard() {
-
-    await Promise.all([
-
-        loadDashboardStats(),
-
-        loadRecentAdmissions()
-
-    ]);
-
-}
-
-/* ==========================================================
-   AUTO REFRESH
-========================================================== */
-
-setInterval(() => {
-
-    if (currentPage === "dashboard") {
-
-        refreshDashboard();
-
-    }
-
-}, 30000);
-/* ==========================================================
    MODAL HANDLING
 ========================================================== */
 
@@ -658,9 +500,9 @@ function showConfirm(message) {
    ACTIVITY FEED
 ========================================================== */
 
-const activityFeed = document.getElementById("activityFeed");
-
 function addActivity(icon, title, description) {
+
+    const activityFeed = document.getElementById("activityFeed");
 
     if (!activityFeed) return;
 
@@ -872,25 +714,23 @@ window.location.href = "/";
 /* ==========================================================
    NALAM AI
    SOCKET.IO EVENTS
+   Registers activity-feed listeners on the socket
+   created by socket.js initializeSocket()
 ========================================================== */
 
-function initializeSocket() {
+function registerInpatientSocketEvents() {
 
-    if (typeof socket === "undefined") {
+    if (!window.socket) {
 
-        console.warn("Socket.IO not available.");
+        console.warn("Socket not ready for inpatient events.");
 
         return;
 
     }
 
-    console.log("Socket.IO Connected");
+    const s = window.socket;
 
-    /* ==========================================
-       PATIENT ADMITTED
-    ========================================== */
-
-    socket.on("patientAdmitted", (patient) => {
+    s.on("patientAdmitted", (patient) => {
 
         addActivity(
             "fa-solid fa-user-plus",
@@ -904,11 +744,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       ROOM CHANGED
-    ========================================== */
-
-    socket.on("roomChanged", (data) => {
+    s.on("roomChanged", (data) => {
 
         addActivity(
             "fa-solid fa-bed",
@@ -922,11 +758,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       DOCTOR ASSIGNED
-    ========================================== */
-
-    socket.on("doctorAssigned", () => {
+    s.on("doctorAssigned", () => {
 
         addActivity(
             "fa-solid fa-user-doctor",
@@ -938,11 +770,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       TREATMENT UPDATED
-    ========================================== */
-
-    socket.on("treatmentUpdated", () => {
+    s.on("treatmentUpdated", () => {
 
         addActivity(
             "fa-solid fa-notes-medical",
@@ -954,11 +782,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       LAB REPORT
-    ========================================== */
-
-    socket.on("labReportUploaded", () => {
+    s.on("labReportUploaded", () => {
 
         addActivity(
             "fa-solid fa-flask",
@@ -970,11 +794,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       MEDICINE
-    ========================================== */
-
-    socket.on("medicineUpdated", () => {
+    s.on("medicineUpdated", () => {
 
         addActivity(
             "fa-solid fa-pills",
@@ -986,11 +806,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       VITALS
-    ========================================== */
-
-    socket.on("vitalsUpdated", () => {
+    s.on("vitalsUpdated", () => {
 
         addActivity(
             "fa-solid fa-heart-pulse",
@@ -1002,11 +818,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       BILL
-    ========================================== */
-
-    socket.on("billGenerated", (bill) => {
+    s.on("billGenerated", (bill) => {
 
         addActivity(
             "fa-solid fa-file-invoice-dollar",
@@ -1018,11 +830,7 @@ function initializeSocket() {
 
     });
 
-    /* ==========================================
-       DISCHARGE
-    ========================================== */
-
-    socket.on("patientDischarged", () => {
+    s.on("patientDischarged", () => {
 
         addActivity(
             "fa-solid fa-door-open",
@@ -1114,9 +922,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         initializeSidebar();
 
-        initializeSocket();
+        initializeSocket();              /* socket.js — creates the socket */
 
-        await refreshDashboard();
+        registerInpatientSocketEvents(); /* inpatient.js — activity feed listeners */
 
         await loadSection("dashboard");
 
@@ -1146,8 +954,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 ========================================================== */
 
 window.loadSection = loadSection;
-
-window.refreshDashboard = refreshDashboard;
 
 window.showLoading = showLoading;
 

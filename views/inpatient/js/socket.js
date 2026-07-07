@@ -343,8 +343,6 @@ function emitPatientDischarged(data) {
    EXPORTS
 ========================================================== */
 
-window.socket = null;
-
 window.initializeSocket = initializeSocket;
 
 window.emitPatientAdmitted = emitPatientAdmitted;

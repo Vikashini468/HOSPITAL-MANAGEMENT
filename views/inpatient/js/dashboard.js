@@ -48,7 +48,7 @@ async function loadDashboard() {
 
         loadDashboardStats(),
 
-        loadPatients()
+        loadDashboardPatients()
 
     ]);
 
@@ -94,23 +94,34 @@ async function loadDashboardStats() {
 
 function updateDashboardCards() {
 
-    document.getElementById("totalPatients").textContent =
-        dashboardStats.total_patients || 0;
+    const ids = [
+        ["dash_totalPatients",   "total_patients"],
+        ["dash_availableBeds",   "available_beds"],
+        ["dash_occupiedBeds",    "occupied_beds"],
+        ["dash_todayAdmissions", "today_admissions"],
+        ["dash_todayDischarges", "today_discharges"],
+        ["dash_criticalPatients","critical_patients"]
+    ];
 
-    document.getElementById("availableBeds").textContent =
-        dashboardStats.available_beds || 0;
+    ids.forEach(([elId, key]) => {
+        const el = document.getElementById(elId);
+        if (el) el.textContent = dashboardStats[key] || 0;
+    });
 
-    document.getElementById("occupiedBeds").textContent =
-        dashboardStats.occupied_beds || 0;
+    /* Also update the persistent top-bar cards in inpatient.html */
+    const topIds = [
+        ["totalPatients",   "total_patients"],
+        ["availableBeds",   "available_beds"],
+        ["occupiedBeds",    "occupied_beds"],
+        ["todayAdmissions", "today_admissions"],
+        ["todayDischarges", "today_discharges"],
+        ["criticalPatients","critical_patients"]
+    ];
 
-    document.getElementById("todayAdmissions").textContent =
-        dashboardStats.today_admissions || 0;
-
-    document.getElementById("todayDischarges").textContent =
-        dashboardStats.today_discharges || 0;
-
-    document.getElementById("criticalPatients").textContent =
-        dashboardStats.critical_patients || 0;
+    topIds.forEach(([elId, key]) => {
+        const el = document.getElementById(elId);
+        if (el) el.textContent = dashboardStats[key] || 0;
+    });
 
 }
 
@@ -160,7 +171,7 @@ function updateBedOccupancy() {
    LOAD PATIENTS
 ========================================================== */
 
-async function loadPatients() {
+async function loadDashboardPatients() {
 
     try {
 
