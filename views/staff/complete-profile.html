@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Complete Your Profile — Aarudhra Hospital</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+body{background:#f4f8ff;}
+.topbar{height:65px;background:linear-gradient(135deg,#134f8f,#1a6fc4);display:flex;align-items:center;justify-content:space-between;padding:0 30px;color:white;}
+.topbar h2{font-size:18px;}
+.topbar .hosp{font-size:13px;opacity:.85;}
+.content{max-width:900px;margin:30px auto;padding:0 20px;}
+.step-bar{display:flex;gap:0;margin-bottom:30px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.step{flex:1;padding:14px;text-align:center;background:#e3f2fd;color:#1565c0;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.step.active{background:#1565c0;color:white;}
+.step.done{background:#2e7d32;color:white;}
+.card{background:white;border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:0 5px 18px rgba(0,0,0,.08);display:none;}
+.card.active{display:block;}
+.card h2{color:#0d47a1;margin-bottom:20px;font-size:17px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;}
+.form-group{display:flex;flex-direction:column;}
+.form-group label{margin-bottom:7px;font-size:13px;font-weight:600;color:#0d47a1;}
+.form-group input,.form-group select,.form-group textarea{padding:11px 13px;border:1px solid #ccc;border-radius:8px;font-size:14px;outline:none;transition:.2s;background:white;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#1565c0;box-shadow:0 0 6px rgba(21,101,192,.2);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.full-width{grid-column:1/-1;}
+.btn{border:none;border-radius:8px;padding:12px 24px;cursor:pointer;color:white;font-size:14px;font-weight:600;transition:.2s;margin-right:10px;}
+.btn:hover{opacity:.9;}
+.btn-primary{background:#1565c0;}
+.btn-success{background:#2e7d32;}
+.btn-secondary{background:#757575;}
+.btn-danger{background:#c62828;}
+.qual-card{background:#eef5ff;border-left:5px solid #1565c0;border-radius:12px;padding:18px;margin-bottom:14px;position:relative;}
+.qual-card h4{color:#0d47a1;margin-bottom:12px;}
+.remove-btn{position:absolute;top:12px;right:12px;background:#c62828;color:white;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;}
+.status-banner{padding:14px 20px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:600;}
+.status-incomplete{background:#fff3e0;color:#e65100;border:1px solid #ffcc80;}
+.status-correction{background:#fde8e8;color:#c0392b;border:1px solid #f5c6cb;}
+.info-row{display:grid;grid-template-columns:180px 1fr;padding:10px 0;border-bottom:1px solid #eee;font-size:14px;}
+.info-row:last-child{border:none;}
+.info-row b{color:#0d47a1;}
+.section-divider{border:none;border-top:2px solid #e3f2fd;margin:20px 0;}
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;display:none;}
+.alert-error{background:#fde8e8;color:#c0392b;}
+.alert-success{background:#e8f5e9;color:#1b5e20;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <h2>Complete Your Staff Profile</h2>
+    <div class="hosp">Aarudhra Multispeciality Hospital</div>
+</div>
+
+<div class="content">
+
+    <div id="statusBanner" class="status-banner status-incomplete" style="display:none;"></div>
+
+    <!-- STEP BAR -->
+    <div class="step-bar">
+        <div class="step active" id="step-tab-1" onclick="goStep(1)">1. Personal Details</div>
+        <div class="step" id="step-tab-2" onclick="goStep(2)">2. Professional Info</div>
+        <div class="step" id="step-tab-3" onclick="goStep(3)">3. Qualifications</div>
+        <div class="step" id="step-tab-4" onclick="goStep(4)">4. Review & Submit</div>
+    </div>
+
+    <!-- STEP 1: PERSONAL DETAILS -->
+    <div class="card active" id="step1">
+        <h2>Personal Details</h2>
+        <div class="alert alert-error" id="err1"></div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Profile Photo</label>
+                <input type="file" id="profile_photo" accept=".jpg,.jpeg,.png">
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" id="address" placeholder="Door No, Street">
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" id="city">
+            </div>
+            <div class="form-group">
+                <label>State</label>
+                <input type="text" id="state">
+            </div>
+            <div class="form-group">
+                <label>Pincode</label>
+                <input type="text" id="pincode" maxlength="6">
+            </div>
+        </div>
+        <br>
+        <button class="btn btn-primary" onclick="savePersonal()">Next →</button>
+    </div>
+
+    <!-- STEP 2: PROFESSIONAL INFO -->
+    <div class="card" id="step2">
+        <h2>Professional Information</h2>
+        <div class="alert alert-error" id="err2"></div>
+
+        <!-- Doctor fields -->
+        <div id="doctorFields">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Medical Registration Number *</label>
+                    <input type="text" id="medical_reg_no" placeholder="e.g. TN-MCI-12345">
+                </div>
+                <div class="form-group">
+                    <label>Registration Authority</label>
+                    <input type="text" id="reg_authority" placeholder="e.g. Tamil Nadu Medical Council">
+                </div>
+                <div class="form-group">
+                    <label>Specialization</label>
+                    <input type="text" id="specialization" placeholder="e.g. Cardiology">
+                </div>
+                <div class="form-group">
+                    <label>Years of Experience</label>
+                    <input type="number" id="years_experience" min="0">
+                </div>
+                <div class="form-group full-width">
+                    <label>Languages Known</label>
+                    <input type="text" id="languages_known" placeholder="e.g. Tamil, English, Hindi">
+                </div>
+            </div>
+        </div>
+
+        <!-- Nurse fields -->
+        <div id="nurseFields" style="display:none;">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nursing Registration Number</label>
+                    <input type="text" id="nursing_reg_no" placeholder="e.g. TNNC-12345">
+                </div>
+                <div class="form-group">
+                    <label>Registration Authority</label>
+                    <input type="text" id="nursing_reg_auth" placeholder="e.g. Tamil Nadu Nurses Council">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lab fields -->
+        <div id="labFields" style="display:none;">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Certification / Registration</label>
+                    <input type="text" id="lab_certification" placeholder="e.g. DMLT, B.Sc MLT">
+                </div>
+            </div>
+        </div>
+
+        <!-- Pharmacist fields -->
+        <div id="pharmacistFields" style="display:none;">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Pharmacy Registration Number</label>
+                    <input type="text" id="pharmacy_reg_no" placeholder="e.g. TN-PCI-12345">
+                </div>
+                <div class="form-group">
+                    <label>Registration Authority</label>
+                    <input type="text" id="pharmacy_reg_auth" placeholder="e.g. Tamil Nadu Pharmacy Council">
+                </div>
+            </div>
+        </div>
+
+        <br>
+        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="saveProfessional()">Next →</button>
+    </div>
+
+    <!-- STEP 3: QUALIFICATIONS -->
+    <div class="card" id="step3">
+        <h2>Educational Qualifications & Certificates</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:16px;">Add each degree separately with its supporting certificate document.</p>
+
+        <div id="qualList"></div>
+
+        <button class="btn btn-primary" onclick="addQualForm()">➕ Add Qualification</button>
+
+        <div id="addQualForm" style="display:none;margin-top:20px;">
+            <div class="qual-card">
+                <h4>New Qualification</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Degree Name *</label>
+                        <select id="newDegree">
+                            <option value="">Select Degree</option>
+                            <option>MBBS</option><option>MD</option><option>MS</option>
+                            <option>DNB</option><option>DM</option><option>MCh</option>
+                            <option>B.Sc Nursing</option><option>M.Sc Nursing</option>
+                            <option>GNM</option><option>ANM</option>
+                            <option>B.Pharm</option><option>M.Pharm</option><option>D.Pharm</option>
+                            <option>DMLT</option><option>B.Sc MLT</option><option>M.Sc MLT</option>
+                            <option>BPT</option><option>MPT</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Other (if selected above)</label>
+                        <input type="text" id="newDegreeOther" placeholder="Specify degree name">
+                    </div>
+                    <div class="form-group">
+                        <label>University / Institution *</label>
+                        <input type="text" id="newInstitution" placeholder="University or College name">
+                    </div>
+                    <div class="form-group">
+                        <label>Year of Completion *</label>
+                        <input type="number" id="newYear" min="1970" max="2030" placeholder="e.g. 2020">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Certificate / Degree Document (PDF/JPG/PNG, max 5MB) *</label>
+                        <input type="file" id="newCert" accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                </div>
+                <br>
+                <button class="btn btn-success" onclick="uploadQual()">💾 Save Qualification</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('addQualForm').style.display='none'">Cancel</button>
+            </div>
+        </div>
+
+        <br><br>
+        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(4)">Next →</button>
+    </div>
+
+    <!-- STEP 4: REVIEW & SUBMIT -->
+    <div class="card" id="step4">
+        <h2>Review & Submit for Approval</h2>
+        <div id="reviewContent">Loading…</div>
+        <br>
+        <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+        <button class="btn btn-success" onclick="submitForApproval()">📤 Submit for Admin Approval</button>
+    </div>
+
+</div>
+
+<script>
+const BASE    = "http://localhost:5000";
+const params  = new URLSearchParams(location.search);
+const userId  = params.get("id");
+let   userRole = "";
+
+window.onload = async () => {
+    if (!userId) { alert("No user ID provided."); return; }
+    try {
+        const res  = await fetch(`${BASE}/api/staff/profile/${userId}`);
+        const data = await res.json();
+        userRole   = data.role || "";
+
+        /* Show status banner */
+        const banner = document.getElementById("statusBanner");
+        if (data.profile_status === "CORRECTION_REQUIRED") {
+            banner.className = "status-banner status-correction";
+            banner.textContent = `⚠️ Correction Required: ${data.rejection_reason || "Please update your profile as requested by admin."}`;
+            banner.style.display = "block";
+        } else if (data.profile_status === "INCOMPLETE") {
+            banner.className = "status-banner status-incomplete";
+            banner.textContent = "📋 Please complete your profile to access the dashboard.";
+            banner.style.display = "block";
+        }
+
+        /* Show role-specific professional fields */
+        showRoleFields(userRole);
+
+        /* Pre-fill existing data */
+        if (data.address)          document.getElementById("address").value          = data.address;
+        if (data.city)             document.getElementById("city").value             = data.city;
+        if (data.state)            document.getElementById("state").value            = data.state;
+        if (data.pincode)          document.getElementById("pincode").value          = data.pincode;
+        if (data.medical_reg_no)   document.getElementById("medical_reg_no").value   = data.medical_reg_no;
+        if (data.reg_authority)    document.getElementById("reg_authority").value    = data.reg_authority;
+        if (data.specialization)   document.getElementById("specialization").value   = data.specialization;
+        if (data.years_experience) document.getElementById("years_experience").value = data.years_experience;
+        if (data.languages_known)  document.getElementById("languages_known").value  = data.languages_known;
+        if (data.nursing_reg_no)   document.getElementById("nursing_reg_no").value   = data.nursing_reg_no;
+        if (data.nursing_reg_auth) document.getElementById("nursing_reg_auth").value = data.nursing_reg_auth;
+        if (data.lab_certification)document.getElementById("lab_certification").value= data.lab_certification;
+        if (data.pharmacy_reg_no)  document.getElementById("pharmacy_reg_no").value  = data.pharmacy_reg_no;
+        if (data.pharmacy_reg_auth)document.getElementById("pharmacy_reg_auth").value= data.pharmacy_reg_auth;
+
+        loadQualifications();
+    } catch (e) { console.error(e); }
+};
+
+function showRoleFields(role) {
+    ["doctorFields","nurseFields","labFields","pharmacistFields"].forEach(id =>
+        document.getElementById(id).style.display = "none"
+    );
+    const map = { doctor:"doctorFields", nurse:"nurseFields", lab:"labFields", pharmacist:"pharmacistFields" };
+    if (map[role]) document.getElementById(map[role]).style.display = "block";
+}
+
+function goStep(n) {
+    [1,2,3,4].forEach(i => {
+        document.getElementById("step"+i).classList.remove("active");
+        document.getElementById("step-tab-"+i).classList.remove("active");
+    });
+    document.getElementById("step"+n).classList.add("active");
+    document.getElementById("step-tab-"+n).classList.add("active");
+    if (n === 4) loadReview();
+}
+
+async function savePersonal() {
+    const fd = new FormData();
+    fd.append("user_id", userId);
+    fd.append("address",  document.getElementById("address").value);
+    fd.append("city",     document.getElementById("city").value);
+    fd.append("state",    document.getElementById("state").value);
+    fd.append("pincode",  document.getElementById("pincode").value);
+    const photo = document.getElementById("profile_photo").files[0];
+    if (photo) fd.append("profile_photo", photo);
+
+    try {
+        const res  = await fetch(`${BASE}/api/staff/complete-profile`, { method:"POST", body:fd });
+        const data = await res.json();
+        if (data.success) goStep(2);
+        else showErr("err1", data.message);
+    } catch (e) { showErr("err1", "Server error"); }
+}
+
+async function saveProfessional() {
+    const fd = new FormData();
+    fd.append("user_id", userId);
+    ["medical_reg_no","reg_authority","specialization","years_experience","languages_known",
+     "nursing_reg_no","nursing_reg_auth","lab_certification","pharmacy_reg_no","pharmacy_reg_auth"]
+    .forEach(id => fd.append(id, document.getElementById(id).value));
+
+    try {
+        const res  = await fetch(`${BASE}/api/staff/complete-profile`, { method:"POST", body:fd });
+        const data = await res.json();
+        if (data.success) goStep(3);
+        else showErr("err2", data.message);
+    } catch (e) { showErr("err2", "Server error"); }
+}
+
+function addQualForm() {
+    document.getElementById("addQualForm").style.display = "block";
+}
+
+async function uploadQual() {
+    const degree = document.getElementById("newDegree").value === "Other"
+        ? document.getElementById("newDegreeOther").value
+        : document.getElementById("newDegree").value;
+    const institution = document.getElementById("newInstitution").value;
+    const year        = document.getElementById("newYear").value;
+    const cert        = document.getElementById("newCert").files[0];
+
+    if (!degree || !institution || !year || !cert) {
+        alert("All qualification fields and certificate are required."); return;
+    }
+
+    const fd = new FormData();
+    fd.append("user_id",            userId);
+    fd.append("degree_name",        degree);
+    fd.append("institution",        institution);
+    fd.append("year_of_completion", year);
+    fd.append("certificate",        cert);
+
+    try {
+        const res  = await fetch(`${BASE}/api/staff/qualification/add`, { method:"POST", body:fd });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById("addQualForm").style.display = "none";
+            loadQualifications();
+        } else alert(data.message);
+    } catch (e) { alert("Upload failed"); }
+}
+
+async function loadQualifications() {
+    try {
+        const res  = await fetch(`${BASE}/api/staff/qualifications/${userId}`);
+        const data = await res.json();
+        const list = document.getElementById("qualList");
+        if (!data.length) { list.innerHTML = `<p style="color:#888;font-size:14px;">No qualifications added yet.</p>`; return; }
+        list.innerHTML = data.map(q => `
+            <div class="qual-card">
+                <button class="remove-btn" onclick="removeQual(${q.id})">✕ Remove</button>
+                <h4>${q.degree_name}</h4>
+                <div class="info-row"><b>Institution</b><span>${q.institution || "-"}</span></div>
+                <div class="info-row"><b>Year</b><span>${q.year_of_completion || "-"}</span></div>
+                <div class="info-row"><b>Certificate</b><span>${q.certificate_file
+                    ? `<a href="/uploads/${q.certificate_file}" target="_blank" style="color:#1565c0;">📄 View</a>`
+                    : "Not uploaded"}</span></div>
+                <div class="info-row"><b>Status</b><span style="color:${q.verification_status==='APPROVED'?'#2e7d32':'#e65100'}">${q.verification_status}</span></div>
+            </div>
+        `).join("");
+    } catch (e) { console.error(e); }
+}
+
+async function removeQual(id) {
+    if (!confirm("Remove this qualification?")) return;
+    await fetch(`${BASE}/api/staff/qualification/${id}`, { method:"DELETE" });
+    loadQualifications();
+}
+
+async function loadReview() {
+    try {
+        const [profRes, qualRes] = await Promise.all([
+            fetch(`${BASE}/api/staff/profile/${userId}`),
+            fetch(`${BASE}/api/staff/qualifications/${userId}`)
+        ]);
+        const prof = await profRes.json();
+        const quals = await qualRes.json();
+
+        document.getElementById("reviewContent").innerHTML = `
+            <div class="info-row"><b>Name</b><span>${prof.name || "-"}</span></div>
+            <div class="info-row"><b>Role</b><span>${prof.role || "-"}</span></div>
+            <div class="info-row"><b>Email</b><span>${prof.email || "-"}</span></div>
+            <div class="info-row"><b>Mobile</b><span>${prof.mobile || "-"}</span></div>
+            <div class="info-row"><b>Department</b><span>${prof.department || "-"}</span></div>
+            <div class="info-row"><b>Employee ID</b><span>${prof.employee_id || "-"}</span></div>
+            <div class="info-row"><b>Address</b><span>${prof.address || "-"}, ${prof.city || ""}, ${prof.state || ""} ${prof.pincode || ""}</span></div>
+            ${prof.medical_reg_no ? `<div class="info-row"><b>Medical Reg No</b><span>${prof.medical_reg_no}</span></div>` : ""}
+            ${prof.specialization ? `<div class="info-row"><b>Specialization</b><span>${prof.specialization}</span></div>` : ""}
+            <hr class="section-divider">
+            <h3 style="color:#0d47a1;margin-bottom:12px;">Qualifications (${quals.length})</h3>
+            ${quals.map(q => `
+                <div style="background:#eef5ff;padding:12px;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <strong>${q.degree_name}</strong> — ${q.institution || "-"} (${q.year_of_completion || "-"})
+                    ${q.certificate_file ? ` — <a href="/uploads/${q.certificate_file}" target="_blank" style="color:#1565c0;">📄 Certificate</a>` : " — ⚠️ No certificate"}
+                </div>
+            `).join("") || "<p style='color:#888;font-size:13px;'>No qualifications added.</p>"}
+        `;
+    } catch (e) { console.error(e); }
+}
+
+async function submitForApproval() {
+    if (!confirm("Submit your profile for admin review? You cannot edit after submission.")) return;
+    try {
+        const res  = await fetch(`${BASE}/api/staff/submit-approval/${userId}`, { method:"POST" });
+        const data = await res.json();
+        if (data.success) {
+            alert("✅ Profile submitted for approval. You will be notified once reviewed.");
+            location.href = "/login.html";
+        } else alert(data.message);
+    } catch (e) { alert("Submission failed"); }
+}
+
+function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = "block";
+}
+</script>
+</body>
+</html>

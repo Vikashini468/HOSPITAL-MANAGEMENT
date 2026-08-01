@@ -12,14 +12,18 @@
   "type": "commonjs",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "canvas": "^3.2.3",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
+    "docx": "^9.7.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "face-api.js": "^0.22.2",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.1",
     "nodemon": "^3.1.14",
     "pg": "^8.22.0",
+    "qrcode": "^1.5.4",
     "socket.io": "^4.8.3",
     "twilio": "^6.0.2",
     "xlsx": "^0.18.5"

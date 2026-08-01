@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Staff Verification — Aarudhra Hospital</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+body{background:#f4f8ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+
+/* PIN screen */
+.pin-card{background:white;border-radius:20px;padding:40px 36px;max-width:400px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.12);text-align:center;}
+.hosp-logo{background:linear-gradient(135deg,#134f8f,#1a6fc4);color:white;border-radius:14px;padding:16px;margin-bottom:28px;}
+.hosp-logo h2{font-size:17px;margin-bottom:4px;}
+.hosp-logo p{font-size:12px;opacity:.85;}
+.pin-icon{font-size:52px;margin-bottom:16px;}
+.pin-card h3{color:#0d47a1;font-size:20px;margin-bottom:8px;}
+.pin-card p{color:#666;font-size:14px;margin-bottom:28px;line-height:1.5;}
+.pin-input{width:100%;padding:16px;font-size:22px;text-align:center;border:2px solid #ccc;border-radius:12px;outline:none;letter-spacing:8px;font-weight:700;color:#0d47a1;}
+.pin-input:focus{border-color:#1565c0;}
+.pin-btn{width:100%;margin-top:16px;padding:14px;background:#1565c0;color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;}
+.pin-btn:hover{background:#0d47a1;}
+.pin-error{color:#c62828;font-size:13px;margin-top:12px;min-height:20px;}
+
+/* Details screen */
+#detailsScreen{display:none;width:100%;max-width:720px;}
+
+.print-btn{background:#1565c0;color:white;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:20px;}
+.print-btn:hover{background:#0d47a1;}
+
+/* PDF-style card */
+.pdf-card{background:white;border-radius:18px;padding:0;box-shadow:0 8px 30px rgba(0,0,0,.12);overflow:hidden;}
+.pdf-header{background:linear-gradient(135deg,#134f8f,#1a6fc4);color:white;padding:24px 30px;display:flex;align-items:center;gap:20px;}
+.pdf-header-text h2{font-size:20px;margin-bottom:4px;}
+.pdf-header-text p{font-size:13px;opacity:.85;}
+.pdf-body{padding:28px 30px;}
+
+.staff-hero{display:flex;align-items:center;gap:24px;margin-bottom:28px;padding-bottom:24px;border-bottom:2px solid #e3f2fd;}
+.staff-photo{width:100px;height:100px;border-radius:50%;border:4px solid #1565c0;overflow:hidden;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;}
+.staff-photo img{width:100%;height:100%;object-fit:cover;}
+.staff-hero-info h2{color:#0d47a1;font-size:24px;margin-bottom:6px;}
+.staff-hero-info .role-tag{display:inline-block;background:#e3f2fd;color:#1565c0;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:8px;}
+.verified-stamp{display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;color:#2e7d32;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;}
+
+.section-title{font-size:12px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:.7px;margin:22px 0 12px;padding-bottom:6px;border-bottom:2px solid #e3f2fd;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.info-box{background:#f4f8ff;border-radius:10px;padding:12px 14px;}
+.info-box .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.info-box .val{font-size:14px;font-weight:600;color:#0d47a1;}
+.info-box .val.na{color:#bbb;font-weight:400;font-style:italic;}
+
+.qual-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee;font-size:13px;}
+.qual-row:last-child{border:none;}
+.qual-row .deg{font-weight:600;color:#0d47a1;}
+.qual-row .inst{color:#555;}
+.qual-row .yr{color:#888;font-size:12px;}
+
+.pdf-footer{background:#f4f8ff;padding:16px 30px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #e3f2fd;}
+
+/* Print styles */
+@media print {
+    body{background:white;padding:0;}
+    .print-btn{display:none;}
+    #pinScreen{display:none;}
+    #detailsScreen{display:block !important;}
+    .pdf-card{box-shadow:none;border-radius:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+    <div class="pin-card">
+        <div class="hosp-logo">
+            <h2>Aarudhra Multispeciality Hospital</h2>
+            <p>Staff Identity Verification</p>
+        </div>
+        <div class="pin-icon">🔐</div>
+        <h3>Enter Your PIN</h3>
+        <p>Enter the 4–6 digit PIN assigned to you when your card was issued to view your staff details.</p>
+        <input type="password" inputmode="numeric" class="pin-input" id="pinInput"
+               maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter') verifyPin()">
+        <button class="pin-btn" onclick="verifyPin()">View My Details →</button>
+        <div class="pin-error" id="pinError"></div>
+    </div>
+</div>
+
+<!-- DETAILS SCREEN -->
+<div id="detailsScreen">
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+    <div class="pdf-card">
+        <div class="pdf-header">
+            <div style="font-size:40px;">🏥</div>
+            <div class="pdf-header-text">
+                <h2>Aarudhra Multispeciality Hospital</h2>
+                <p>Official Staff Identity Record</p>
+            </div>
+        </div>
+
+        <div class="pdf-body">
+            <!-- Hero -->
+            <div class="staff-hero">
+                <div class="staff-photo" id="staffPhoto">👤</div>
+                <div class="staff-hero-info">
+                    <h2 id="staffName"></h2>
+                    <div class="role-tag" id="staffRole"></div><br>
+                    <div class="verified-stamp">✅ Verified Staff Member</div>
+                </div>
+            </div>
+
+            <!-- Personal -->
+            <div class="section-title">Personal Information</div>
+            <div class="info-grid" id="personalInfo"></div>
+
+            <!-- Professional -->
+            <div class="section-title">Professional Information</div>
+            <div class="info-grid" id="professionalInfo"></div>
+
+            <!-- Credentials -->
+            <div id="credentialsWrap">
+                <div class="section-title">Registration & Credentials</div>
+                <div class="info-grid" id="credentialsInfo"></div>
+            </div>
+
+            <!-- Address -->
+            <div class="section-title">Address</div>
+            <div class="info-grid" id="addressInfo"></div>
+
+            <!-- Qualifications -->
+            <div class="section-title">Qualifications</div>
+            <div id="qualsInfo"></div>
+        </div>
+
+        <div class="pdf-footer">
+            Generated on <span id="genDate"></span> &nbsp;|&nbsp; Aarudhra Multispeciality Hospital &nbsp;|&nbsp; Confidential
+        </div>
+    </div>
+</div>
+
+<script>
+const BASE  = "http://localhost:5000";
+const token = new URLSearchParams(location.search).get("token");
+
+if (!token) {
+    document.getElementById("pinError").textContent = "Invalid QR code — no token found.";
+    document.querySelector(".pin-btn").disabled = true;
+}
+
+async function verifyPin() {
+    const pin = document.getElementById("pinInput").value.trim();
+    const err = document.getElementById("pinError");
+    err.textContent = "";
+
+    if (!pin) { err.textContent = "Please enter your PIN."; return; }
+
+    try {
+        const res  = await fetch(BASE + "/api/staff/verify-card", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, pin })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            err.textContent = data.message || "Verification failed.";
+            return;
+        }
+
+        renderDetails(data.staff, data.qualifications || []);
+    } catch (e) {
+        err.textContent = "Server error. Please try again.";
+    }
+}
+
+const roleLabels = {
+    doctor: "Doctor", nurse: "Nurse", lab: "Lab Staff",
+    lab_staff: "Lab Staff", pharmacist: "Pharmacist", receptionist: "Receptionist"
+};
+
+function box(label, value) {
+    const na = !value || value === "—";
+    return `<div class="info-box">
+        <div class="lbl">${label}</div>
+        <div class="val${na ? " na" : ""}">${value || "Not provided"}</div>
+    </div>`;
+}
+
+function renderDetails(s, quals) {
+    document.getElementById("pinScreen").style.display    = "none";
+    document.getElementById("detailsScreen").style.display = "block";
+
+    document.getElementById("staffName").textContent = s.name || "—";
+    document.getElementById("staffRole").textContent = roleLabels[s.role] || s.role || "—";
+    document.getElementById("genDate").textContent   = new Date().toLocaleString();
+
+    if (s.profile_photo)
+        document.getElementById("staffPhoto").innerHTML = `<img src="/uploads/${s.profile_photo}" alt="photo">`;
+
+    document.getElementById("personalInfo").innerHTML =
+        box("Full Name",    s.name) +
+        box("Email",        s.email) +
+        box("Mobile",       s.mobile) +
+        box("Gender",       s.gender) +
+        box("Date of Birth", s.dob ? new Date(s.dob).toLocaleDateString() : null);
+
+    document.getElementById("professionalInfo").innerHTML =
+        box("Employee ID",      s.employee_id) +
+        box("Department",       s.department) +
+        box("Specialization",   s.specialization) +
+        box("Years Experience", s.years_experience) +
+        box("Languages Known",  s.languages_known) +
+        box("Date of Joining",  s.date_of_joining ? new Date(s.date_of_joining).toLocaleDateString() : null);
+
+    /* Role-specific credentials */
+    let creds = "";
+    if (s.role === "doctor")
+        creds = box("Medical Reg No", s.medical_reg_no) + box("Reg Authority", s.reg_authority);
+    else if (s.role === "nurse")
+        creds = box("Nursing Reg No", s.nursing_reg_no) + box("Nursing Reg Authority", s.nursing_reg_auth);
+    else if (s.role === "pharmacist")
+        creds = box("Pharmacy Reg No", s.pharmacy_reg_no) + box("Pharmacy Reg Authority", s.pharmacy_reg_auth);
+    else if (s.role === "lab" || s.role === "lab_staff")
+        creds = box("Lab Certification", s.lab_certification);
+
+    if (creds) {
+        document.getElementById("credentialsWrap").style.display = "block";
+        document.getElementById("credentialsInfo").innerHTML = creds;
+    } else {
+        document.getElementById("credentialsWrap").style.display = "none";
+    }
+
+    document.getElementById("addressInfo").innerHTML =
+        box("Address", s.address) +
+        box("City",    s.city) +
+        box("State",   s.state) +
+        box("Pincode", s.pincode);
+
+    document.getElementById("qualsInfo").innerHTML = quals.length
+        ? quals.map(q => `
+            <div class="qual-row">
+                <div>
+                    <div class="deg">${q.degree_name}</div>
+                    <div class="inst">${q.institution || "—"}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="yr">${q.year_of_completion || "—"}</div>
+                    <div style="font-size:12px;color:${q.verification_status==='APPROVED'?'#2e7d32':'#e65100'};font-weight:600;">${q.verification_status}</div>
+                </div>
+            </div>
+        `).join("")
+        : `<p style="color:#aaa;font-size:13px;">No qualifications on record.</p>`;
+}
+</script>
+</body>
+</html>

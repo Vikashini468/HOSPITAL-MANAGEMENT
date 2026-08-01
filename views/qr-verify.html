@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Patient Record — NALAM AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0d3b7a 0%,#1565c0 60%,#1976d2 100%);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:32px 16px;
+}
+
+/* ── PIN CARD ── */
+.pin-card{
+  background:white;border-radius:20px;padding:40px 36px;
+  width:100%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #eef2ff;}
+.logo-box{width:46px;height:46px;background:linear-gradient(135deg,#0d3b7a,#1565c0);border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:800;}
+.logo-name{font-size:16px;font-weight:800;color:#0d3b7a;}
+.logo-sub{font-size:11px;color:#888;margin-top:2px;}
+.pin-card h2{font-size:20px;font-weight:700;color:#0d3b7a;margin-bottom:6px;}
+.subtitle{font-size:13px;color:#888;margin-bottom:28px;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.field label{font-size:13px;font-weight:600;color:#333;}
+.field input{padding:12px 14px;border:1.5px solid #d0d9ee;border-radius:10px;font-size:15px;outline:none;background:#fafcff;transition:.2s;letter-spacing:2px;}
+.field input:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.1);background:white;}
+.field input.err{border-color:#e53935;box-shadow:0 0 0 3px rgba(229,57,53,.1);}
+.err-msg{font-size:12px;color:#e53935;min-height:16px;margin-top:-8px;margin-bottom:8px;}
+.btn-verify{width:100%;padding:14px;background:linear-gradient(135deg,#0d3b7a,#1565c0);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;}
+.btn-verify:hover{opacity:.9;}
+.btn-verify:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── RECORD SCREEN ── */
+#recordScreen{display:none;width:100%;max-width:820px;}
+
+.dl-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.dl-btn{padding:11px 22px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.2s;}
+.dl-pdf{background:#e53935;color:white;}
+.dl-pdf:hover{background:#c62828;}
+.dl-word{background:#1565c0;color:white;}
+.dl-word:hover{background:#0d47a1;}
+
+/* ── PDF CARD ── */
+.pdf-card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.15);}
+.pdf-header{background:linear-gradient(135deg,#0d3b7a,#1565c0);color:white;padding:24px 30px;display:flex;align-items:center;gap:20px;}
+.pdf-header-text h2{font-size:20px;margin-bottom:4px;}
+.pdf-header-text p{font-size:13px;opacity:.85;}
+.pdf-body{padding:28px 30px;}
+
+.hero{display:flex;align-items:center;gap:24px;margin-bottom:28px;padding-bottom:24px;border-bottom:2px solid #e3f2fd;}
+.hero-photo{width:90px;height:90px;border-radius:50%;border:4px solid #1565c0;overflow:hidden;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;}
+.hero-photo img{width:100%;height:100%;object-fit:cover;}
+.hero-info h2{color:#0d3b7a;font-size:22px;margin-bottom:6px;}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;}
+.badge-green{background:#e8f5e9;color:#2e7d32;}
+.badge-blue{background:#e3f2fd;color:#1565c0;}
+
+.sec-title{font-size:11px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:.7px;margin:22px 0 12px;padding-bottom:6px;border-bottom:2px solid #e3f2fd;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.info-box{background:#f4f8ff;border-radius:10px;padding:11px 14px;}
+.info-box .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.info-box .val{font-size:14px;font-weight:600;color:#0d3b7a;}
+.info-box .val.na{color:#bbb;font-weight:400;font-style:italic;}
+
+.tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.tag{background:#e3f2fd;color:#1565c0;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+.tag.red{background:#fce4ec;color:#c62828;}
+.tag.green{background:#e8f5e9;color:#2e7d32;}
+
+.visit-row,.rx-row,.lab-row{padding:12px 0;border-bottom:1px solid #eee;font-size:13px;}
+.visit-row:last-child,.rx-row:last-child,.lab-row:last-child{border:none;}
+.visit-row b,.rx-row b,.lab-row b{color:#0d3b7a;}
+
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.ai-box{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-radius:10px;padding:12px 14px;border-left:3px solid #1565c0;}
+.ai-box .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.ai-box .val{font-size:14px;font-weight:700;color:#0d3b7a;}
+
+.pdf-footer{background:#f4f8ff;padding:14px 30px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #e3f2fd;}
+
+@media print{
+  body{background:white;padding:0;}
+  .dl-bar{display:none;}
+  #pinScreen{display:none;}
+  #recordScreen{display:block!important;}
+  .pdf-card{box-shadow:none;border-radius:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div class="pin-card">
+    <div class="logo-row">
+      <div class="logo-box">H+</div>
+      <div>
+        <div class="logo-name">NALAM AI Hospital</div>
+        <div class="logo-sub">Patient Identity Verification</div>
+      </div>
+    </div>
+    <h2>🔐 Verify Patient Identity</h2>
+    <p class="subtitle">Enter the Patient ID from the QR code and the patient's 6-digit PIN to view the medical record.</p>
+
+    <div class="field">
+      <label>Patient ID</label>
+      <input id="inp-pid" type="text" placeholder="e.g. PAT000001"
+             oninput="formatPid(this)">
+    </div>
+    <div class="field">
+      <label>6-Digit PIN</label>
+      <input id="inp-pin" type="password" placeholder="••••••" maxlength="6"
+             oninput="this.value=this.value.replace(/\D/g,'');this.classList.remove('err')"
+             onkeydown="if(event.key==='Enter')verifyPin()">
+    </div>
+    <div class="err-msg" id="err-main"></div>
+    <button class="btn-verify" id="btn-verify" onclick="verifyPin()">Verify &amp; View Record →</button>
+  </div>
+</div>
+
+<!-- RECORD SCREEN -->
+<div id="recordScreen">
+  <div class="dl-bar">
+    <button class="dl-btn dl-pdf" onclick="downloadPDF()">📄 Download PDF</button>
+    <button class="dl-btn dl-word" onclick="downloadWord()">📝 Download Word</button>
+  </div>
+
+  <div class="pdf-card" id="printArea">
+    <div class="pdf-header">
+      <div style="font-size:38px;">🏥</div>
+      <div class="pdf-header-text">
+        <h2>NALAM AI Hospital</h2>
+        <p>Patient Medical Record — Confidential</p>
+      </div>
+    </div>
+
+    <div class="pdf-body">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-photo" id="heroPhoto">👤</div>
+        <div class="hero-info">
+          <h2 id="heroName"></h2>
+          <span class="badge badge-blue" id="heroPid"></span>&nbsp;
+          <span class="badge badge-green">✅ Verified</span>
+        </div>
+      </div>
+
+      <!-- 1. Basic Information -->
+      <div class="sec-title">1. Basic Information</div>
+      <div class="info-grid" id="secBasic"></div>
+
+      <!-- 2. Medical History -->
+      <div class="sec-title">2. Medical History</div>
+      <div id="secMedical"></div>
+
+      <!-- 3. Lifestyle -->
+      <div class="sec-title">3. Lifestyle</div>
+      <div class="info-grid" id="secLifestyle"></div>
+
+      <!-- 4. Vitals -->
+      <div class="sec-title">4. Vitals</div>
+      <div id="secVitals"></div>
+
+      <!-- 5. Lab Reports -->
+      <div class="sec-title">5. Lab Reports</div>
+      <div id="secLab"></div>
+
+      <!-- 6. Doctor Visits -->
+      <div class="sec-title">6. Doctor Visits</div>
+      <div id="secVisits"></div>
+
+      <!-- 7. Prescriptions -->
+      <div class="sec-title">7. Prescriptions</div>
+      <div id="secRx"></div>
+
+      <!-- 8. AI Dataset -->
+      <div class="sec-title">8. AI Dataset</div>
+      <div class="ai-grid" id="secAI"></div>
+
+    </div>
+    <div class="pdf-footer">
+      Generated on <span id="genDate"></span> &nbsp;|&nbsp; NALAM AI Hospital &nbsp;|&nbsp; Confidential
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.origin;
+
+function formatPid(input) {
+  input.classList.remove('err');
+  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  // If user typed only digits, prepend PAT
+  if (/^\d+$/.test(v)) v = 'PAT' + v;
+  // Pad the numeric part to 6 digits: PAT + 000001
+  const m = v.match(/^([A-Z]+)(\d+)$/);
+  if (m) v = m[1] + m[2].padStart(6, '0');
+  input.value = v;
+}
+
+/* Pre-fill Patient ID from QR URL ?id=PAT000001 */
+window.onload = () => {
+  const id = new URLSearchParams(location.search).get("id");
+  if (id) {
+    document.getElementById("inp-pid").value = id.toUpperCase();
+    document.getElementById("inp-pin").focus();
+  }
+};
+
+async function verifyPin() {
+  const pid = document.getElementById("inp-pid").value.trim();
+  const pin = document.getElementById("inp-pin").value.trim();
+  const err = document.getElementById("err-main");
+  err.textContent = "";
+  let ok = true;
+  if (!pid) { document.getElementById("inp-pid").classList.add("err"); err.textContent = "Patient ID is required."; ok = false; }
+  if (!pin || pin.length !== 6) { document.getElementById("inp-pin").classList.add("err"); if (ok) err.textContent = "Enter the 6-digit PIN."; ok = false; }
+  if (!ok) return;
+
+  const btn = document.getElementById("btn-verify");
+  btn.textContent = "Verifying…"; btn.disabled = true;
+
+  try {
+    /* Step 1: verify PIN */
+    const vRes  = await fetch(BASE + "/api/patient/verify-pin", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: pid, pin })
+    });
+
+    const text = await vRes.text();
+    let vData;
+    try { vData = JSON.parse(text); }
+    catch { err.textContent = "Server error (" + vRes.status + "): " + text.slice(0, 120); btn.textContent = "Verify & View Record →"; btn.disabled = false; return; }
+
+    if (!vData.success) {
+      err.textContent = vRes.status === 401 ? "Incorrect PIN. Access denied." : (vData.message || "Verification failed.");
+      btn.textContent = "Verify & View Record →"; btn.disabled = false;
+      return;
+    }
+
+    /* Step 2: fetch full record */
+    const recordId  = vData.source === "legacy" ? vData.user_id : pid;
+    const recordUrl = vData.source === "legacy"
+      ? BASE + "/api/patient-reg/record/" + recordId
+      : BASE + "/api/patient/full-record/" + pid;
+
+    const rRes  = await fetch(recordUrl);
+    const rText = await rRes.text();
+    let rData;
+    try { rData = JSON.parse(rText); }
+    catch { err.textContent = "Record error (" + rRes.status + "): " + rText.slice(0, 120); btn.textContent = "Verify & View Record →"; btn.disabled = false; return; }
+
+    if (!rData.success) {
+      err.textContent = rData.message || "Could not load record.";
+      btn.textContent = "Verify & View Record →"; btn.disabled = false;
+      return;
+    }
+
+    renderRecord(rData);
+  } catch (e) {
+    err.textContent = "Cannot reach server. Make sure your phone and PC are on the same WiFi. (" + e.message + ")";
+    btn.textContent = "Verify & View Record →"; btn.disabled = false;
+  }
+}
+
+/* ── Helpers ── */
+function box(lbl, val) {
+  const na = !val || val === "—";
+  return `<div class="info-box"><div class="lbl">${lbl}</div><div class="val${na?" na":""}">${val||"Not provided"}</div></div>`;
+}
+function tags(arr, cls="") {
+  if (!arr || !arr.length) return `<span class="val na">None recorded</span>`;
+  return `<div class="tag-list">${arr.map(t=>`<span class="tag ${cls}">${t}</span>`).join("")}</div>`;
+}
+function fmt(d) { return d ? new Date(d).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "—"; }
+
+function renderRecord(d) {
+  /* Normalise legacy record shape to match new system shape */
+  if (!d.basic && d.consultations !== undefined) {
+    d.visits        = d.consultations;
+    d.medical_history = d.medical_history || {};
+    d.lifestyle     = d.lifestyle || {};
+    d.lab_reports   = d.lab_reports || [];
+    d.prescriptions = (d.prescriptions || []).map(p => ({
+      created_at:  p.created_at,
+      doctor_name: p.doctor_name,
+      medicines:   [{ medicine: p.medicine_name, dosage: p.dosage, quantity: p.quantity, duration: p.duration }]
+    }));
+    d.basic = d.basic || {};
+    d.ai_dataset = {
+      age: d.basic.age, gender: d.basic.gender, blood_group: d.basic.blood_group,
+      total_visits: (d.visits||[]).length,
+      total_prescriptions: (d.prescriptions||[]).length,
+      total_lab_reports: (d.lab_reports||[]).length
+    };
+  }
+  const b  = d.basic        || {};
+  const ls = d.lifestyle    || {};
+  const mh = d.medical_history || {};
+  const ai = d.ai_dataset   || {};
+
+  document.getElementById("heroName").textContent = b.name || "—";
+  document.getElementById("heroPid").textContent  = b.patient_id || "";
+  if (d.face && d.face.image_path)
+    document.getElementById("heroPhoto").innerHTML = `<img src="/uploads/${d.face.image_path}" alt="photo">`;
+  document.getElementById("genDate").textContent = new Date().toLocaleString("en-IN");
+
+  /* 1. Basic */
+  document.getElementById("secBasic").innerHTML =
+    box("Patient ID",   b.patient_id) +
+    box("Full Name",    b.name) +
+    box("Date of Birth",fmt(b.dob)) +
+    box("Age",          b.age ? b.age+" yrs" : null) +
+    box("Gender",       b.gender) +
+    box("Blood Group",  b.blood_group) +
+    box("Mobile",       b.mobile) +
+    box("City",         b.city) +
+    box("State",        b.state) +
+    box("Pincode",      b.pincode) +
+    box("Address",      b.address) +
+    box("Registered",   fmt(b.registered_at));
+
+  /* 2. Medical History */
+  document.getElementById("secMedical").innerHTML = `
+    <div style="margin-bottom:10px;"><div class="lbl" style="font-size:11px;color:#888;margin-bottom:6px;">EXISTING DISEASES</div>${tags(mh.existing_diseases,"red")}</div>
+    <div style="margin-bottom:10px;"><div class="lbl" style="font-size:11px;color:#888;margin-bottom:6px;">SURGERIES</div>${tags(mh.surgeries)}</div>
+    <div style="margin-bottom:10px;"><div class="lbl" style="font-size:11px;color:#888;margin-bottom:6px;">ALLERGIES</div>${tags(mh.allergies,"red")}</div>
+    <div style="margin-bottom:10px;"><div class="lbl" style="font-size:11px;color:#888;margin-bottom:6px;">CURRENT MEDICATIONS</div>${tags(mh.medications)}</div>
+    <div style="margin-bottom:10px;"><div class="lbl" style="font-size:11px;color:#888;margin-bottom:6px;">FAMILY HISTORY</div>${tags(d.family_history)}</div>`;
+
+  /* 3. Lifestyle */
+  document.getElementById("secLifestyle").innerHTML =
+    box("Smoking",           ls.smoking) +
+    box("Alcohol",           ls.alcohol) +
+    box("Physical Activity", ls.physical_activity) +
+    box("Diet Quality",      ls.diet_quality) +
+    box("Sleep Hours",       ls.sleep_hours) +
+    box("Sleep Quality",     ls.sleep_quality) +
+    box("Stress Level",      ls.stress_level) +
+    box("Occupation",        ls.occupation);
+
+  /* 4. Vitals */
+  const vitals = d.vitals || [];
+  document.getElementById("secVitals").innerHTML = vitals.length
+    ? vitals.map(v=>`<div class="visit-row"><b>${fmt(v.recorded_at)}</b> — BP: ${v.bp||"—"}, Pulse: ${v.pulse||"—"}, Temp: ${v.temp||"—"}, SpO2: ${v.spo2||"—"}, Weight: ${v.weight||"—"}</div>`).join("")
+    : `<p style="color:#bbb;font-style:italic;font-size:13px;">No vitals recorded yet.</p>`;
+
+  /* 5. Lab Reports */
+  const labs = d.lab_reports || [];
+  document.getElementById("secLab").innerHTML = labs.length
+    ? labs.map(r=>`<div class="lab-row">
+        <b>${fmt(r.created_at)}</b> — Dr. ${r.doctor_name||"—"}<br>
+        Tests: ${(r.tests||[]).join(", ")||"—"} &nbsp;|&nbsp; Status: ${r.status||"—"}
+        ${r.report_file ? ` &nbsp;|&nbsp; <a href="/uploads/${r.report_file}" target="_blank" style="color:#1565c0;">View Report</a>` : ""}
+      </div>`).join("")
+    : `<p style="color:#bbb;font-style:italic;font-size:13px;">No lab reports found.</p>`;
+
+  /* 6. Doctor Visits */
+  const visits = d.visits || [];
+  document.getElementById("secVisits").innerHTML = visits.length
+    ? visits.map(v=>`<div class="visit-row">
+        <b>${fmt(v.appointment_date)}</b> ${v.appointment_time||""} — Dr. ${v.doctor_name||"—"}<br>
+        Symptoms: ${v.symptoms||"—"} &nbsp;|&nbsp; Status: ${v.status||"—"}
+      </div>`).join("")
+    : `<p style="color:#bbb;font-style:italic;font-size:13px;">No visits recorded.</p>`;
+
+  /* 7. Prescriptions */
+  const rxs = d.prescriptions || [];
+  document.getElementById("secRx").innerHTML = rxs.length
+    ? rxs.map(p=>{
+        const meds = Array.isArray(p.medicines) ? p.medicines : [];
+        return `<div class="rx-row">
+          <b>${fmt(p.created_at)}</b> — Dr. ${p.doctor_name||"—"}<br>
+          ${meds.map(m=>`${m.medicine} (${m.dosage||"—"}, ${m.quantity||"—"} × ${m.duration||"—"})`).join(" | ")||"—"}
+        </div>`;
+      }).join("")
+    : `<p style="color:#bbb;font-style:italic;font-size:13px;">No prescriptions found.</p>`;
+
+  /* 8. AI Dataset */
+  document.getElementById("secAI").innerHTML =
+    `<div class="ai-box"><div class="lbl">Age</div><div class="val">${ai.age||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Gender</div><div class="val">${ai.gender||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Blood Group</div><div class="val">${ai.blood_group||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Smoking</div><div class="val">${ai.smoking||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Alcohol</div><div class="val">${ai.alcohol||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Activity</div><div class="val">${ai.physical_activity||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Diet</div><div class="val">${ai.diet_quality||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Sleep</div><div class="val">${ai.sleep_hours||"—"} hrs</div></div>` +
+    `<div class="ai-box"><div class="lbl">Stress</div><div class="val">${ai.stress_level||"—"}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Total Visits</div><div class="val">${ai.total_visits||0}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Prescriptions</div><div class="val">${ai.total_prescriptions||0}</div></div>` +
+    `<div class="ai-box"><div class="lbl">Lab Reports</div><div class="val">${ai.total_lab_reports||0}</div></div>`;
+
+  document.getElementById("pinScreen").style.display    = "none";
+  document.getElementById("recordScreen").style.display = "block";
+}
+
+/* ── Downloads ── */
+function downloadPDF() {
+  const el = document.getElementById("printArea");
+  html2pdf().set({
+    margin: 8,
+    filename: `Patient_Record_${document.getElementById("heroPid").textContent}.pdf`,
+    image: { type: "jpeg", quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  }).from(el).save();
+}
+
+function downloadWord() {
+  const pid = document.getElementById("heroPid").textContent || "record";
+  window.location.href = BASE + "/api/patient/record-docx/" + pid;
+}
+</script>
+</body>
+</html>

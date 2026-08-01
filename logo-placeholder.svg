@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="16" fill="#1565c0"/>
+  <text x="60" y="52" font-family="Segoe UI,Arial" font-size="28" font-weight="bold"
+        fill="white" text-anchor="middle">A</text>
+  <text x="60" y="74" font-family="Segoe UI,Arial" font-size="10"
+        fill="rgba(255,255,255,0.85)" text-anchor="middle">AARUDHRA</text>
+  <text x="60" y="88" font-family="Segoe UI,Arial" font-size="8"
+        fill="rgba(255,255,255,0.7)" text-anchor="middle">MULTISPECIALITY</text>
+  <!-- Cross symbol -->
+  <rect x="54" y="96" width="12" height="4" rx="2" fill="white"/>
+  <rect x="58" y="92" width="4" height="12" rx="2" fill="white"/>
+</svg>

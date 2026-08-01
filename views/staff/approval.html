@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Staff Approval — Aarudhra Hospital</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+body{background:#f4f8ff;}
+.sidebar{position:fixed;left:0;top:0;width:250px;height:100vh;background:linear-gradient(135deg,#134f8f,#1a6fc4);color:white;padding:25px;overflow-y:auto;}
+.sidebar h2{text-align:center;margin-bottom:8px;font-size:18px;}
+.sidebar .sub{text-align:center;font-size:11px;opacity:.7;margin-bottom:28px;}
+.menu{padding:13px 14px;margin-bottom:10px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,.12);transition:.25s;font-size:14px;}
+.menu:hover{background:rgba(255,255,255,.25);}
+.menu.active{background:white;color:#1565c0;font-weight:700;}
+.main{margin-left:250px;min-height:100vh;}
+.topbar{height:65px;background:white;display:flex;justify-content:space-between;align-items:center;padding:0 30px;box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.topbar h2{color:#0d47a1;font-size:20px;}
+.profile-chip{background:#1565c0;color:white;padding:8px 18px;border-radius:20px;font-weight:600;font-size:13px;}
+.content{padding:30px;}
+.card{background:white;border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:0 5px 18px rgba(0,0,0,.08);}
+.card h2{color:#0d47a1;margin-bottom:20px;font-size:18px;}
+.staff-card{background:#eef5ff;border-left:5px solid #1565c0;border-radius:14px;padding:20px;margin-bottom:16px;cursor:pointer;transition:.2s;}
+.staff-card:hover{background:#dfeeff;transform:translateY(-2px);}
+.staff-card h3{color:#0d47a1;margin-bottom:6px;}
+.staff-card p{font-size:13px;color:#555;margin:3px 0;}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+.badge-pending{background:#fff3e0;color:#e65100;}
+.badge-approved{background:#e8f5e9;color:#2e7d32;}
+.badge-rejected{background:#fde8e8;color:#c0392b;}
+.badge-correction{background:#e3f2fd;color:#1565c0;}
+
+/* Detail sections */
+.section-title{font-size:13px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:.6px;margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid #e3f2fd;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:4px;}
+.info-box{background:#f4f8ff;border-radius:10px;padding:12px 14px;}
+.info-box .lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.info-box .val{font-size:14px;font-weight:600;color:#0d47a1;}
+.info-box .val.empty{color:#bbb;font-weight:400;font-style:italic;}
+
+.qual-item{background:#eef5ff;border-radius:10px;padding:14px;margin-bottom:10px;font-size:13px;}
+.qual-item strong{color:#0d47a1;}
+
+.btn{border:none;border-radius:8px;padding:11px 20px;cursor:pointer;color:white;font-size:14px;font-weight:600;transition:.2s;margin-right:10px;margin-top:8px;}
+.btn:hover{opacity:.9;}
+.btn-approve{background:#2e7d32;}
+.btn-reject{background:#c62828;}
+.btn-correction{background:#1565c0;}
+.btn-back{background:#757575;}
+.btn-qr{background:#6a1b9a;}
+
+.action-box{background:#f9f9f9;border-radius:12px;padding:20px;margin-top:12px;}
+.action-box label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px;margin-top:14px;}
+.action-box label:first-child{margin-top:0;}
+.action-box textarea,.action-box input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;font-size:14px;outline:none;}
+.action-box textarea{resize:vertical;min-height:80px;}
+.action-box textarea:focus,.action-box input:focus{border-color:#1565c0;}
+.pin-hint{font-size:12px;color:#888;margin-top:4px;}
+
+.photo-wrap{width:90px;height:90px;border-radius:50%;border:3px solid #1565c0;overflow:hidden;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;}
+.photo-wrap img{width:100%;height:100%;object-fit:cover;}
+
+.tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:9px 18px;border-radius:10px;cursor:pointer;background:#eef4ff;color:#1565c0;font-weight:600;font-size:13px;border:2px solid transparent;transition:.2s;}
+.tab.active{background:#1565c0;color:white;}
+.empty{text-align:center;color:#aaa;padding:40px;font-size:14px;}
+
+.log-item{font-size:13px;padding:8px 0;border-bottom:1px solid #eee;color:#444;}
+.log-item:last-child{border:none;}
+.log-item b{color:#0d47a1;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>NALAM AI</h2>
+    <div class="sub">Aarudhra Multispeciality Hospital</div>
+    <div class="menu" onclick="location.href='/staff/create.html'">👤 Create Staff</div>
+    <div class="menu active">✅ Staff Approvals</div>
+    <div class="menu" onclick="location.href='/admin'">🏠 Admin Dashboard</div>
+    <div class="menu" onclick="location.href='/login.html'">🚪 Logout</div>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <h2>Staff Document Verification & Approval</h2>
+        <div class="profile-chip">Admin</div>
+    </div>
+    <div class="content">
+
+        <!-- LIST VIEW -->
+        <div id="listView">
+            <div class="card">
+                <h2>Staff Approvals</h2>
+                <div class="tabs">
+                    <div class="tab active" id="tab-pending" onclick="switchTab('pending')">⏳ Pending</div>
+                    <div class="tab" id="tab-all"     onclick="switchTab('all')">📋 All Staff</div>
+                </div>
+                <div id="staffList"><div class="empty">Loading…</div></div>
+            </div>
+        </div>
+
+        <!-- DETAIL VIEW -->
+        <div id="detailView" style="display:none;">
+            <button class="btn btn-back" onclick="backToList()">← Back to List</button>
+            <br><br>
+
+            <!-- Header card -->
+            <div class="card">
+                <div style="display:flex;align-items:center;gap:20px;margin-bottom:6px;">
+                    <div class="photo-wrap" id="staffPhoto"></div>
+                    <div>
+                        <h2 id="detailName" style="margin-bottom:6px;"></h2>
+                        <span id="detailBadge"></span>
+                    </div>
+                </div>
+
+                <!-- Personal Info -->
+                <div class="section-title">Personal Information</div>
+                <div class="info-grid" id="personalInfo"></div>
+
+                <!-- Professional Info -->
+                <div class="section-title">Professional Information</div>
+                <div class="info-grid" id="professionalInfo"></div>
+
+                <!-- Role-specific -->
+                <div id="roleSpecificWrap">
+                    <div class="section-title">Registration & Credentials</div>
+                    <div class="info-grid" id="roleSpecificInfo"></div>
+                </div>
+
+                <!-- Address -->
+                <div class="section-title">Address</div>
+                <div class="info-grid" id="addressInfo"></div>
+            </div>
+
+            <!-- Qualifications -->
+            <div class="card">
+                <h2>Qualifications & Certificates</h2>
+                <div id="detailQuals"></div>
+            </div>
+
+            <!-- Approval Log -->
+            <div class="card" id="logCard">
+                <h2>Approval History</h2>
+                <div id="approvalLog"></div>
+            </div>
+
+            <!-- Action -->
+            <div class="card" id="actionCard">
+                <h2>Admin Action</h2>
+                <div id="actionArea"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const BASE = "http://localhost:5000";
+let currentUserId = null;
+let currentTab    = "pending";
+
+window.onload = () => loadPending();
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-" + tab).classList.add("active");
+    tab === "pending" ? loadPending() : loadAll();
+}
+
+async function loadPending() {
+    try {
+        const res  = await fetch(BASE + "/api/staff/pending-approvals");
+        const data = await res.json();
+        renderList(data);
+    } catch (e) { console.error(e); }
+}
+
+async function loadAll() {
+    try {
+        const res  = await fetch(BASE + "/api/staff/list");
+        const data = await res.json();
+        renderList(data);
+    } catch (e) { console.error(e); }
+}
+
+function renderList(data) {
+    const list = document.getElementById("staffList");
+    if (!data.length) { list.innerHTML = `<div class="empty">No staff found.</div>`; return; }
+    list.innerHTML = data.map(s => `
+        <div class="staff-card" onclick="viewDetail(${s.id})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h3>${s.name}</h3>
+                    <p>📧 ${s.email} &nbsp;|&nbsp; 📱 ${s.mobile || "—"}</p>
+                    <p>🏥 ${s.role} &nbsp;|&nbsp; ${s.department || "—"} &nbsp;|&nbsp; ${s.employee_id || "—"}</p>
+                </div>
+                <span class="badge badge-${badgeClass(s.verification_status || s.profile_status)}">${s.verification_status || s.profile_status || "PENDING"}</span>
+            </div>
+        </div>
+    `).join("");
+}
+
+function badgeClass(status) {
+    if (!status) return "pending";
+    const s = status.toLowerCase();
+    if (s.includes("approved") || s === "verified") return "approved";
+    if (s.includes("reject")) return "rejected";
+    if (s.includes("correction")) return "correction";
+    return "pending";
+}
+
+function infoBox(label, value) {
+    const empty = !value || value === "—";
+    return `<div class="info-box">
+        <div class="lbl">${label}</div>
+        <div class="val${empty ? " empty" : ""}">${value || "Not provided"}</div>
+    </div>`;
+}
+
+async function viewDetail(userId) {
+    currentUserId = userId;
+    try {
+        const res  = await fetch(`${BASE}/api/staff/review/${userId}`);
+        const data = await res.json();
+        const p    = data.profile || {};
+        const quals= data.qualifications || [];
+        const logs = data.approval_log || [];
+
+        document.getElementById("listView").style.display   = "none";
+        document.getElementById("detailView").style.display = "block";
+
+        document.getElementById("detailName").textContent = p.name || "—";
+        document.getElementById("detailBadge").innerHTML  =
+            `<span class="badge badge-${badgeClass(p.verification_status)}">${p.verification_status || p.profile_status || "PENDING"}</span>`;
+
+        /* Photo */
+        document.getElementById("staffPhoto").innerHTML = p.profile_photo
+            ? `<img src="/uploads/${p.profile_photo}" alt="photo">`
+            : "👤";
+
+        /* Personal */
+        document.getElementById("personalInfo").innerHTML =
+            infoBox("Full Name",   p.name) +
+            infoBox("Email",       p.email) +
+            infoBox("Mobile",      p.mobile) +
+            infoBox("Gender",      p.gender) +
+            infoBox("Date of Birth", p.dob ? new Date(p.dob).toLocaleDateString() : null);
+
+        /* Professional */
+        document.getElementById("professionalInfo").innerHTML =
+            infoBox("Role",            p.role) +
+            infoBox("Employee ID",     p.employee_id) +
+            infoBox("Department",      p.department) +
+            infoBox("Specialization",  p.specialization) +
+            infoBox("Years Experience",p.years_experience) +
+            infoBox("Languages Known", p.languages_known) +
+            infoBox("Date of Joining", p.date_of_joining ? new Date(p.date_of_joining).toLocaleDateString() : null);
+
+        /* Role-specific credentials */
+        let roleFields = "";
+        if (p.role === "doctor")
+            roleFields = infoBox("Medical Reg No", p.medical_reg_no) + infoBox("Reg Authority", p.reg_authority);
+        else if (p.role === "nurse")
+            roleFields = infoBox("Nursing Reg No", p.nursing_reg_no) + infoBox("Nursing Reg Authority", p.nursing_reg_auth);
+        else if (p.role === "pharmacist")
+            roleFields = infoBox("Pharmacy Reg No", p.pharmacy_reg_no) + infoBox("Pharmacy Reg Authority", p.pharmacy_reg_auth);
+        else if (p.role === "lab" || p.role === "lab_staff")
+            roleFields = infoBox("Lab Certification", p.lab_certification);
+
+        if (roleFields) {
+            document.getElementById("roleSpecificWrap").style.display = "block";
+            document.getElementById("roleSpecificInfo").innerHTML = roleFields;
+        } else {
+            document.getElementById("roleSpecificWrap").style.display = "none";
+        }
+
+        /* Address */
+        document.getElementById("addressInfo").innerHTML =
+            infoBox("Address",  p.address) +
+            infoBox("City",     p.city) +
+            infoBox("State",    p.state) +
+            infoBox("Pincode",  p.pincode);
+
+        /* Qualifications */
+        document.getElementById("detailQuals").innerHTML = quals.length
+            ? quals.map(q => `
+                <div class="qual-item">
+                    <strong>${q.degree_name}</strong> — ${q.institution || "—"} (${q.year_of_completion || "—"})
+                    &nbsp;|&nbsp; Status: <strong style="color:${q.verification_status==='APPROVED'?'#2e7d32':'#e65100'}">${q.verification_status}</strong>
+                    ${q.certificate_file
+                        ? `&nbsp;|&nbsp; <a href="/uploads/${q.certificate_file}" target="_blank" style="color:#1565c0;font-weight:600;">📄 View Certificate</a>`
+                        : "&nbsp;|&nbsp; ⚠️ No certificate"}
+                </div>
+            `).join("")
+            : `<p style="color:#888;font-size:14px;">No qualifications uploaded.</p>`;
+
+        /* Approval log */
+        document.getElementById("approvalLog").innerHTML = logs.length
+            ? logs.map(l => `
+                <div class="log-item">
+                    <b>${l.action}</b> — ${l.notes || ""}
+                    <span style="float:right;color:#aaa;font-size:12px;">${new Date(l.created_at).toLocaleString()}</span>
+                </div>
+            `).join("")
+            : `<p style="color:#888;font-size:14px;">No history yet.</p>`;
+
+        /* Action area */
+        const isApproved = p.verification_status === "VERIFIED";
+        document.getElementById("actionArea").innerHTML = isApproved
+            ? `<p style="color:#2e7d32;font-weight:600;margin-bottom:12px;">✅ This staff member is already approved.</p>
+               <button class="btn btn-qr" onclick="viewQRCard(${userId})">🪪 View QR Card</button>`
+            : `<div class="action-box">
+                <label>Reason <span style="color:#888;font-weight:400;">(required for Correction / Reject)</span></label>
+                <textarea id="actionReason" placeholder="Enter reason or correction notes…"></textarea>
+
+                <label>Card PIN <span style="color:#888;font-weight:400;">(required for Approve — 4 to 6 digits)</span></label>
+                <input type="number" id="cardPin" placeholder="e.g. 1234" min="1000" max="999999">
+                <div class="pin-hint">This PIN will be given to the staff member. They must enter it when scanning their QR card to view their details.</div>
+               </div>
+               <br>
+               <button class="btn btn-approve"    onclick="doAction('approve')">✅ Approve</button>
+               <button class="btn btn-correction" onclick="doAction('correction')">🔄 Request Correction</button>
+               <button class="btn btn-reject"     onclick="doAction('reject')">❌ Reject</button>`;
+
+    } catch (e) { console.error(e); alert("Failed to load staff details."); }
+}
+
+async function doAction(action) {
+    const reason  = (document.getElementById("actionReason")?.value || "").trim();
+    const cardPin = (document.getElementById("cardPin")?.value || "").trim();
+
+    if ((action === "reject" || action === "correction") && !reason) {
+        alert("Please enter a reason."); return;
+    }
+    if (action === "approve") {
+        if (!cardPin || !/^\d{4,6}$/.test(cardPin)) {
+            alert("Please enter a valid 4–6 digit PIN for the card."); return;
+        }
+    }
+    if (!confirm(`Confirm: ${action} this staff member?`)) return;
+
+    const endpoints = {
+        approve:    `/api/staff/approve/${currentUserId}`,
+        reject:     `/api/staff/reject/${currentUserId}`,
+        correction: `/api/staff/request-correction/${currentUserId}`
+    };
+
+    try {
+        const res  = await fetch(BASE + endpoints[action], {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason, card_pin: cardPin, reviewed_by: null })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (action === "approve") {
+                alert("Staff approved! QR card is ready.");
+                viewQRCard(currentUserId);
+            } else {
+                alert(`Done: ${action}`);
+                backToList();
+            }
+        } else {
+            alert(data.message || "Action failed.");
+        }
+    } catch (e) { alert("Server error."); }
+}
+
+function viewQRCard(userId) {
+    window.open(`/staff/qr-card.html?id=${userId}`, "_blank");
+}
+
+function backToList() {
+    document.getElementById("detailView").style.display = "none";
+    document.getElementById("listView").style.display   = "block";
+    currentTab === "pending" ? loadPending() : loadAll();
+}
+</script>
+</body>
+</html>

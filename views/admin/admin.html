@@ -56,18 +56,6 @@ body{ background:#f4f8ff; }
 .stat-box h1{ color:#1565c0; font-size:32px; }
 .stat-box p{ color:#555; font-size:13px; margin-top:6px; }
 
-/* USER CARDS */
-.user-card{
-    background:#eef5ff; padding:16px; margin-bottom:12px;
-    border-left:5px solid #1565c0; border-radius:12px;
-    cursor:pointer; transition:.3s;
-}
-.user-card:hover{ background:#dfeeff; transform:translateY(-2px); }
-.detail-row{
-    display:grid; grid-template-columns:180px auto;
-    padding:10px 0; border-bottom:1px solid #ddd;
-}
-
 /* BUTTONS */
 .btn{
     padding:10px 18px; border:none; border-radius:8px;
@@ -117,24 +105,166 @@ tr:hover td{ background:#f5f9ff; }
     border:2px solid transparent; transition:.2s;
 }
 .tab.active{ background:#1565c0; color:white; }
+/* ========================
+   STAFF MANAGEMENT
+======================== */
+
+.staff-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.staff-btn{
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+    background:#1565c0;
+    color:white;
+}
+
+.staff-btn:hover{
+    opacity:.9;
+}
+
+.staff-btn.green{
+    background:#2e7d32;
+}
+
+.staff-btn.orange{
+    background:#ef6c00;
+}
+
+.staff-btn.gray{
+    background:#546e7a;
+}
+
+.staff-form{
+    background:#f7faff;
+    padding:20px;
+    border-radius:14px;
+    border:1px solid #dce8f8;
+    margin-bottom:20px;
+}
+
+.staff-form h3{
+    color:#0d47a1;
+    margin-bottom:15px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group label{
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+    color:#333;
+}
+
+.form-group input,
+.form-group select{
+    padding:11px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    outline:none;
+    font-size:14px;
+}
+
+.form-group input:focus,
+.form-group select:focus{
+    border-color:#1565c0;
+}
+
+.staff-message{
+    margin-top:12px;
+    padding:12px;
+    border-radius:8px;
+    display:none;
+}
+
+.staff-message.success{
+    display:block;
+    background:#e8f5e9;
+    color:#2e7d32;
+}
+
+.staff-message.error{
+    display:block;
+    background:#ffebee;
+    color:#c62828;
+}
+
+.staff-card{
+    background:#eef5ff;
+    padding:18px;
+    margin:12px 0;
+    border-radius:12px;
+    border-left:5px solid #1565c0;
+}
+
+.staff-card h3{
+    color:#0d47a1;
+    margin-bottom:8px;
+}
+
+.staff-card p{
+    margin:5px 0;
+    font-size:13px;
+}
+
+.staff-status{
+    display:inline-block;
+    margin-top:8px;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.staff-status.pending{
+    background:#fff3cd;
+    color:#856404;
+}
+
+.staff-status.approved{
+    background:#d4edda;
+    color:#155724;
+}
+
+.staff-status.rejected{
+    background:#f8d7da;
+    color:#721c24;
+}
+
+@media(max-width:800px){
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+}
 </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>NALAM AI</h2>
-    <div class="menu" onclick="showDashboard()">Dashboard</div>
-    <div class="menu" onclick="showProfile()">Admin Profile</div>
-    <div class="menu" onclick="showApproval()">User Approval</div>
-    <div class="menu" onclick="showPurchase()">Purchase Management</div>
-    <div class="menu" onclick="showMaintenance()">Maintenance Management</div>
-    <div class="menu" onclick="location.href='salary.html'">
-    Salary Management
-</div>
-
-<div class="menu" onclick="location.href='revenue.html'">
-    Revenue Analytics
-</div>
+    <div class="menu" onclick="showDashboard()">🏠 Dashboard</div>
+    <div class="menu" onclick="showProfile()">👤 Admin Profile</div>
+    <div class="menu" onclick="showStaffManagement()">👥 Staff Management</div>
+    <div class="menu" onclick="location.href='/staff/approval.html'">📋 Staff Approvals</div>
+    <div class="menu" onclick="location.href='/revenue.html'">📊 Revenue Analytics</div>
 </div>
 
 <div class="main">
@@ -163,19 +293,10 @@ tr:hover td{ background:#f5f9ff; }
             </table>
         </div>
 
-        <!-- USER APPROVAL -->
-        <div id="approvalSection" class="card hidden"></div>
-
+        <!-- STAFF MANAGEMENT -->
+        <div id="staffSection" class="card hidden"></div>
         <!-- PURCHASE -->
-        <div id="purchaseSection" class="card hidden"></div>
-
-        <!-- MAINTENANCE -->
-        <div id="maintenanceSection" class="card hidden"></div>
-        <!-- SALARY -->
-        <div id="salarySection" class="card hidden"></div>
-
-        <!-- REVENUE -->
-        <div id="revenueSection" class="card hidden"></div>
+        
 
     </div>
 </div>
@@ -185,8 +306,20 @@ const BASE = "http://localhost:5000";
 
 /* ---- SECTION HELPERS ---- */
 function hideAll(){
-    ["dashboardSection","profileSection","approvalSection","purchaseSection","maintenanceSection"]
-    .forEach(id => document.getElementById(id).classList.add("hidden"));
+    [
+        "dashboardSection",
+        "profileSection",
+        "staffSection",
+        "purchaseSection",
+        "maintenanceSection",
+        "salarySection",
+        "revenueSection"
+    ].forEach(id => {
+        const element = document.getElementById(id);
+        if(element){
+            element.classList.add("hidden");
+        }
+    });
 }
 function showSection(id){ hideAll(); document.getElementById(id).classList.remove("hidden"); }
 
@@ -200,13 +333,11 @@ function showDashboard(){
 
 async function loadDashStats(){
     try {
-        const [pu, mu, pu2] = await Promise.all([
+        const [pu, mu] = await Promise.all([
             fetch(BASE+"/admin/stats/purchase").then(r=>r.json()),
-            fetch(BASE+"/admin/stats/maintenance").then(r=>r.json()),
-            fetch(BASE+"/admin/pending-users").then(r=>r.json())
+            fetch(BASE+"/admin/stats/maintenance").then(r=>r.json())
         ]);
         document.getElementById("dashStats").innerHTML = `
-            <div class="stat-box"><h1>${pu2.length}</h1><p>Pending User Approvals</p></div>
             <div class="stat-box"><h1>${pu.total_uploads||0}</h1><p>Purchase Uploads</p></div>
             <div class="stat-box"><h1>${pu.total_items||0}</h1><p>Total Items Purchased</p></div>
             <div class="stat-box"><h1>${mu.pending||0}</h1><p>Pending Maintenance</p></div>
@@ -222,65 +353,6 @@ async function loadDashStats(){
    ADMIN PROFILE
 ======================== */
 function showProfile(){ showSection("profileSection"); }
-
-/* ========================
-   USER APPROVAL
-======================== */
-async function showApproval(){
-    showSection("approvalSection");
-    document.getElementById("approvalSection").innerHTML = `
-        <h2>✅ Pending User Approvals</h2><br>
-        <div id="userList">Loading...</div>
-    `;
-    loadPendingUsers();
-}
-
-async function loadPendingUsers(){
-    const res = await fetch(BASE+"/admin/pending-users");
-    const users = await res.json();
-    if(users.length===0){
-        document.getElementById("userList").innerHTML = "<p>No pending users.</p>";
-        return;
-    }
-    document.getElementById("userList").innerHTML = users.map(u=>`
-        <div class="user-card" onclick="viewUser(${u.id})">
-            <h3>${u.name}</h3>
-            <p>Email: ${u.email} &nbsp;|&nbsp; Role: ${u.role}</p>
-        </div>
-    `).join("");
-}
-
-async function viewUser(id){
-    const res = await fetch(BASE+"/admin/user/"+id);
-    const u = await res.json();
-    document.getElementById("approvalSection").innerHTML = `
-        <button class="btn back" onclick="showApproval()">← Back</button>
-        <h2 style="margin-top:16px">User Details</h2><br>
-        <div class="detail-row"><b>Name</b><span>${u.name}</span></div>
-        <div class="detail-row"><b>Email</b><span>${u.email}</span></div>
-        <div class="detail-row"><b>Role</b><span>${u.role}</span></div>
-        <div class="detail-row"><b>Mobile</b><span>${u.mobile||"-"}</span></div>
-        <div class="detail-row"><b>Gender</b><span>${u.gender||"-"}</span></div>
-        <div class="detail-row"><b>Date of Birth</b><span>${u.dob||"-"}</span></div>
-        <div class="detail-row"><b>Address</b><span>${u.address||"-"}</span></div>
-        <br>
-        <button class="btn approve" onclick="approveUser(${u.id})">✔ Approve</button>
-        <button class="btn reject" onclick="rejectUser(${u.id})">✘ Reject</button>
-    `;
-}
-
-async function approveUser(id){
-    const res = await fetch(BASE+"/admin/approve-user/"+id, { method:"POST" });
-    const data = await res.json();
-    if(data.success){ alert("User Approved"); showApproval(); }
-}
-
-async function rejectUser(id){
-    if(!confirm("Reject this user?")) return;
-    const res = await fetch(BASE+"/admin/reject-user/"+id, { method:"POST" });
-    const data = await res.json();
-    if(data.success){ alert("User Rejected"); showApproval(); }
-}
 
 /* ========================
    PURCHASE MANAGEMENT
@@ -563,6 +635,628 @@ function showSalary(){
 function showRevenue(){
     showSection("revenueSection");
     loadRevenueDashboard();
+}
+/* ========================
+   STAFF MANAGEMENT
+======================== */
+
+function showStaffManagement(){
+
+    showSection("staffSection");
+
+    document.getElementById("staffSection").innerHTML = `
+
+        <h2>👥 Staff Management</h2>
+
+        <div class="staff-actions">
+
+            <button class="staff-btn green"
+                onclick="showCreateStaffForm()">
+                ➕ Create Staff
+            </button>
+
+            <button class="staff-btn orange"
+                onclick="loadPendingStaff()">
+                ⏳ Pending Approvals
+            </button>
+
+            <button class="staff-btn gray"
+                onclick="loadAllStaff()">
+                👥 All Staff
+            </button>
+
+        </div>
+
+        <div id="staffContent">
+            <div class="item">
+                <h3>Staff Management</h3>
+                <p>
+                    Create doctors, nurses, lab staff,
+                    pharmacists and receptionists.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+
+/* ========================
+   CREATE STAFF FORM
+======================== */
+
+function showCreateStaffForm(){
+
+    document.getElementById("staffContent").innerHTML = `
+
+        <div class="staff-form">
+
+            <button
+                class="btn back"
+                onclick="showStaffManagement()">
+                ← Back
+            </button>
+
+            <h3 style="margin-top:18px;">
+                Create New Staff Account
+            </h3>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input
+                        type="text"
+                        id="staffName"
+                        placeholder="Enter full name">
+                </div>
+
+                <div class="form-group">
+                    <label>Mobile Number *</label>
+                    <input
+                        type="text"
+                        id="staffMobile"
+                        placeholder="Enter mobile number">
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input
+                        type="email"
+                        id="staffEmail"
+                        placeholder="Enter email">
+                </div>
+
+                <div class="form-group">
+                    <label>Gender *</label>
+                    <select id="staffGender">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Date of Birth *</label>
+                    <input
+                        type="date"
+                        id="staffDob">
+                </div>
+
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="staffRole">
+                        <option value="">Select Role</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="nurse">Nurse</option>
+                        <option value="lab_staff">Lab Staff</option>
+                        <option value="pharmacist">Pharmacist</option>
+                        <option value="receptionist">Receptionist</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Department</label>
+                    <input
+                        type="text"
+                        id="staffDepartment"
+                        placeholder="Example: Cardiology">
+                </div>
+
+                <div class="form-group">
+                    <label>Employee ID</label>
+                    <input
+                        type="text"
+                        id="staffEmployeeId"
+                        placeholder="Example: DR001">
+                </div>
+
+                <div class="form-group">
+                    <label>Date of Joining</label>
+                    <input
+                        type="date"
+                        id="staffJoining">
+                </div>
+
+            </div>
+
+            <br>
+
+            <button
+                class="staff-btn green"
+                onclick="createStaff()">
+                Create Staff Account
+            </button>
+
+            <div id="staffMessage"
+                 class="staff-message">
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* ========================
+   CREATE STAFF API
+======================== */
+
+async function createStaff(){
+
+    const name =
+        document.getElementById("staffName").value.trim();
+
+    const mobile =
+        document.getElementById("staffMobile").value.trim();
+
+    const email =
+        document.getElementById("staffEmail").value.trim();
+
+    const gender =
+        document.getElementById("staffGender").value;
+
+    const dob =
+        document.getElementById("staffDob").value;
+
+    const role =
+        document.getElementById("staffRole").value;
+
+    const department =
+        document.getElementById("staffDepartment").value.trim();
+
+    const employee_id =
+        document.getElementById("staffEmployeeId").value.trim();
+
+    const joining_date =
+        document.getElementById("staffJoining").value;
+
+
+    /* Basic validation */
+
+    if(!name || !mobile || !email || !gender || !dob || !role){
+
+        showStaffMessage(
+            "Please fill all required fields.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const payload = {
+
+        name,
+        mobile,
+        email,
+        gender,
+        dob,
+        role,
+        department,
+        employee_id,
+        joining_date
+
+    };
+
+
+    try{
+
+        const response = await fetch(
+            BASE + "/api/staff/create",
+            {
+                method:"POST",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify(payload)
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if(!response.ok || !data.success){
+
+            showStaffMessage(
+                data.message || "Unable to create staff.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const tempPwd = data.temporaryPassword || "";
+
+        showStaffMessage(
+            `✅ Staff account created!\n\nTemporary Password: ${tempPwd}\n\nShare this with the staff member. They must log in and complete their profile.`,
+            "success"
+        );
+
+        /* Show temp password prominently */
+        const box = document.getElementById("staffMessage");
+        if (box) box.style.whiteSpace = "pre-line";
+
+        /* Clear form after successful creation */
+        ["staffName","staffMobile","staffEmail","staffGender","staffDob",
+         "staffRole","staffDepartment","staffEmployeeId","staffJoining"]
+        .forEach(id => document.getElementById(id).value = "");
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        showStaffMessage(
+            "Server error while creating staff.",
+            "error"
+        );
+
+    }
+}
+
+
+/* ========================
+   STAFF MESSAGE
+======================== */
+
+function showStaffMessage(message,type){
+
+    const box =
+        document.getElementById("staffMessage");
+
+    if(!box) return;
+
+    box.className =
+        "staff-message " + type;
+
+    box.textContent = message;
+
+    box.style.display = "block";
+}
+
+
+/* ========================
+   PENDING STAFF
+======================== */
+
+async function loadPendingStaff(){
+
+    document.getElementById("staffContent").innerHTML =
+        "<p>Loading pending staff...</p>";
+
+    try{
+
+        const response = await fetch(
+            BASE + "/api/staff/pending-approvals"
+        );
+
+        const staff = await response.json();
+
+
+        if(!staff || staff.length === 0){
+
+            document.getElementById("staffContent").innerHTML = `
+                <div class="item">
+                    <h3>No Pending Staff</h3>
+                    <p>There are no staff members waiting for approval.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        document.getElementById("staffContent").innerHTML = `
+
+            <button
+                class="btn back"
+                onclick="showStaffManagement()">
+                ← Back
+            </button>
+
+            <h3 style="margin:20px 0;">
+                Pending Staff Approvals
+            </h3>
+
+            ${staff.map(s => `
+
+                <div class="staff-card">
+
+                    <h3>${s.name || "-"}</h3>
+
+                    <p>
+                        <b>Role:</b>
+                        ${s.role || "-"}
+                    </p>
+
+                    <p>
+                        <b>Email:</b>
+                        ${s.email || "-"}
+                    </p>
+
+                    <p>
+                        <b>Mobile:</b>
+                        ${s.mobile || "-"}
+                    </p>
+
+                    <p>
+                        <b>Department:</b>
+                        ${s.department || "-"}
+                    </p>
+
+                    <span class="staff-status pending">
+                        Pending Approval
+                    </span>
+
+                    <br>
+
+                    <button
+                        class="btn approve"
+                        onclick="approveStaff(${s.id})">
+                        ✔ Approve
+                    </button>
+
+                    <button
+                        class="btn reject"
+                        onclick="rejectStaff(${s.id})">
+                        ✘ Reject
+                    </button>
+
+                </div>
+
+            `).join("")}
+
+        `;
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        document.getElementById("staffContent").innerHTML =
+            "<p>Unable to load pending staff.</p>";
+    }
+}
+
+
+/* ========================
+   ALL STAFF
+======================== */
+
+async function loadAllStaff(){
+
+    document.getElementById("staffContent").innerHTML =
+        "<p>Loading staff...</p>";
+
+    try{
+
+        const response = await fetch(
+            BASE + "/api/staff/list"
+        );
+
+        const staff = await response.json();
+
+
+        if(!staff || staff.length === 0){
+
+            document.getElementById("staffContent").innerHTML = `
+                <div class="item">
+                    <h3>No Staff Found</h3>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        document.getElementById("staffContent").innerHTML = `
+
+            <button
+                class="btn back"
+                onclick="showStaffManagement()">
+                ← Back
+            </button>
+
+            <h3 style="margin:20px 0;">
+                All Staff
+            </h3>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${staff.map(s => `
+
+                        <tr>
+
+                            <td>${s.id || "-"}</td>
+
+                            <td>${s.name || "-"}</td>
+
+                            <td>${s.role || "-"}</td>
+
+                            <td>${s.email || "-"}</td>
+
+                            <td>${s.department || "-"}</td>
+
+                            <td>
+                                <span class="badge ${
+                                    s.status === "APPROVED"
+                                    ? "approved"
+                                    : s.status === "REJECTED"
+                                    ? "rejected"
+                                    : "pending"
+                                }">
+                                    ${s.status || "PENDING"}
+                                </span>
+                            </td>
+
+                        </tr>
+
+                    `).join("")}
+
+                </tbody>
+
+            </table>
+
+        `;
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        document.getElementById("staffContent").innerHTML =
+            "<p>Unable to load staff list.</p>";
+    }
+}
+
+
+/* ========================
+   APPROVE STAFF
+======================== */
+
+async function approveStaff(id){
+
+    if(!confirm("Approve this staff member?"))
+        return;
+
+
+    try{
+
+        const response = await fetch(
+            BASE + "/api/staff/approve/" + id,
+            {
+                method:"PUT"
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if(data.success){
+
+            alert("Staff approved successfully.");
+
+            loadPendingStaff();
+
+        }
+        else{
+
+            alert(
+                data.message ||
+                "Unable to approve staff."
+            );
+
+        }
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert("Server error while approving staff.");
+
+    }
+}
+
+
+/* ========================
+   REJECT STAFF
+======================== */
+
+async function rejectStaff(id){
+
+    const reason =
+        prompt("Enter rejection reason:");
+
+    if(!reason)
+        return;
+
+
+    try{
+
+        const response = await fetch(
+            BASE + "/api/staff/reject/" + id,
+            {
+                method:"PUT",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify({
+                    reason
+                })
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if(data.success){
+
+            alert("Staff rejected.");
+
+            loadPendingStaff();
+
+        }
+        else{
+
+            alert(
+                data.message ||
+                "Unable to reject staff."
+            );
+
+        }
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert("Server error while rejecting staff.");
+
+    }
 }
 /* ---- INIT ---- */
 showDashboard();

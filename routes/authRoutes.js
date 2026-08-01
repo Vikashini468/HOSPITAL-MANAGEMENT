@@ -23,6 +23,15 @@ router.get("/doctor", (req, res) => res.sendFile(path.join(__dirname, "../views/
 router.get("/lab", (req, res) => res.sendFile(path.join(__dirname, "../views/lab/lab.html")));
 router.get("/pharmacy", (req, res) => res.sendFile(path.join(__dirname, "../views/pharmacy/pharmacy.html")));
 router.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "../views/admin/admin.html")));
+router.get("/receptionist", (req, res) => res.sendFile(path.join(__dirname, "../views/receptionist/receptionist.html")));
+/* Staff & Patient Registration pages */
+router.get("/staff/create.html",           (req, res) => res.sendFile(path.join(__dirname, "../views/staff/create.html")));
+router.get("/staff/complete-profile.html", (req, res) => res.sendFile(path.join(__dirname, "../views/staff/complete-profile.html")));
+router.get("/staff/approval.html",         (req, res) => res.sendFile(path.join(__dirname, "../views/staff/approval.html")));
+router.get("/staff/qr-card.html",          (req, res) => res.sendFile(path.join(__dirname, "../views/staff/qr-card.html")));
+router.get("/patient-reg/register.html",   (req, res) => res.sendFile(path.join(__dirname, "../views/patient-reg/register.html")));
+router.get("/patient-reg/health-card.html",(req, res) => res.sendFile(path.join(__dirname, "../views/patient-reg/health-card.html")));
+router.get("/patient-reg/scanner.html",    (req, res) => res.sendFile(path.join(__dirname, "../views/patient-reg/scanner.html")));
 
 // -------------------- REGISTER --------------------
 router.post("/register", upload.any(), async (req, res) => {
@@ -117,15 +126,26 @@ router.post("/login", async (req, res) => {
         const user = result.rows[0];
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.send("Wrong Password");
-        if (user.role !== "patient" && user.role !== "admin" && !user.approved) return res.send("Please wait for approval");
         if (!user.verified) return res.send("Please Verify OTP First");
+
+        /* Staff created by admin — must complete profile first */
+        if (user.profile_status === 'INCOMPLETE' || user.profile_status === 'CORRECTION_REQUIRED') {
+            return res.redirect(`/staff/complete-profile.html?id=${user.id}&status=${user.profile_status}`);
+        }
+
+        /* Staff submitted but not yet approved */
+        if (user.profile_status === 'PENDING_APPROVAL' || user.profile_status === 'SUBMITTED') {
+            return res.send("Your profile is under review. Please wait for admin approval.");
+        }
+
+        if (user.role !== "patient" && user.role !== "admin" && !user.approved) return res.send("Please wait for approval");
 
         if (user.role === "admin") {
             if (user.email !== "admin@nalam.com") return res.send("Access Denied: Not authorized admin");
             return res.redirect(`/admin?username=${encodeURIComponent(user.username)}`);
         }
 
-        const routes = { patient: "/patient", doctor: "/doctor", nurse: "/nurse", lab: "/lab", pharmacist: "/pharmacy" };
+        const routes = { patient: "/patient", doctor: "/doctor", nurse: "/nurse", lab: "/lab", pharmacist: "/pharmacy", receptionist: "/receptionist" };
         return res.redirect(`${routes[user.role]}?id=${user.id}`);
     } catch (err) {
         console.error(err);

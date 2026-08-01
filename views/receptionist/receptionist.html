@@ -5,6 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Receptionist Dashboard — NALAM AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 
@@ -173,6 +175,367 @@ tbody tr:hover { background:#f5f9ff; }
 
 .report-link:hover { text-decoration: underline; }
 
+/* ── PATIENT MANAGEMENT ── */
+.pm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.pm-card {
+    background: #f0f6ff;
+    border: 2px solid #dce8ff;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pm-card:hover {
+    background: #1565c0;
+    border-color: #1565c0;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(21,101,192,0.25);
+}
+
+.pm-card:hover .pm-icon,
+.pm-card:hover .pm-title,
+.pm-card:hover .pm-desc { color: white; }
+
+.pm-icon  { font-size: 40px; margin-bottom: 14px; }
+.pm-title { font-size: 16px; font-weight: 700; color: #0d3b7a; margin-bottom: 6px; }
+.pm-desc  { font-size: 13px; color: #666; line-height: 1.4; }
+
+.pm-sub {
+    background: white;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+    display: none;
+    margin-top: 0;
+}
+
+.pm-sub.active { display: block; }
+
+.pm-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #1565c0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.pm-back:hover { text-decoration: underline; }
+
+/* ── REGISTRATION WIZARD ── */
+
+/* Progress bar */
+.reg-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 0;
+}
+.reg-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e3eaf8;
+    color: #aaa;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #d0d9ee;
+    transition: all 0.3s;
+}
+.step-label {
+    font-size: 11px;
+    color: #aaa;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: color 0.3s;
+}
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: #d0d9ee;
+    min-width: 28px;
+    max-width: 60px;
+    margin-bottom: 22px;
+    transition: background 0.3s;
+}
+.reg-step.active   .step-circle { background: #1565c0; color: white; border-color: #1565c0; }
+.reg-step.active   .step-label  { color: #1565c0; font-weight: 700; }
+.reg-step.done     .step-circle { background: #2e7d32; color: white; border-color: #2e7d32; }
+.reg-step.done     .step-label  { color: #2e7d32; }
+.step-line.done                  { background: #2e7d32; }
+
+/* Panel */
+.reg-panel { display: none; }
+.reg-panel.active { display: block; }
+
+/* Section header */
+.reg-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, #e8f0fe, #f0f6ff);
+    border-left: 4px solid #1565c0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+}
+.reg-section-icon  { font-size: 28px; }
+.reg-section-title { font-size: 16px; font-weight: 700; color: #0d3b7a; }
+.reg-section-sub   { font-size: 12px; color: #666; margin-top: 2px; }
+
+/* Form grid */
+.reg-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+    margin-bottom: 24px;
+}
+.reg-field { display: flex; flex-direction: column; gap: 6px; }
+.reg-field.full-width { grid-column: 1 / -1; }
+
+.reg-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+.req { color: #e53935; }
+
+.reg-input {
+    padding: 11px 14px;
+    border: 1.5px solid #d0d9ee;
+    border-radius: 9px;
+    font-size: 14px;
+    outline: none;
+    background: #fafcff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: "Segoe UI", sans-serif;
+}
+.reg-input:focus {
+    border-color: #1565c0;
+    box-shadow: 0 0 0 3px rgba(21,101,192,0.1);
+    background: white;
+}
+.reg-input.input-error {
+    border-color: #e53935;
+    box-shadow: 0 0 0 3px rgba(229,57,53,0.1);
+}
+.reg-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Age display */
+.age-display {
+    background: #f0f6ff;
+    color: #1565c0;
+    font-weight: 700;
+    cursor: default;
+    border-color: #c5d8f8;
+}
+
+/* Radio pills */
+.radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.radio-pill input { display: none; }
+.radio-pill span {
+    display: inline-block;
+    padding: 9px 18px;
+    border: 1.5px solid #d0d9ee;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    background: #fafcff;
+    transition: all 0.2s;
+    user-select: none;
+}
+.radio-pill input:checked + span {
+    background: #1565c0;
+    border-color: #1565c0;
+    color: white;
+    font-weight: 700;
+}
+.radio-pill span:hover { border-color: #1565c0; color: #1565c0; }
+
+/* Field error */
+.field-err {
+    font-size: 12px;
+    color: #e53935;
+    min-height: 16px;
+}
+
+/* Summary preview */
+.reg-preview {
+    background: #f4f8ff;
+    border: 1px solid #dce8ff;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+.preview-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0d3b7a;
+    margin-bottom: 12px;
+}
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+.preview-item .p-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .4px; }
+.preview-item .p-value { font-size: 14px; font-weight: 600; color: #0d3b7a; margin-top: 2px; }
+
+/* Actions row */
+.reg-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 20px;
+    border-top: 1px solid #eef2ff;
+}
+.reg-btn-next {
+    background: #1565c0;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.reg-btn-next:hover { background: #0d47a1; }
+.reg-btn-back-step {
+    background: #f0f4ff;
+    color: #1565c0;
+    border: 1.5px solid #c5d8f8;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.reg-btn-back-step:hover { background: #dce8ff; }
+
+@media (max-width: 700px) {
+    .reg-form-grid { grid-template-columns: 1fr; }
+    .reg-field.full-width { grid-column: 1; }
+    .step-line { min-width: 14px; }
+}
+
+/* ── HEALTH CARD ── */
+.hcard-wrap {
+    display: none;
+    margin-top: 28px;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.hcard {
+    width: 420px;
+    background: linear-gradient(160deg, #0d3b7a 0%, #1565c0 55%, #1976d2 100%);
+    border-radius: 20px;
+    padding: 28px 28px 24px;
+    color: white;
+    box-shadow: 0 12px 40px rgba(13,59,122,0.35);
+    position: relative;
+    overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+}
+.hcard::before {
+    content: "";
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+}
+.hcard::after {
+    content: "";
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+}
+.hcard-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.hcard-logo {
+    width: 52px; height: 52px;
+    background: white;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.hcard-hosp-name  { font-size: 17px; font-weight: 800; letter-spacing: .3px; }
+.hcard-hosp-sub   { font-size: 11px; opacity: .75; margin-top: 2px; }
+.hcard-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+}
+.hcard-fields { flex: 1; display: flex; flex-direction: column; gap: 13px; }
+.hcard-field-label { font-size: 10px; opacity: .65; text-transform: uppercase; letter-spacing: .5px; }
+.hcard-field-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+.hcard-pid { font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #ffe082; }
+.hcard-qr-wrap {
+    background: white;
+    border-radius: 12px;
+    padding: 8px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.hcard-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    opacity: .7;
+}
+
 </style>
 </head>
 
@@ -197,6 +560,10 @@ tbody tr:hover { background:#f5f9ff; }
 
     <div class="menu" onclick="showSection('patients', this)">
         👥 Patients
+    </div>
+
+    <div class="menu" onclick="showSection('patientMgmt', this)">
+        🏥 Patient Management
     </div>
 
 </div>
@@ -315,6 +682,645 @@ tbody tr:hover { background:#f5f9ff; }
 
     </div>
 
+    <!-- ── PATIENT MANAGEMENT ── -->
+    <div id="patientMgmt" class="section">
+
+        <!-- Dashboard (default view) -->
+        <div id="pm-dashboard">
+            <div class="section-header">
+                <h3>🏥 Patient Management</h3>
+            </div>
+            <div class="pm-grid">
+                <div class="pm-card" onclick="pmShow('pm-create')">
+                    <div class="pm-icon">➕</div>
+                    <div class="pm-title">Create Patient</div>
+                    <div class="pm-desc">Register a new patient with full details and health card</div>
+                </div>
+                <div class="pm-card" onclick="pmShow('pm-list')">
+                    <div class="pm-icon">📋</div>
+                    <div class="pm-title">Patient List</div>
+                    <div class="pm-desc">View all registered patients in the system</div>
+                </div>
+                <div class="pm-card" onclick="pmShow('pm-search')">
+                    <div class="pm-icon">🔍</div>
+                    <div class="pm-title">Search Patient</div>
+                    <div class="pm-desc">Find a patient by name, mobile or Patient ID</div>
+                </div>
+                <div class="pm-card" onclick="pmShow('pm-healthcard')">
+                    <div class="pm-icon">🏥</div>
+                    <div class="pm-title">Generate Health Card</div>
+                    <div class="pm-desc">Generate and print a patient's QR health card</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Patient -->
+        <div id="pm-create" class="pm-sub">
+            <button class="pm-back" onclick="pmBack()">&#8592; Back to Patient Management</button>
+
+            <!-- Progress bar -->
+            <div class="reg-progress">
+                <div class="reg-step active" id="step-dot-1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Basic Info</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="reg-step" id="step-dot-2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Lifestyle</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="reg-step" id="step-dot-3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Family History</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="reg-step" id="step-dot-4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Medical History</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="reg-step" id="step-dot-5">
+                    <div class="step-circle">5</div>
+                    <div class="step-label">Face Capture</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="reg-step" id="step-dot-6">
+                    <div class="step-circle">6</div>
+                    <div class="step-label">Consent</div>
+                </div>
+            </div>
+
+            <!-- Step 1 — Basic Information -->
+            <div id="reg-step-1" class="reg-panel active">
+
+                <div class="reg-section-header">
+                    <div class="reg-section-icon">👤</div>
+                    <div>
+                        <div class="reg-section-title">Basic Information</div>
+                        <div class="reg-section-sub">Enter the patient's personal details</div>
+                    </div>
+                </div>
+
+                <div class="reg-form-grid">
+
+                    <!-- Full Name -->
+                    <div class="reg-field full-width">
+                        <label class="reg-label">Full Name <span class="req">*</span></label>
+                        <input id="reg-name" type="text" class="reg-input"
+                               placeholder="Enter patient's full name"
+                               oninput="this.classList.remove('input-error')">
+                        <div class="field-err" id="err-name"></div>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="reg-field">
+                        <label class="reg-label">Date of Birth <span class="req">*</span></label>
+                        <input id="reg-dob" type="date" class="reg-input"
+                               onchange="calcAge()"
+                               oninput="this.classList.remove('input-error')">
+                        <div class="field-err" id="err-dob"></div>
+                    </div>
+
+                    <!-- Age (auto) -->
+                    <div class="reg-field">
+                        <label class="reg-label">Age</label>
+                        <div class="reg-input age-display" id="reg-age-display">— years</div>
+                        <input id="reg-age" type="hidden">
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="reg-field">
+                        <label class="reg-label">Gender <span class="req">*</span></label>
+                        <div class="radio-group" id="reg-gender">
+                            <label class="radio-pill">
+                                <input type="radio" name="gender" value="Male">
+                                <span>♂ Male</span>
+                            </label>
+                            <label class="radio-pill">
+                                <input type="radio" name="gender" value="Female">
+                                <span>♀ Female</span>
+                            </label>
+                            <label class="radio-pill">
+                                <input type="radio" name="gender" value="Other">
+                                <span>⚧ Other</span>
+                            </label>
+                        </div>
+                        <div class="field-err" id="err-gender"></div>
+                    </div>
+
+                    <!-- Mobile -->
+                    <div class="reg-field">
+                        <label class="reg-label">Mobile Number <span class="req">*</span></label>
+                        <input id="reg-mobile" type="tel" class="reg-input"
+                               placeholder="10-digit mobile number" maxlength="10"
+                               oninput="this.value=this.value.replace(/\D/g,''); this.classList.remove('input-error')">
+                        <div class="field-err" id="err-mobile"></div>
+                    </div>
+
+                    <!-- Blood Group -->
+                    <div class="reg-field">
+                        <label class="reg-label">Blood Group</label>
+                        <select id="reg-blood" class="reg-input">
+                            <option value="">Select blood group</option>
+                            <option>A+</option><option>A-</option>
+                            <option>B+</option><option>B-</option>
+                            <option>AB+</option><option>AB-</option>
+                            <option>O+</option><option>O-</option>
+                        </select>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="reg-field full-width">
+                        <label class="reg-label">Address <span class="req">*</span></label>
+                        <textarea id="reg-address" class="reg-input reg-textarea"
+                                  placeholder="House No., Street, Area"
+                                  oninput="this.classList.remove('input-error')"></textarea>
+                        <div class="field-err" id="err-address"></div>
+                    </div>
+
+                    <!-- City / State / Pincode -->
+                    <div class="reg-field">
+                        <label class="reg-label">City</label>
+                        <input id="reg-city" type="text" class="reg-input" placeholder="City">
+                    </div>
+
+                    <div class="reg-field">
+                        <label class="reg-label">State</label>
+                        <input id="reg-state" type="text" class="reg-input" placeholder="State">
+                    </div>
+
+                    <div class="reg-field">
+                        <label class="reg-label">Pincode</label>
+                        <input id="reg-pincode" type="text" class="reg-input" placeholder="6-digit pincode"
+                               maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+                    </div>
+
+                </div>
+
+                <!-- Summary preview -->
+                <div class="reg-preview" id="basic-preview" style="display:none;">
+                    <div class="preview-title">📋 Summary</div>
+                    <div class="preview-grid" id="basic-preview-grid"></div>
+                </div>
+
+                <div class="reg-actions">
+                    <div></div>
+                    <button class="reg-btn-next" onclick="validateStep1()">Next: Lifestyle →</button>
+                </div>
+
+            </div>
+
+            <!-- Step 2 — Lifestyle Information -->
+            <div id="reg-step-2" class="reg-panel">
+
+                <div class="reg-section-header">
+                    <div class="reg-section-icon">🧠</div>
+                    <div>
+                        <div class="reg-section-title">Lifestyle Information <span style="font-size:11px;font-weight:500;color:#1565c0;background:#e8f0fe;padding:2px 8px;border-radius:10px;margin-left:8px;">AI Dataset</span></div>
+                        <div class="reg-section-sub">Used for disease prediction models — all fields optional</div>
+                    </div>
+                </div>
+
+                <div class="reg-form-grid">
+
+                    <!-- Smoking -->
+                    <div class="reg-field">
+                        <label class="reg-label">🚭 Smoking</label>
+                        <div class="radio-group">
+                            <label class="radio-pill"><input type="radio" name="ls-smoking" value="Never"><span>Never</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-smoking" value="Former"><span>Former</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-smoking" value="Current"><span>Current</span></label>
+                        </div>
+                    </div>
+
+                    <!-- Alcohol -->
+                    <div class="reg-field">
+                        <label class="reg-label">🍷 Alcohol</label>
+                        <div class="radio-group">
+                            <label class="radio-pill"><input type="radio" name="ls-alcohol" value="Never"><span>Never</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-alcohol" value="Occasionally"><span>Occasionally</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-alcohol" value="Weekly"><span>Weekly</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-alcohol" value="Daily"><span>Daily</span></label>
+                        </div>
+                    </div>
+
+                    <!-- Physical Activity -->
+                    <div class="reg-field">
+                        <label class="reg-label">🏋 Physical Activity</label>
+                        <div class="radio-group">
+                            <label class="radio-pill"><input type="radio" name="ls-activity" value="Sedentary"><span>Sedentary</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-activity" value="Light"><span>Light</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-activity" value="Moderate"><span>Moderate</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-activity" value="Active"><span>Active</span></label>
+                        </div>
+                    </div>
+
+                    <!-- Diet Quality -->
+                    <div class="reg-field">
+                        <label class="reg-label">🥗 Diet Quality</label>
+                        <div class="radio-group">
+                            <label class="radio-pill"><input type="radio" name="ls-diet" value="Poor"><span>Poor</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-diet" value="Average"><span>Average</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-diet" value="Good"><span>Good</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-diet" value="Excellent"><span>Excellent</span></label>
+                        </div>
+                    </div>
+
+                    <!-- Sleep Hours -->
+                    <div class="reg-field">
+                        <label class="reg-label">🛌 Sleep Hours</label>
+                        <select id="ls-sleep-hours" class="reg-input">
+                            <option value="">Select sleep duration</option>
+                            <option value="Less than 5">Less than 5 hours</option>
+                            <option value="5-6">5 – 6 hours</option>
+                            <option value="7-8">7 – 8 hours</option>
+                            <option value="More than 8">More than 8 hours</option>
+                        </select>
+                    </div>
+
+                    <!-- Sleep Quality -->
+                    <div class="reg-field">
+                        <label class="reg-label">⭐ Sleep Quality</label>
+                        <div class="radio-group">
+                            <label class="radio-pill"><input type="radio" name="ls-sleep-quality" value="Poor"><span>Poor</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-sleep-quality" value="Average"><span>Average</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-sleep-quality" value="Good"><span>Good</span></label>
+                        </div>
+                    </div>
+
+                    <!-- Stress Level -->
+                    <div class="reg-field">
+                        <label class="reg-label">🧠 Stress Level</label>
+                        <div class="radio-group">
+                            <label class="radio-pill"><input type="radio" name="ls-stress" value="Low"><span>🟢 Low</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-stress" value="Moderate"><span>🟡 Moderate</span></label>
+                            <label class="radio-pill"><input type="radio" name="ls-stress" value="High"><span>🔴 High</span></label>
+                        </div>
+                    </div>
+
+                    <!-- Occupation -->
+                    <div class="reg-field">
+                        <label class="reg-label">💼 Occupation</label>
+                        <input id="ls-occupation" type="text" class="reg-input"
+                               placeholder="e.g. Teacher, Engineer, Farmer">
+                    </div>
+
+                </div>
+
+                <div class="reg-actions">
+                    <button class="reg-btn-back-step" onclick="regGoTo(1)">← Back</button>
+                    <button class="reg-btn-next" onclick="validateStep2()">Next: Family History →</button>
+                </div>
+
+            </div>
+            <!-- Step 3 — Family History -->
+            <div id="reg-step-3" class="reg-panel">
+
+                <div class="reg-section-header">
+                    <div class="reg-section-icon">🧬</div>
+                    <div>
+                        <div class="reg-section-title">Family History <span style="font-size:11px;font-weight:500;color:#1565c0;background:#e8f0fe;padding:2px 8px;border-radius:10px;margin-left:8px;">AI Dataset</span></div>
+                        <div class="reg-section-sub">Select any conditions that run in the patient's family — all optional</div>
+                    </div>
+                </div>
+
+                <div class="reg-form-grid">
+                    <div class="reg-field full-width">
+                        <label class="reg-label">Known Family Conditions</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                                <input type="checkbox" id="fh-diabetes" style="width:16px;height:16px;accent-color:#1565c0;"> Diabetes
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                                <input type="checkbox" id="fh-hypertension" style="width:16px;height:16px;accent-color:#1565c0;"> Hypertension
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                                <input type="checkbox" id="fh-heart" style="width:16px;height:16px;accent-color:#1565c0;"> Heart Disease
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                                <input type="checkbox" id="fh-stroke" style="width:16px;height:16px;accent-color:#1565c0;"> Stroke
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                                <input type="checkbox" id="fh-kidney" style="width:16px;height:16px;accent-color:#1565c0;"> Kidney Disease
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reg-actions">
+                    <button class="reg-btn-back-step" onclick="regGoTo(2)">← Back</button>
+                    <button class="reg-btn-next" onclick="validateStep3()">Next: Medical History →</button>
+                </div>
+
+            </div>
+
+            <!-- Step 4 — Medical History -->
+            <div id="reg-step-4" class="reg-panel">
+
+                <div class="reg-section-header">
+                    <div class="reg-section-icon">🏥</div>
+                    <div>
+                        <div class="reg-section-title">Medical History</div>
+                        <div class="reg-section-sub">Current and past medical information — all optional</div>
+                    </div>
+                </div>
+
+                <div class="reg-form-grid">
+
+                    <!-- Existing Diseases -->
+                    <div class="reg-field">
+                        <label class="reg-label">Existing Diseases</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-diabetes" style="width:15px;height:15px;accent-color:#1565c0;"> Diabetes
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-hypertension" style="width:15px;height:15px;accent-color:#1565c0;"> Hypertension
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-asthma" style="width:15px;height:15px;accent-color:#1565c0;"> Asthma
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-thyroid" style="width:15px;height:15px;accent-color:#1565c0;"> Thyroid
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-heart" style="width:15px;height:15px;accent-color:#1565c0;"> Heart Disease
+                            </label>
+                        </div>
+                        <textarea id="mh-diseases-other" class="reg-input reg-textarea" style="min-height:60px;"
+                                  placeholder="Other existing diseases (optional)"></textarea>
+                    </div>
+
+                    <!-- Previous Surgeries -->
+                    <div class="reg-field">
+                        <label class="reg-label">Previous Surgeries</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-appendix" style="width:15px;height:15px;accent-color:#1565c0;"> Appendectomy
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-gallbladder" style="width:15px;height:15px;accent-color:#1565c0;"> Gallbladder
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-cardiac" style="width:15px;height:15px;accent-color:#1565c0;"> Cardiac
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-ortho" style="width:15px;height:15px;accent-color:#1565c0;"> Orthopaedic
+                            </label>
+                        </div>
+                        <textarea id="mh-surgeries-other" class="reg-input reg-textarea" style="min-height:60px;"
+                                  placeholder="Other surgeries with approximate year (optional)"></textarea>
+                    </div>
+
+                    <!-- Allergies -->
+                    <div class="reg-field">
+                        <label class="reg-label">Allergies</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-allergy-penicillin" style="width:15px;height:15px;accent-color:#1565c0;"> Penicillin
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-allergy-sulfa" style="width:15px;height:15px;accent-color:#1565c0;"> Sulfa drugs
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-allergy-aspirin" style="width:15px;height:15px;accent-color:#1565c0;"> Aspirin
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-allergy-dust" style="width:15px;height:15px;accent-color:#1565c0;"> Dust
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-allergy-pollen" style="width:15px;height:15px;accent-color:#1565c0;"> Pollen
+                            </label>
+                        </div>
+                        <textarea id="mh-allergies-other" class="reg-input reg-textarea" style="min-height:60px;"
+                                  placeholder="Other allergies (food, drug, environmental)"></textarea>
+                    </div>
+
+                    <!-- Current Medications -->
+                    <div class="reg-field">
+                        <label class="reg-label">Current Medications</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-med-insulin" style="width:15px;height:15px;accent-color:#1565c0;"> Insulin
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-med-bp" style="width:15px;height:15px;accent-color:#1565c0;"> BP medication
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-med-thyroid" style="width:15px;height:15px;accent-color:#1565c0;"> Thyroid medication
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="mh-med-anticoag" style="width:15px;height:15px;accent-color:#1565c0;"> Anticoagulants
+                            </label>
+                        </div>
+                        <textarea id="mh-medications-other" class="reg-input reg-textarea" style="min-height:60px;"
+                                  placeholder="Other current medications with dosage (optional)"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="reg-actions">
+                    <button class="reg-btn-back-step" onclick="regGoTo(3)">← Back</button>
+                    <button class="reg-btn-next" onclick="validateStep4()">Next: Face Capture →</button>
+                </div>
+
+            </div>
+            <!-- Step 5 — Face Capture -->
+            <div id="reg-step-5" class="reg-panel">
+
+                <div class="reg-section-header">
+                    <div class="reg-section-icon">📷</div>
+                    <div>
+                        <div class="reg-section-title">Face Capture</div>
+                        <div class="reg-section-sub">Position the patient's face in the frame and capture a clear photo</div>
+                    </div>
+                </div>
+
+                <!-- Camera area -->
+                <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+
+                    <!-- Live feed -->
+                    <div id="cam-feed-wrap" style="position:relative;width:360px;height:270px;background:#0d1b2a;border-radius:16px;overflow:hidden;border:3px solid #1565c0;">
+                        <video id="cam-video" autoplay playsinline muted
+                               style="width:100%;height:100%;object-fit:cover;"></video>
+                        <!-- guide overlay -->
+                        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                            <div style="width:180px;height:220px;border:2px dashed rgba(255,255,255,0.4);border-radius:50%;opacity:0.6;"></div>
+                        </div>
+                        <div id="cam-status-badge" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.55);color:white;font-size:12px;padding:4px 14px;border-radius:20px;white-space:nowrap;">Camera starting…</div>
+                    </div>
+
+                    <!-- Hidden canvas for capture -->
+                    <canvas id="cam-canvas" width="360" height="270" style="display:none;"></canvas>
+
+                    <!-- Preview after capture -->
+                    <div id="cam-preview-wrap" style="display:none;flex-direction:column;align-items:center;gap:10px;">
+                        <img id="cam-preview-img" style="width:360px;height:270px;object-fit:cover;border-radius:16px;border:3px solid #2e7d32;" alt="Captured face">
+                        <span style="font-size:13px;color:#2e7d32;font-weight:600;">✅ Photo captured</span>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div style="display:flex;gap:14px;">
+                        <button id="cam-btn-capture" class="reg-btn-next" onclick="camCapture()" style="display:none;">📸 Capture Photo</button>
+                        <button id="cam-btn-retake"  class="reg-btn-back-step" onclick="camRetake()"  style="display:none;">🔄 Retake</button>
+                    </div>
+
+                    <div id="cam-err" style="font-size:13px;color:#e53935;min-height:18px;"></div>
+
+                </div>
+
+                <div class="reg-actions">
+                    <button class="reg-btn-back-step" onclick="camStop(); regGoTo(4);">← Back</button>
+                    <button class="reg-btn-next" id="cam-btn-next" onclick="validateStep5()" disabled
+                            style="opacity:0.45;cursor:not-allowed;">Next: Consent →</button>
+                </div>
+
+            </div>
+            <!-- Step 6 — Consent -->
+            <div id="reg-step-6" class="reg-panel">
+
+                <div class="reg-section-header">
+                    <div class="reg-section-icon">📋</div>
+                    <div>
+                        <div class="reg-section-title">Patient Consent</div>
+                        <div class="reg-section-sub">Read and confirm the consent statement to complete registration</div>
+                    </div>
+                </div>
+
+                <!-- Consent card -->
+                <div style="background:#f4f8ff;border:1.5px solid #c5d8f8;border-radius:14px;padding:28px 32px;margin-bottom:28px;">
+                    <div style="font-size:13px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;">📄 Consent Statement</div>
+                    <p style="font-size:15px;color:#1a1a2e;line-height:1.8;font-style:italic;">
+                        &ldquo;I voluntarily consent to this hospital storing my medical records securely and using anonymized health data for AI disease prediction.&rdquo;
+                    </p>
+                </div>
+
+                <!-- Mandatory checkbox -->
+                <label id="consent-label" style="display:flex;align-items:flex-start;gap:14px;cursor:pointer;padding:18px 20px;border:1.5px solid #d0d9ee;border-radius:12px;background:#fafcff;transition:border-color 0.2s;">
+                    <input type="checkbox" id="consent-checkbox"
+                           style="width:20px;height:20px;margin-top:2px;accent-color:#1565c0;flex-shrink:0;"
+                           onchange="onConsentChange()">
+                    <span style="font-size:14px;color:#333;line-height:1.6;">
+                        I have read the above statement and confirm that the patient has given their voluntary consent.
+                        <span style="color:#e53935;font-weight:700;"> *</span>
+                    </span>
+                </label>
+                <div id="err-consent" style="font-size:12px;color:#e53935;min-height:18px;margin-top:6px;margin-left:4px;"></div>
+
+                <div class="reg-actions">
+                    <button class="reg-btn-back-step" onclick="regGoTo(5)">← Back</button>
+                    <button class="reg-btn-next" id="consent-submit-btn" onclick="submitConsent()"
+                            disabled style="opacity:0.45;cursor:not-allowed;">
+                        ✅ Complete Registration
+                    </button>
+                </div>
+
+                <!-- Success + Health Card (hidden until consent saved) -->
+                <div id="reg-success-card" style="display:none;margin-top:28px;">
+
+                    <!-- Confirmation banner -->
+                    <div style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1.5px solid #a5d6a7;border-radius:16px;padding:24px 28px;text-align:center;margin-bottom:24px;">
+                        <div style="font-size:40px;margin-bottom:8px;">🎉</div>
+                        <div style="font-size:18px;font-weight:700;color:#2e7d32;margin-bottom:4px;">Registration Complete!</div>
+                        <div style="font-size:13px;color:#555;">Health card generated successfully.</div>
+                    </div>
+
+                    <!-- Health Card -->
+                    <div class="hcard-wrap" id="hcard-wrap">
+                        <div class="hcard" id="health-card">
+
+                            <!-- Header: logo + hospital -->
+                            <div class="hcard-header">
+                                <div class="hcard-logo">🏥</div>
+                                <div>
+                                    <div class="hcard-hosp-name">NALAM General Hospital</div>
+                                    <div class="hcard-hosp-sub">Advanced Healthcare &amp; AI Diagnostics</div>
+                                </div>
+                            </div>
+
+                            <!-- Body: fields + QR -->
+                            <div class="hcard-body">
+                                <div class="hcard-fields">
+                                    <div>
+                                        <div class="hcard-field-label">Patient Name</div>
+                                        <div class="hcard-field-value" id="hc-name"></div>
+                                    </div>
+                                    <div>
+                                        <div class="hcard-field-label">Patient ID</div>
+                                        <div class="hcard-field-value hcard-pid" id="hc-pid"></div>
+                                    </div>
+                                    <div style="display:flex;gap:28px;">
+                                        <div>
+                                            <div class="hcard-field-label">Blood Group</div>
+                                            <div class="hcard-field-value" id="hc-blood"></div>
+                                        </div>
+                                        <div>
+                                            <div class="hcard-field-label">Gender</div>
+                                            <div class="hcard-field-value" id="hc-gender"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- QR Code -->
+                                <div class="hcard-qr-wrap">
+                                    <div id="hc-qr" style="width:100px;height:100px;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Footer: issue date -->
+                            <div class="hcard-footer">
+                                <span>NALAM AI Health System</span>
+                                <span>Issued: <span id="hc-date"></span></span>
+                            </div>
+
+                        </div>
+
+                        <!-- One-time PIN notice -->
+                        <div id="hc-pin-notice" style="width:420px;background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:16px 20px;">
+                            <div style="font-size:11px;font-weight:700;color:#f57f17;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">&#128274; Patient PIN &mdash; Show Once Only</div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                                <div style="font-size:30px;font-weight:800;color:#0d3b7a;letter-spacing:8px;" id="hc-pin"></div>
+                                <div style="font-size:11px;color:#888;line-height:1.5;">Give this PIN to the patient.<br>It will not be shown again.</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div style="display:flex;gap:14px;">
+                            <button class="reg-btn-next" onclick="downloadHealthCard()" style="background:#0d47a1;">⬇ Download PDF</button>
+                            <button class="reg-btn-next" onclick="regReset()" style="background:#2e7d32;">+ Register Another Patient</button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Patient List -->
+        <div id="pm-list" class="pm-sub">
+            <button class="pm-back" onclick="pmBack()">&#8592; Back to Patient Management</button>
+            <div class="section-header"><h3>💻 Patient List</h3></div>
+            <div class="empty" style="padding:60px 0;">📊 Patient list coming soon.</div>
+        </div>
+
+        <!-- Search Patient -->
+        <div id="pm-search" class="pm-sub">
+            <button class="pm-back" onclick="pmBack()">&#8592; Back to Patient Management</button>
+            <div class="section-header"><h3>🔍 Search Patient</h3></div>
+            <div class="empty" style="padding:60px 0;">🔍 Search functionality coming soon.</div>
+        </div>
+
+        <!-- Generate Health Card -->
+        <div id="pm-healthcard" class="pm-sub">
+            <button class="pm-back" onclick="pmBack()">&#8592; Back to Patient Management</button>
+            <div class="section-header"><h3>🏥 Generate Health Card</h3></div>
+            <div class="empty" style="padding:60px 0;">🏥 Health card generator coming soon.</div>
+        </div>
+
+    </div>
+
 </div>
 
 <script>
@@ -346,6 +1352,7 @@ function showSection(id, el) {
     if (id === "labWaiting")   loadLabWaiting();
     if (id === "labCompleted") loadLabCompleted();
     if (id === "patients")     loadPatients();
+    if (id === "patientMgmt")  pmBack();
 }
 
 /* ── INIT ── */
@@ -405,8 +1412,485 @@ function filterTable(tableId, query) {
 }
 
 /* =====================================================
-   APPOINTMENTS
+   PATIENT MANAGEMENT — sub-section routing
 ===================================================== */
+function pmShow(id) {
+    document.getElementById("pm-dashboard").style.display = "none";
+    document.querySelectorAll(".pm-sub").forEach(el => el.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
+
+function pmBack() {
+    document.querySelectorAll(".pm-sub").forEach(el => el.classList.remove("active"));
+    document.getElementById("pm-dashboard").style.display = "block";
+}
+
+/* =====================================================
+   REGISTRATION WIZARD
+===================================================== */
+let regCurrentStep = 1;
+const REG_TOTAL    = 6;
+
+/* Collected data across steps */
+const regData = {};
+
+/* — Step navigation — */
+function regGoTo(step) {
+    /* Hide current panel */
+    document.getElementById(`reg-step-${regCurrentStep}`).classList.remove("active");
+
+    /* Mark old step done, new step active */
+    const oldDot = document.getElementById(`step-dot-${regCurrentStep}`);
+    oldDot.classList.remove("active");
+    if (step > regCurrentStep) oldDot.classList.add("done");
+
+    /* Colour the connecting line */
+    const lines = document.querySelectorAll(".step-line");
+    lines.forEach((l, i) => {
+        if (i < step - 1) l.classList.add("done"); else l.classList.remove("done");
+    });
+
+    regCurrentStep = step;
+    document.getElementById(`step-dot-${step}`).classList.add("active");
+    document.getElementById(`step-dot-${step}`).classList.remove("done");
+    document.getElementById(`reg-step-${step}`).classList.add("active");
+
+    /* Scroll wizard into view */
+    document.getElementById("pm-create").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* — Age calculator — */
+function calcAge() {
+    const dob = document.getElementById("reg-dob").value;
+    if (!dob) return;
+    const today = new Date();
+    const birth = new Date(dob);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    if (age < 0 || age > 130) {
+        document.getElementById("reg-age-display").textContent = "Invalid date";
+        document.getElementById("reg-age").value = "";
+        return;
+    }
+    document.getElementById("reg-age-display").textContent = age + " years";
+    document.getElementById("reg-age").value = age;
+    document.getElementById("reg-dob").classList.remove("input-error");
+    document.getElementById("err-dob").textContent = "";
+}
+
+/* — Step 1 validation — */
+function validateStep1() {
+    let ok = true;
+
+    const name    = document.getElementById("reg-name").value.trim();
+    const dob     = document.getElementById("reg-dob").value;
+    const age     = document.getElementById("reg-age").value;
+    const mobile  = document.getElementById("reg-mobile").value.trim();
+    const address = document.getElementById("reg-address").value.trim();
+    const gender  = document.querySelector('input[name="gender"]:checked')?.value || "";
+
+    /* Name */
+    if (!name) {
+        document.getElementById("reg-name").classList.add("input-error");
+        document.getElementById("err-name").textContent = "Full name is required.";
+        ok = false;
+    } else { document.getElementById("err-name").textContent = ""; }
+
+    /* DOB */
+    if (!dob || !age) {
+        document.getElementById("reg-dob").classList.add("input-error");
+        document.getElementById("err-dob").textContent = "Valid date of birth is required.";
+        ok = false;
+    } else { document.getElementById("err-dob").textContent = ""; }
+
+    /* Gender */
+    if (!gender) {
+        document.getElementById("err-gender").textContent = "Please select a gender.";
+        ok = false;
+    } else { document.getElementById("err-gender").textContent = ""; }
+
+    /* Mobile */
+    if (!mobile || mobile.length !== 10) {
+        document.getElementById("reg-mobile").classList.add("input-error");
+        document.getElementById("err-mobile").textContent = "Enter a valid 10-digit mobile number.";
+        ok = false;
+    } else { document.getElementById("err-mobile").textContent = ""; }
+
+    /* Address */
+    if (!address) {
+        document.getElementById("reg-address").classList.add("input-error");
+        document.getElementById("err-address").textContent = "Address is required.";
+        ok = false;
+    } else { document.getElementById("err-address").textContent = ""; }
+
+    if (!ok) return;
+
+    /* Save to regData */
+    regData.name     = name;
+    regData.dob      = dob;
+    regData.age      = age;
+    regData.gender   = gender;
+    regData.mobile   = mobile;
+    regData.blood    = document.getElementById("reg-blood").value;
+    regData.address  = address;
+    regData.city     = document.getElementById("reg-city").value.trim();
+    regData.state    = document.getElementById("reg-state").value.trim();
+    regData.pincode  = document.getElementById("reg-pincode").value.trim();
+
+    /* Show summary preview */
+    const items = [
+        ["Full Name",   regData.name],
+        ["Date of Birth", new Date(regData.dob).toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"})],
+        ["Age",         regData.age + " years"],
+        ["Gender",      regData.gender],
+        ["Mobile",      regData.mobile],
+        ["Blood Group", regData.blood || "—"],
+        ["Address",     [regData.address, regData.city, regData.state, regData.pincode].filter(Boolean).join(", ")]
+    ];
+    document.getElementById("basic-preview-grid").innerHTML =
+        items.map(([l, v]) =>
+            `<div class="preview-item">
+                <div class="p-label">${l}</div>
+                <div class="p-value">${v}</div>
+            </div>`
+        ).join("");
+    document.getElementById("basic-preview").style.display = "block";
+
+    /* Advance to step 2 */
+    regGoTo(2);
+}
+
+/* — Step 3 validation — */
+function validateStep3() {
+    const checked = id => document.getElementById(id).checked;
+    regData.familyHistory = [
+        checked('fh-diabetes')     ? 'Diabetes'      : null,
+        checked('fh-hypertension') ? 'Hypertension'  : null,
+        checked('fh-heart')        ? 'Heart Disease'  : null,
+        checked('fh-stroke')       ? 'Stroke'         : null,
+        checked('fh-kidney')       ? 'Kidney Disease' : null,
+    ].filter(Boolean);
+    regGoTo(4);
+}
+
+/* — Step 4 validation — */
+function validateStep4() {
+    const checked = id => document.getElementById(id).checked;
+    const val     = id => document.getElementById(id).value.trim();
+
+    regData.existingDiseases = [
+        checked('mh-diabetes')    ? 'Diabetes'      : null,
+        checked('mh-hypertension')? 'Hypertension'  : null,
+        checked('mh-asthma')      ? 'Asthma'        : null,
+        checked('mh-thyroid')     ? 'Thyroid'       : null,
+        checked('mh-heart')       ? 'Heart Disease' : null,
+    ].filter(Boolean);
+    regData.existingDiseasesOther = val('mh-diseases-other');
+
+    regData.surgeries = [
+        checked('mh-appendix')    ? 'Appendectomy'  : null,
+        checked('mh-gallbladder') ? 'Gallbladder'   : null,
+        checked('mh-cardiac')     ? 'Cardiac'       : null,
+        checked('mh-ortho')       ? 'Orthopaedic'   : null,
+    ].filter(Boolean);
+    regData.surgeriesOther = val('mh-surgeries-other');
+
+    regData.allergies = [
+        checked('mh-allergy-penicillin') ? 'Penicillin'  : null,
+        checked('mh-allergy-sulfa')      ? 'Sulfa drugs' : null,
+        checked('mh-allergy-aspirin')    ? 'Aspirin'     : null,
+        checked('mh-allergy-dust')       ? 'Dust'        : null,
+        checked('mh-allergy-pollen')     ? 'Pollen'      : null,
+    ].filter(Boolean);
+    regData.allergiesOther = val('mh-allergies-other');
+
+    regData.medications = [
+        checked('mh-med-insulin')   ? 'Insulin'             : null,
+        checked('mh-med-bp')        ? 'BP medication'       : null,
+        checked('mh-med-thyroid')   ? 'Thyroid medication'  : null,
+        checked('mh-med-anticoag')  ? 'Anticoagulants'      : null,
+    ].filter(Boolean);
+    regData.medicationsOther = val('mh-medications-other');
+
+    regGoTo(5);
+}
+
+/* — Step 2 validation — */
+function validateStep2() {
+    /* All lifestyle fields are optional — just collect and advance */
+    regData.smoking      = document.querySelector('input[name="ls-smoking"]:checked')?.value   || "";
+    regData.alcohol      = document.querySelector('input[name="ls-alcohol"]:checked')?.value   || "";
+    regData.activity     = document.querySelector('input[name="ls-activity"]:checked')?.value  || "";
+    regData.diet         = document.querySelector('input[name="ls-diet"]:checked')?.value      || "";
+    regData.sleepHours   = document.getElementById("ls-sleep-hours").value;
+    regData.sleepQuality = document.querySelector('input[name="ls-sleep-quality"]:checked')?.value || "";
+    regData.stress       = document.querySelector('input[name="ls-stress"]:checked')?.value    || "";
+    regData.occupation   = document.getElementById("ls-occupation").value.trim();
+
+    regGoTo(3);
+}
+
+
+/* =====================================================
+   STEP 5 — FACE CAPTURE
+===================================================== */
+let camStream   = null;   /* active MediaStream */
+let camBlob     = null;   /* captured image Blob */
+
+/* Called by regGoTo(5) indirectly — start camera when step 5 becomes active */
+const _origRegGoTo = regGoTo;
+regGoTo = function(step) {
+    _origRegGoTo(step);
+    if (step === 5) camStart();
+    else            camStop();
+};
+
+async function camStart() {
+    camBlob = null;
+    document.getElementById("cam-feed-wrap").style.display    = "block";
+    document.getElementById("cam-preview-wrap").style.display = "none";
+    document.getElementById("cam-btn-retake").style.display   = "none";
+    document.getElementById("cam-err").textContent            = "";
+    setCamNextEnabled(false);
+
+    try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: { width:360, height:270, facingMode:"user" }, audio:false });
+        const video = document.getElementById("cam-video");
+        video.srcObject = camStream;
+        await video.play();
+        document.getElementById("cam-status-badge").textContent = "Camera ready — position face in the oval";
+        document.getElementById("cam-btn-capture").style.display = "inline-flex";
+    } catch (e) {
+        document.getElementById("cam-status-badge").textContent = "Camera unavailable";
+        document.getElementById("cam-err").textContent = "Could not access webcam. Please allow camera permission and try again.";
+    }
+}
+
+function camStop() {
+    if (camStream) {
+        camStream.getTracks().forEach(t => t.stop());
+        camStream = null;
+    }
+    document.getElementById("cam-btn-capture").style.display = "none";
+}
+
+function camCapture() {
+    const video  = document.getElementById("cam-video");
+    const canvas = document.getElementById("cam-canvas");
+    const ctx    = canvas.getContext("2d");
+
+    /* Mirror-flip so the preview looks natural */
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    canvas.toBlob(blob => {
+        camBlob = blob;
+
+        /* Show preview */
+        const url = URL.createObjectURL(blob);
+        document.getElementById("cam-preview-img").src        = url;
+        document.getElementById("cam-preview-wrap").style.display = "flex";
+        document.getElementById("cam-feed-wrap").style.display    = "none";
+        document.getElementById("cam-btn-capture").style.display  = "none";
+        document.getElementById("cam-btn-retake").style.display   = "inline-flex";
+        setCamNextEnabled(true);
+        camStop();
+    }, "image/jpeg", 0.92);
+}
+
+function camRetake() {
+    camBlob = null;
+    document.getElementById("cam-preview-wrap").style.display = "none";
+    document.getElementById("cam-btn-retake").style.display   = "none";
+    setCamNextEnabled(false);
+    camStart();
+}
+
+function setCamNextEnabled(on) {
+    const btn = document.getElementById("cam-btn-next");
+    btn.disabled = !on;
+    btn.style.opacity = on ? "1" : "0.45";
+    btn.style.cursor  = on ? "pointer" : "not-allowed";
+}
+
+async function validateStep5() {
+    if (!camBlob) {
+        document.getElementById("cam-err").textContent = "Please capture a photo before continuing.";
+        return;
+    }
+
+    const btn = document.getElementById("cam-btn-next");
+    btn.textContent = "Saving\u2026";
+    btn.disabled = true;
+
+    try {
+        /* ── Step 1: Register patient (steps 1-4 data) ── */
+        const regRes = await fetch(BASE + "/api/patient/register", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name:        regData.name,
+                dob:         regData.dob,
+                age:         regData.age,
+                gender:      regData.gender,
+                mobile:      regData.mobile,
+                blood_group: regData.blood,
+                address:     regData.address,
+                city:        regData.city,
+                state:       regData.state,
+                pincode:     regData.pincode,
+                smoking:     regData.smoking,
+                alcohol:     regData.alcohol,
+                activity:    regData.activity,
+                diet:        regData.diet,
+                sleepHours:  regData.sleepHours,
+                sleepQuality:regData.sleepQuality,
+                stress:      regData.stress,
+                occupation:  regData.occupation,
+                familyHistory:          JSON.stringify(regData.familyHistory   || []),
+                existingDiseases:       JSON.stringify(regData.existingDiseases || []),
+                existingDiseasesOther:  regData.existingDiseasesOther || "",
+                surgeries:              JSON.stringify(regData.surgeries        || []),
+                surgeriesOther:         regData.surgeriesOther        || "",
+                allergies:              JSON.stringify(regData.allergies        || []),
+                allergiesOther:         regData.allergiesOther        || "",
+                medications:            JSON.stringify(regData.medications      || []),
+                medicationsOther:       regData.medicationsOther      || ""
+            })
+        });
+
+        const regJson = await regRes.json();
+        if (!regJson.success) {
+            document.getElementById("cam-err").textContent = regJson.message || "Registration failed.";
+            btn.textContent = "Next: Consent \u2192";
+            btn.disabled = false;
+            return;
+        }
+
+        regData.patient_id = regJson.patient_id;
+        regData.pin        = regJson.pin;
+
+        /* ── Step 2: Upload face image ── */
+        const fd = new FormData();
+        fd.append("patient_id", regData.patient_id);
+        fd.append("face_image",  camBlob, "face.jpg");
+
+        const faceRes  = await fetch(BASE + "/api/patient/save-face", { method: "POST", body: fd });
+        const faceJson = await faceRes.json();
+        if (!faceJson.success) {
+            document.getElementById("cam-err").textContent = "Face save failed: " + faceJson.message;
+            btn.textContent = "Next: Consent \u2192";
+            btn.disabled = false;
+            return;
+        }
+
+        camStop();
+        regGoTo(6);
+
+    } catch (err) {
+        document.getElementById("cam-err").textContent = "Network error: " + err.message;
+        btn.textContent = "Next: Consent \u2192";
+        btn.disabled = false;
+    }
+}
+
+
+/* =====================================================
+   STEP 6 — CONSENT
+===================================================== */
+function onConsentChange() {
+    const checked = document.getElementById("consent-checkbox").checked;
+    const btn     = document.getElementById("consent-submit-btn");
+    const label   = document.getElementById("consent-label");
+    btn.disabled        = !checked;
+    btn.style.opacity   = checked ? "1"   : "0.45";
+    btn.style.cursor    = checked ? "pointer" : "not-allowed";
+    label.style.borderColor = checked ? "#1565c0" : "#d0d9ee";
+    label.style.background  = checked ? "#f0f6ff" : "#fafcff";
+    document.getElementById("err-consent").textContent = "";
+}
+
+async function submitConsent() {
+    if (!document.getElementById("consent-checkbox").checked) {
+        document.getElementById("err-consent").textContent = "You must accept the consent statement to complete registration.";
+        return;
+    }
+
+    const btn = document.getElementById("consent-submit-btn");
+    btn.textContent = "Saving\u2026";
+    btn.disabled    = true;
+
+    try {
+        const res  = await fetch(BASE + "/api/patient/save-consent", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ patient_id: regData.patient_id })
+        });
+        const json = await res.json();
+
+        if (!json.success) {
+            document.getElementById("err-consent").textContent = json.message || "Failed to save consent.";
+            btn.textContent = "\u2705 Complete Registration";
+            btn.disabled    = false;
+            return;
+        }
+
+        /* Show success card + health card */
+        document.getElementById("reg-success-card").style.display = "block";
+        btn.style.display = "none";
+        document.querySelector(`#reg-step-6 .reg-actions`).style.display = "none";
+        showHealthCard();
+
+    } catch (err) {
+        document.getElementById("err-consent").textContent = "Network error: " + err.message;
+        btn.textContent = "\u2705 Complete Registration";
+        btn.disabled    = false;
+    }
+}
+
+function regReset() {
+    /* Reset all form fields */
+    document.getElementById("reg-name").value    = "";
+    document.getElementById("reg-dob").value     = "";
+    document.getElementById("reg-age").value     = "";
+    document.getElementById("reg-age-display").textContent = "\u2014 years";
+    document.getElementById("reg-mobile").value  = "";
+    document.getElementById("reg-blood").value   = "";
+    document.getElementById("reg-address").value = "";
+    document.getElementById("reg-city").value    = "";
+    document.getElementById("reg-state").value   = "";
+    document.getElementById("reg-pincode").value = "";
+    document.querySelectorAll('input[name="gender"]').forEach(r => r.checked = false);
+    document.querySelectorAll('#reg-step-2 input[type="radio"]').forEach(r => r.checked = false);
+    document.getElementById("ls-sleep-hours").value = "";
+    document.getElementById("ls-occupation").value  = "";
+    document.querySelectorAll('#reg-step-3 input[type="checkbox"]').forEach(c => c.checked = false);
+    document.querySelectorAll('#reg-step-4 input[type="checkbox"]').forEach(c => c.checked = false);
+    document.querySelectorAll('#reg-step-4 textarea').forEach(t => t.value = "");
+    document.getElementById("consent-checkbox").checked = false;
+    document.getElementById("reg-success-card").style.display = "none";
+    document.getElementById("hcard-wrap").style.display = "none";
+    document.getElementById("hc-qr").innerHTML = "";
+    document.getElementById("hc-pin").textContent = "";
+    document.querySelector(`#reg-step-6 .reg-actions`).style.display = "flex";
+    document.getElementById("consent-submit-btn").style.display = "inline-flex";
+    onConsentChange();
+    document.getElementById("basic-preview").style.display = "none";
+    camBlob = null;
+    Object.keys(regData).forEach(k => delete regData[k]);
+
+    /* Reset progress bar to step 1 */
+    regCurrentStep = 6;
+    regGoTo(1);
+    document.querySelectorAll(".reg-step").forEach(s => { s.classList.remove("done"); });
+    document.querySelectorAll(".step-line").forEach(l => l.classList.remove("done"));
+}
+
+
 async function loadAppointments() {
 
     const container = document.getElementById("apptBody");
@@ -608,6 +2092,121 @@ async function loadPatients() {
         container.innerHTML = `<div class="empty">Unable to load data.</div>`;
     }
 
+}
+
+/* =====================================================
+   HEALTH CARD
+===================================================== */
+function showHealthCard() {
+    document.getElementById("hc-name").textContent   = regData.name;
+    document.getElementById("hc-pid").textContent    = regData.patient_id;
+    document.getElementById("hc-blood").textContent  = regData.blood  || "N/A";
+    document.getElementById("hc-gender").textContent = regData.gender || "N/A";
+    document.getElementById("hc-date").textContent   = new Date().toLocaleDateString("en-IN", {
+        day: "2-digit", month: "short", year: "numeric"
+    });
+
+    /* Show PIN — one-time display */
+    const pinEl = document.getElementById("hc-pin");
+    if (pinEl) pinEl.textContent = regData.pin || "——";
+
+    /* QR encodes the full verification URL — patient_id passed as query param */
+    document.getElementById("hc-qr").innerHTML = "";
+    new QRCode(document.getElementById("hc-qr"), {
+        text:         "http://localhost:5000/patient/verify?id=" + regData.patient_id,
+        width:        100,
+        height:       100,
+        colorDark:    "#0d3b7a",
+        colorLight:   "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+    });
+
+    document.getElementById("hcard-wrap").style.display = "flex";
+    document.getElementById("hcard-wrap").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function downloadHealthCard() {
+    const { jsPDF } = window.jspdf;
+
+    /* Wait for QR canvas to finish rendering */
+    await new Promise(r => setTimeout(r, 150));
+
+    const qrCanvas  = document.querySelector("#hc-qr canvas");
+    const qrDataUrl = qrCanvas ? qrCanvas.toDataURL("image/png") : "";
+    const issueDate = document.getElementById("hc-date").textContent;
+
+    /* Credit-card landscape: 105 x 65 mm */
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [105, 65] });
+
+    /* Background */
+    pdf.setFillColor(13, 59, 122);
+    pdf.roundedRect(0, 0, 105, 65, 4, 4, "F");
+
+    /* Decorative circle */
+    pdf.setFillColor(21, 101, 192);
+    pdf.circle(98, 4, 20, "F");
+
+    /* Logo box */
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(5, 5, 13, 13, 2, 2, "F");
+    pdf.setFontSize(9);
+    pdf.setTextColor(13, 59, 122);
+    pdf.text("H+", 7.5, 13.5);
+
+    /* Hospital name */
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("NALAM General Hospital", 21, 11);
+    pdf.setFontSize(6);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(180, 210, 255);
+    pdf.text("Advanced Healthcare & AI Diagnostics", 21, 16);
+
+    /* Divider */
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.2);
+    pdf.line(5, 21, 100, 21);
+
+    /* Patient fields */
+    const fields = [
+        ["PATIENT NAME", regData.name,            false],
+        ["PATIENT ID",   regData.patient_id,       true ],
+        ["BLOOD GROUP",  regData.blood  || "N/A",  false],
+        ["GENDER",       regData.gender || "N/A",  false],
+    ];
+    let y = 29;
+    fields.forEach(([label, value, highlight]) => {
+        pdf.setFontSize(5);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(160, 200, 255);
+        pdf.text(label, 5, y - 3);
+        pdf.setFontSize(highlight ? 8 : 7);
+        pdf.setFont("helvetica", "bold");
+        if (highlight) pdf.setTextColor(255, 224, 130);
+        else           pdf.setTextColor(255, 255, 255);
+        pdf.text(value, 5, y + 1.5);
+        y += 10;
+    });
+
+    /* QR code */
+    if (qrDataUrl) {
+        pdf.setFillColor(255, 255, 255);
+        pdf.roundedRect(73, 23, 27, 27, 2, 2, "F");
+        pdf.addImage(qrDataUrl, "PNG", 74, 24, 25, 25);
+    }
+
+    /* Footer */
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.15);
+    pdf.line(5, 57, 100, 57);
+    pdf.setFontSize(5);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(160, 200, 240);
+    pdf.text("NALAM AI Health System", 5, 61);
+    pdf.text("Issued: " + issueDate, 72, 61);
+
+    pdf.save("HealthCard_" + regData.patient_id + ".pdf");
 }
 
 </script>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Staff QR Card — Aarudhra Hospital</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+body{background:#f4f8ff;display:flex;flex-direction:column;align-items:center;padding:30px 20px;}
+.topbar{width:100%;max-width:480px;background:linear-gradient(135deg,#134f8f,#1a6fc4);color:white;
+        border-radius:14px;padding:16px 24px;display:flex;justify-content:space-between;
+        align-items:center;margin-bottom:24px;}
+.topbar h2{font-size:16px;}
+.card{background:white;border-radius:20px;padding:30px;max-width:380px;width:100%;
+      box-shadow:0 8px 30px rgba(0,0,0,.12);text-align:center;}
+.hosp-header{background:linear-gradient(135deg,#134f8f,#1a6fc4);color:white;
+             border-radius:12px;padding:14px;margin-bottom:20px;}
+.hosp-header h3{font-size:15px;margin-bottom:4px;}
+.hosp-header p{font-size:11px;opacity:.85;}
+.photo-wrap{margin:0 auto 16px;width:90px;height:90px;border-radius:50%;
+            border:3px solid #1565c0;overflow:hidden;background:#e3f2fd;
+            display:flex;align-items:center;justify-content:center;font-size:36px;}
+.photo-wrap img{width:100%;height:100%;object-fit:cover;}
+.staff-name{font-size:20px;font-weight:700;color:#0d47a1;margin-bottom:4px;}
+.staff-role{font-size:13px;color:#555;margin-bottom:16px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;text-align:left;}
+.info-box{background:#eef5ff;border-radius:10px;padding:10px 12px;}
+.info-box .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;}
+.info-box .value{font-size:13px;font-weight:600;color:#0d47a1;margin-top:2px;}
+.qr-wrap{margin:0 auto 16px;}
+.qr-wrap img{width:160px;height:160px;}
+.verified-badge{display:inline-block;background:#e8f5e9;color:#2e7d32;
+                padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:16px;}
+.btn{border:none;border-radius:8px;padding:11px 22px;cursor:pointer;color:white;
+     font-size:14px;font-weight:600;margin:4px;transition:.2s;}
+.btn:hover{opacity:.9;}
+.btn-print{background:#1565c0;}
+.btn-back{background:#757575;}
+.error{color:#c0392b;font-size:14px;padding:20px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <h2>Staff Identity Card</h2>
+    <div style="font-size:12px;opacity:.85;">Aarudhra Multispeciality Hospital</div>
+</div>
+
+<div id="cardWrap">
+    <div class="card" id="staffCard">
+        <div class="error" id="loadMsg">Loading…</div>
+    </div>
+</div>
+
+<div style="margin-top:16px;">
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print Card</button>
+    <button class="btn btn-back" onclick="history.back()">← Back</button>
+</div>
+
+<script>
+const BASE   = "http://localhost:5000";
+const params = new URLSearchParams(location.search);
+const userId = params.get("id");
+
+window.onload = async () => {
+    if (!userId) { document.getElementById("loadMsg").textContent = "No staff ID provided."; return; }
+    try {
+        const res  = await fetch(`${BASE}/api/staff/qr-card/${userId}`);
+        const data = await res.json();
+
+        if (!data.success) {
+            document.getElementById("loadMsg").textContent = data.message || "Unable to load card.";
+            return;
+        }
+
+        const s = data.staff;
+        const roleLabel = { doctor:"Doctor", nurse:"Nurse", lab:"Lab Staff",
+                            pharmacist:"Pharmacist", receptionist:"Receptionist" };
+
+        document.getElementById("staffCard").innerHTML = `
+            <div class="hosp-header">
+                <h3>Aarudhra Multispeciality Hospital</h3>
+                <p>Staff Identity Card</p>
+            </div>
+
+            <div class="photo-wrap">
+                ${s.profile_photo
+                    ? `<img src="/uploads/${s.profile_photo}" alt="photo">`
+                    : "👤"}
+            </div>
+
+            <div class="staff-name">${s.name}</div>
+            <div class="staff-role">${roleLabel[s.role] || s.role}</div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="label">Staff ID</div>
+                    <div class="value">${s.employee_id || "—"}</div>
+                </div>
+                <div class="info-box">
+                    <div class="label">Department</div>
+                    <div class="value">${s.department || "—"}</div>
+                </div>
+                ${s.specialization ? `
+                <div class="info-box" style="grid-column:1/-1;">
+                    <div class="label">Specialization</div>
+                    <div class="value">${s.specialization}</div>
+                </div>` : ""}
+            </div>
+
+            <div class="verified-badge">✅ Verified Staff</div>
+
+            <div class="qr-wrap">
+                <img src="${data.qr_image}" alt="QR Code">
+            </div>
+
+            <p style="font-size:11px;color:#aaa;margin-bottom:4px;">Scan QR to view staff details</p>
+            <p style="font-size:11px;color:#aaa;">PIN required on scan</p>
+        `;
+    } catch (e) {
+        document.getElementById("loadMsg").textContent = "Server error loading card.";
+        console.error(e);
+    }
+};
+</script>
+</body>
+</html>

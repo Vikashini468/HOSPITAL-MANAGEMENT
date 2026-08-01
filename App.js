@@ -40,6 +40,8 @@ app.locals.pool = pool;
 app.use(express.static(path.join(__dirname, "views")));
 app.use(express.static(__dirname));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/models",  express.static(path.join(__dirname, "public", "models")));
+app.use("/js",      express.static(path.join(__dirname, "public", "js")));
 
 /* ===========================
    ROUTES
@@ -57,12 +59,25 @@ const adminRoutes = require("./routes/adminRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const revenueRoutes = require("./routes/revenueRoutes");
 const receptionistRoutes = require("./routes/receptionistRoutes");
-const inpatientRoutes = require("./routes/inpatientRoutes")(io);
-app.use("/api/inpatient", inpatientRoutes);
+const inpatientRoutes    = require("./routes/inpatientRoutes")(io);
+const staffRoutes        = require("./routes/staffRoutes");
+const qrRoutes           = require("./routes/qrRoutes");
+const patientRegRoutes   = require("./routes/patientRegRoutes");
+const patientReg2        = require("./routes/patientRoutes2");
+
+app.use("/api/inpatient",   inpatientRoutes);
+app.use("/api/staff",       staffRoutes);
+app.use("/api/qr",          qrRoutes);
+app.use("/api/patient-reg", patientRegRoutes);
+app.use("/api/patient",     patientReg2.router);
+
+/* Serve logo placeholder */
+app.use(express.static(path.join(__dirname)));
 
 /* Init inpatient DB tables */
 pool.connect().then(() => {
     inpatientRoutes.initTables(pool).catch(console.error);
+    patientReg2.initTables(pool).catch(console.error);
 });
 app.use("/receptionist", receptionistRoutes);
 app.use("/revenue", revenueRoutes);
@@ -93,9 +108,19 @@ app.get("/otp.html", (req, res) => {
     res.sendFile(path.join(__dirname, "views", "auth", "otp.html"));
 });
 
+/* Staff verify page (QR scan landing) */
+app.get("/staff/verify.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "views", "staff", "verify.html"));
+});
+
+/* Patient QR verify page */
+app.get("/patient/verify", (req, res) => {
+    res.sendFile(path.join(__dirname, "views", "qr-verify.html"));
+});
+
 /* ===========================
    SERVER
 =========================== */
-server.listen(5000, () => {
+server.listen(5000, "0.0.0.0", () => {
     console.log("Server Running on Port 5000");
 });
