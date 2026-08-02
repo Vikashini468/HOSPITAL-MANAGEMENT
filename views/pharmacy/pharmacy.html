@@ -102,10 +102,67 @@
     /* PRESCRIPTION GRID */
     .presc-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 16px;
       margin-top: 10px;
     }
+
+    .presc-section {
+      margin-bottom: 30px;
+    }
+
+    .presc-section h4 {
+      color: #0d47a1;
+      margin-bottom: 10px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .count-badge {
+      background: #e3f0ff;
+      color: #0d47a1;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .search-box:focus { border-color: #0d47a1; }
+
+    .med-detail {
+      border: 1px solid #eef2f7;
+      background: #fbfdff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .med-detail .med-name {
+      font-weight: 600;
+      color: #0d47a1;
+    }
+
+    .med-detail .med-meta {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+      line-height: 1.6;
+    }
+
+    .med-detail .med-meta b { color: #333; }
 
     /* CARD */
     .p-card {
@@ -142,6 +199,90 @@
     }
 
     .complete-btn:hover { background: #1e8449; }
+
+    .dispense-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 9px;
+      background: #1565c0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .dispense-btn:hover { background: #0d47a1; }
+
+    .avail {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .avail-available { background: #dcfce7; color: #166534; }
+    .avail-low       { background: #ffedd5; color: #c2410c; }
+    .avail-out       { background: #fee2e2; color: #b91c1c; }
+
+    .disp-hist {
+      border: 1px solid #e3f0ff;
+      background: #f5f9ff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: #555;
+    }
+    .disp-hist b { color: #0d47a1; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 12px;
+      padding: 22px;
+      width: 620px;
+      max-width: 94vw;
+      max-height: 90vh;
+      overflow: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .modal-box h3 { color: #0d47a1; margin-bottom: 12px; }
+    .modal-box label { display: block; font-size: 12px; font-weight: 600; color: #333; margin-bottom: 3px; }
+    .modal-box input, .modal-box textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .modal-box input:focus, .modal-box textarea:focus { border-color: #0d47a1; }
+    .modal-box textarea { height: 52px; resize: vertical; }
+    .modal-table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; }
+    .modal-table th {
+      background: #f0f4ff; color: #0d47a1; text-align: left;
+      padding: 8px 10px; font-size: 12px;
+    }
+    .modal-table td { padding: 8px 10px; border-bottom: 1px solid #eef2f7; font-size: 13px; }
+    .modal-table input { width: 70px; margin: 0; }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-btns button {
+      padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    .modal-btns .confirm { background: #27ae60; color: white; }
+    .modal-btns .cancel  { background: #e5e7eb; color: #333; }
   </style>
 </head>
 
@@ -156,7 +297,7 @@
 <div class="main">
   <div class="topbar">
     <input placeholder="Search medicine">
-    <div class="profile">Pharmacy</div>
+    <div class="profile">Pharmacy &nbsp;|&nbsp; <span id="pharmacistName" style="font-weight:700;">Not logged in</span></div>
   </div>
 
   <div class="content">
@@ -183,14 +324,88 @@
     <div id="prescriptions" class="section">
       <div class="panel">
         <h3>Patient Prescriptions</h3>
-        <div id="prescriptionList" class="presc-grid"></div>
+        <input id="prescSearch" class="search-box" placeholder="Search by Patient ID, Patient Name, Visit ID or Doctor Name..." oninput="loadPrescriptions()">
+        <div class="presc-section">
+          <h4>⏳ Today's Pending Prescriptions <span class="count-badge" id="pendingCount">0</span></h4>
+          <div id="pendingList" class="presc-grid"></div>
+        </div>
+        <div class="presc-section">
+          <h4>💊 Dispensed Prescriptions <span class="count-badge" id="dispensingCount">0</span></h4>
+          <div id="dispensingList" class="presc-grid"></div>
+        </div>
+        <div class="presc-section">
+          <h4>✅ Completed Prescriptions <span class="count-badge" id="completedCount">0</span></h4>
+          <div id="completedList" class="presc-grid"></div>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
 
+<!-- DISPENSE MODAL -->
+<div id="dispenseModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3>💊 Dispense Medicines</h3>
+    <p style="font-size:13px;color:#555;margin-bottom:12px;">
+      Prescription <b id="dm-presc"></b> — <b id="dm-patient"></b>
+      <span style="display:block;font-size:12px;color:#888;margin-top:2px;" id="dm-sub"></span>
+    </p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label>Pharmacist ID</label>
+        <input id="dm-pharmacist" placeholder="Enter Pharmacist ID">
+      </div>
+      <div>
+        <label>Remarks</label>
+        <input id="dm-remarks" placeholder="Remarks (optional)">
+      </div>
+    </div>
+
+    <table class="modal-table">
+      <thead>
+        <tr>
+          <th>Medicine</th>
+          <th>Prescribed</th>
+          <th>Stock</th>
+          <th>Availability</th>
+          <th>Qty to Dispense</th>
+        </tr>
+      </thead>
+      <tbody id="dm-items"></tbody>
+    </table>
+
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeDispense()">Cancel</button>
+      <button class="confirm" onclick="confirmDispense()">✅ Confirm Dispense</button>
+    </div>
+    <div id="dm-msg" style="font-size:12px;color:#b91c1c;margin-top:8px;min-height:14px;"></div>
+  </div>
+</div>
+
 <script>
+const pharmacistId = new URLSearchParams(window.location.search).get("id");
+let pharmacistName = "";
+
+async function loadPharmacist() {
+  const el = document.getElementById("pharmacistName");
+  if (pharmacistId) {
+    try {
+      const res = await fetch(`/api/user/${pharmacistId}`);
+      const u = await res.json();
+      if (u && u.name) {
+        pharmacistName = u.name;
+        el.textContent = `${u.name} (ID: ${pharmacistId})`;
+        return;
+      }
+    } catch (err) { console.error(err); }
+    el.textContent = `Pharmacist (ID: ${pharmacistId})`;
+  } else {
+    el.textContent = "Not logged in";
+  }
+}
+
 function showSection(id, el) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -213,45 +428,241 @@ async function loadStock() {
   } catch (err) { console.error(err); }
 }
 
+function isTodayStr(v) {
+  if (!v) return false;
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  return d.getFullYear() === today.getFullYear() &&
+         d.getMonth() === today.getMonth() &&
+         d.getDate() === today.getDate();
+}
+
+function timingText(m) {
+  return [
+    m.morning  ? 'M' : '–',
+    m.afternoon ? 'A' : '–',
+    m.night    ? 'N' : '–'
+  ].join(' ');
+}
+
+function availBadge(label) {
+  const cls = label === 'Available' ? 'avail-available'
+            : label === 'Low Stock' ? 'avail-low'
+            : 'avail-out';
+  return `<span class="avail ${cls}">${label}</span>`;
+}
+
+function prescCard(p) {
+  const meds = Array.isArray(p.medicines) ? p.medicines : [];
+  const medRows = meds.map(m =>
+    `<div class="med-detail">
+      <div class="med-name">${m.medicine_name} ${availBadge(m.availability || 'Out of Stock')}</div>
+      <div class="med-meta">
+        <b>Prescribed:</b> ${m.quantity || '-'} &nbsp;|&nbsp;
+        <b>Dispensed:</b> ${m.dispensed_qty || 0} &nbsp;|&nbsp;
+        <b>Stock now:</b> ${m.stock ?? '-'}<br>
+        <b>Dosage:</b> ${m.dosage || '-'} &nbsp;|&nbsp; <b>Frequency:</b> ${m.frequency || '-'} &nbsp;|&nbsp; <b>Duration:</b> ${m.duration || '-'}<br>
+        <b>Food:</b> ${m.food_timing || '-'} &nbsp;|&nbsp; <b>Timing:</b> ${timingText(m)} &nbsp;(M A N)<br>
+        ${m.special_instructions ? `<b>Instructions:</b> ${m.special_instructions}<br>` : ''}
+        <b>Amount:</b> &#8377;${parseFloat(m.total || 0).toFixed(2)}
+      </div>
+    </div>`
+  ).join('');
+
+  const disp = Array.isArray(p.dispensing) ? p.dispensing : [];
+  const dispRows = disp.map(d => {
+    const dt = d.dispensing_date
+      ? new Date(d.dispensing_date).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '-';
+    return `
+    <div class="disp-hist">
+      <b>${d.medicine_name}</b> — dispensed ${d.quantity_dispensed} of ${d.quantity_prescribed} ${availBadge(d.medicine_availability || 'Out of Stock')}<br>
+      <b>Pharmacist:</b> ${d.pharmacist_name || d.pharmacist_id || '-'} &nbsp;|&nbsp; <b>Date:</b> ${dt}
+      ${d.remarks ? `<br><b>Remarks:</b> ${d.remarks}` : ''}
+    </div>`;
+  }).join('');
+
+  const st = String(p.status || '').toLowerCase();
+  const isPending   = st === 'pending';
+  const isDispensed = st === 'dispensed' || st === 'dispensing';
+  const isCompleted = st === 'completed';
+  const statusColor = isCompleted ? '#2e7d32' : (isPending ? '#e65100' : '#1565c0');
+  const statusLabel = isCompleted ? 'Completed' : (isPending ? 'Pending' : 'Dispensed');
+
+  const date = p.prescription_date
+    ? new Date(p.prescription_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+    : (p.appointment_date
+        ? new Date(p.appointment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+        : new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}));
+
+  const actionBtn = isCompleted
+    ? ''
+    : (isPending
+        ? `<button class="dispense-btn" onclick="openDispense(${p.prescription_id})">Dispense</button>`
+        : `<button class="complete-btn" onclick="completePrescription(${p.prescription_id})">&#10003; Mark Completed</button>`);
+
+  return `
+  <div class="p-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+      <div>
+        <h3 style="margin:0;">${p.patient_name}</h3>
+        <p style="margin:2px 0;font-size:12px;color:#555;">Patient ID: ${p.patient_id_display || p.patient_id || '-'} &nbsp;|&nbsp; Visit ID: ${p.visit_id || '-'}</p>
+        <p style="margin:2px 0;font-size:12px;color:#555;">Dr. ${p.doctor_name} &nbsp;|&nbsp; ${date}</p>
+        ${p.symptoms ? `<p style="margin:2px 0;font-size:12px;color:#888;">Symptoms: ${p.symptoms}</p>` : ''}
+      </div>
+      <span style="background:${statusColor};color:white;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;">${statusLabel}</span>
+    </div>
+    <hr>
+    ${medRows || '<p style="font-size:13px;color:#888;">No medicines.</p>'}
+    ${dispRows ? `<hr>${dispRows}` : ''}
+    <p class="total-row" style="margin-top:8px;">Total: &#8377;${parseFloat(p.grand_total||0).toFixed(2)}</p>
+    ${actionBtn}
+  </div>`;
+}
+
 async function loadPrescriptions() {
   try {
     const res = await fetch("/pharmacy/prescriptions");
     const data = await res.json();
-    const list = document.getElementById("prescriptionList");
-    if (!data || !data.length) { list.innerHTML = "<p>No prescriptions found.</p>"; return; }
-    list.innerHTML = data.map(p => {
-      const total = p.total_amount || (p.quantity * p.price) || 0;
-      return `
-      <div class="p-card">
-        <h3>${p.patient_name || "-"}</h3>
-        <hr>
-        <p><b>Doctor:</b> ${p.doctor_name || "-"}</p>
-        <p><b>Medicine:</b> ${p.medicine_name || "-"}</p>
-        <p><b>Price:</b> ₹${p.price || 0}</p>
-        <p><b>Quantity:</b> ${p.quantity || 0}</p>
-        <p><b>Duration:</b> ${p.duration || "-"}</p>
-        <p class="total-row">Total: ₹${total}</p>
-        <button class="complete-btn" onclick="completePrescription(${p.prescription_id})">
-          ✅ Mark Completed
-        </button>
-      </div>`;
-    }).join("");
+    window.__pharmacyData = data;
+    const q = (document.getElementById("prescSearch").value || "").trim().toLowerCase();
+
+    const filter = (p) => {
+      if (!q) return true;
+      const hay = [
+        String(p.patient_id || ''),
+        String(p.patient_id_display || ''),
+        String(p.patient_name || ''),
+        String(p.visit_id || ''),
+        String(p.doctor_name || '')
+      ].join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    };
+
+    const st = (s) => String(s || '').toLowerCase();
+
+    const pending    = data.filter(p => st(p.status) === 'pending'    && isTodayStr(p.prescription_date || p.created_at) && filter(p));
+    const dispensing = data.filter(p => (st(p.status) === 'dispensed' || st(p.status) === 'dispensing') && filter(p));
+    const completed  = data.filter(p => st(p.status) === 'completed'  && filter(p));
+
+    document.getElementById("pendingCount").textContent = pending.length;
+    document.getElementById("dispensingCount").textContent = dispensing.length;
+    document.getElementById("completedCount").textContent = completed.length;
+
+    document.getElementById("pendingList").innerHTML = pending.length
+      ? pending.map(prescCard).join('')
+      : '<p style="color:#888;font-size:13px;">No pending prescriptions.</p>';
+
+    document.getElementById("dispensingList").innerHTML = dispensing.length
+      ? dispensing.map(prescCard).join('')
+      : '<p style="color:#888;font-size:13px;">No prescriptions being dispensed.</p>';
+
+    document.getElementById("completedList").innerHTML = completed.length
+      ? completed.map(prescCard).join('')
+      : '<p style="color:#888;font-size:13px;">No completed prescriptions.</p>';
   } catch (err) { console.error(err); }
+}
+
+let currentPresc = null;
+
+function openDispense(prescriptionId) {
+  const all = window.__pharmacyData || [];
+  const p = all.find(x => x.prescription_id === prescriptionId);
+  if (!p) return;
+
+  currentPresc = p;
+
+  document.getElementById("dm-presc").textContent = "#" + p.prescription_id;
+  document.getElementById("dm-patient").textContent = p.patient_name || "";
+  document.getElementById("dm-sub").textContent = `Dr. ${p.doctor_name || '-'} | Patient ID: ${p.patient_id_display || p.patient_id || '-'} | Visit ID: ${p.visit_id || '-'}`;
+  document.getElementById("dm-remarks").value = "";
+  document.getElementById("dm-pharmacist").value = pharmacistId || "";
+  document.getElementById("dm-msg").textContent = "";
+
+  const meds = Array.isArray(p.medicines) ? p.medicines : [];
+  document.getElementById("dm-items").innerHTML = meds.map(m => {
+    const stock = m.stock ?? 0;
+    const prescribed = m.quantity || 0;
+    const label = (stock >= prescribed) ? 'Available' : (stock > 0 ? 'Low Stock' : 'Out of Stock');
+    const defaultQty = (label === 'Available') ? prescribed : (label === 'Low Stock' ? stock : 0);
+    return `
+    <tr>
+      <td>${m.medicine_name}</td>
+      <td>${prescribed}</td>
+      <td>${stock}</td>
+      <td>${availBadge(label)}</td>
+      <td><input type="number" min="0" value="${defaultQty}" data-id="${m.id}"></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById("dispenseModal").style.display = "flex";
+}
+
+function closeDispense() {
+  document.getElementById("dispenseModal").style.display = "none";
+  currentPresc = null;
+}
+
+async function confirmDispense() {
+  const msg = document.getElementById("dm-msg");
+  msg.textContent = "";
+
+  if (!currentPresc) return;
+
+  const pharmacist = (document.getElementById("dm-pharmacist").value || "").trim();
+  if (!pharmacist) { msg.textContent = "Pharmacist ID is required."; return; }
+
+  const items = [...document.querySelectorAll("#dm-items input[data-id]")].map(inp => ({
+    prescriptionMedicineId: Number(inp.dataset.id),
+    quantityDispensed: Number(inp.value) || 0
+  }));
+
+  try {
+    const res = await fetch("/pharmacy/dispense", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prescriptionId: currentPresc.prescription_id,
+        pharmacistId: pharmacist,
+        remarks: document.getElementById("dm-remarks").value,
+        items
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeDispense();
+      loadPrescriptions();
+      loadStock();
+    } else {
+      msg.textContent = data.message || "Failed to dispense.";
+    }
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "Network error.";
+  }
 }
 
 async function completePrescription(id) {
   const res = await fetch(`/pharmacy/complete-prescription/${id}`, { method: "POST" });
   const data = await res.json();
   if (data.success) {
-    alert("Prescription completed & stock updated");
+    alert("Prescription completed.");
     loadPrescriptions();
-    loadStock();
   } else {
     alert("Failed to complete prescription");
   }
 }
 
-window.onload = function () { loadStock(); };
+window.onload = function () {
+  loadPharmacist();
+  loadStock();
+};
+
+setInterval(function () {
+  const active = document.querySelector('#prescriptions.active');
+  if (active) loadPrescriptions();
+}, 30000);
 </script>
 
 </body>

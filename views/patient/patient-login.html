@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Login – NALAM AI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 46px;
+      height: 46px;
+      background: white;
+      color: #0d47a1;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 22px;
+    }
+
+    .logo-text .name { font-size: 20px; font-weight: 800; color: white; display: block; }
+    .logo-text .sub  { font-size: 12px; color: rgba(255,255,255,0.75); display: block; }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .card h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0d47a1;
+      margin-bottom: 6px;
+    }
+
+    .card .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #d0d9ee;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      background: #fafcff;
+      transition: 0.2s;
+    }
+
+    .field input:focus {
+      border-color: #1565c0;
+      box-shadow: 0 0 0 3px rgba(21,101,192,0.1);
+      background: white;
+    }
+
+    .field input.err { border-color: #e53935; }
+
+    .err-msg {
+      font-size: 12px;
+      color: #e53935;
+      min-height: 16px;
+      margin-top: 6px;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 6px;
+    }
+
+    .btn-login:hover { opacity: 0.88; }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .bottom-text {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .bottom-text a { color: #0d47a1; text-decoration: none; font-weight: 600; }
+    .bottom-text a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="logo-row">
+    <div class="logo-icon">N</div>
+    <div class="logo-text">
+      <span class="name">NALAM AI</span>
+      <span class="sub">Unified Health Record Ecosystem</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Patient Login</h2>
+    <p class="subtitle">Sign in with your registered mobile number</p>
+
+    <div class="field">
+      <label>Mobile Number</label>
+      <input type="tel" id="mobile" placeholder="Enter your mobile number"
+             oninput="this.classList.remove('err'); clearErr()"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password"
+             oninput="this.classList.remove('err'); clearErr()"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+
+    <div class="err-msg" id="errMsg"></div>
+
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">Sign In</button>
+
+    <div class="bottom-text">
+      Don't have an account? <a href="/register.html">Register here</a>
+    </div>
+  </div>
+
+<script>
+  function clearErr() { document.getElementById("errMsg").textContent = ""; }
+
+  async function doLogin() {
+    const mobile   = document.getElementById("mobile").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const errEl    = document.getElementById("errMsg");
+    const btn      = document.getElementById("btnLogin");
+
+    errEl.textContent = "";
+    let ok = true;
+
+    if (!mobile) { document.getElementById("mobile").classList.add("err"); errEl.textContent = "Mobile number is required."; ok = false; }
+    if (!password) { document.getElementById("password").classList.add("err"); if (ok) errEl.textContent = "Password is required."; ok = false; }
+    if (!ok) return;
+
+    btn.textContent = "Signing in…";
+    btn.disabled = true;
+
+    try {
+      const res = await fetch("/patient-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile, password })
+      });
+
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
+      const text = await res.text();
+      errEl.textContent = text || "Login failed.";
+    } catch (e) {
+      errEl.textContent = "Cannot reach server. Please try again.";
+    }
+
+    btn.textContent = "Sign In";
+    btn.disabled = false;
+  }
+</script>
+
+</body>
+</html>

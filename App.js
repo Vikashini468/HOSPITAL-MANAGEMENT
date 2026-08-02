@@ -78,6 +78,7 @@ app.use(express.static(path.join(__dirname)));
 pool.connect().then(() => {
     inpatientRoutes.initTables(pool).catch(console.error);
     patientReg2.initTables(pool).catch(console.error);
+    pharmacyRoutes.initPrescriptionSchema(pool).catch(console.error);
 });
 app.use("/receptionist", receptionistRoutes);
 app.use("/revenue", revenueRoutes);

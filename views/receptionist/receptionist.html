@@ -566,6 +566,10 @@ tbody tr:hover { background:#f5f9ff; }
         🏥 Patient Management
     </div>
 
+    <div class="menu" onclick="openScanner()">
+        📷 QR Scan &amp; Records
+    </div>
+
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -710,6 +714,16 @@ tbody tr:hover { background:#f5f9ff; }
                     <div class="pm-icon">🏥</div>
                     <div class="pm-title">Generate Health Card</div>
                     <div class="pm-desc">Generate and print a patient's QR health card</div>
+                </div>
+                <div class="pm-card" onclick="openScanner()">
+                    <div class="pm-icon">📷</div>
+                    <div class="pm-title">Scan QR &amp; View Record</div>
+                    <div class="pm-desc">Scan a patient QR, verify PIN, and open the medical record</div>
+                </div>
+                <div class="pm-card" onclick="pmShow('pm-pin')">
+                    <div class="pm-icon">🔐</div>
+                    <div class="pm-title">Set / Reset Patient PIN</div>
+                    <div class="pm-desc">Set or change the PIN used for secure QR record access</div>
                 </div>
             </div>
         </div>
@@ -1286,8 +1300,9 @@ tbody tr:hover { background:#f5f9ff; }
                         </div>
 
                         <!-- Actions -->
-                        <div style="display:flex;gap:14px;">
+                        <div style="display:flex;gap:14px;flex-wrap:wrap;">
                             <button class="reg-btn-next" onclick="downloadHealthCard()" style="background:#0d47a1;">⬇ Download PDF</button>
+                            <button class="reg-btn-next" onclick="scanNewHealthCard()" style="background:#6a1b9a;">📷 Scan to Verify</button>
                             <button class="reg-btn-next" onclick="regReset()" style="background:#2e7d32;">+ Register Another Patient</button>
                         </div>
                     </div>
@@ -1317,6 +1332,44 @@ tbody tr:hover { background:#f5f9ff; }
             <button class="pm-back" onclick="pmBack()">&#8592; Back to Patient Management</button>
             <div class="section-header"><h3>🏥 Generate Health Card</h3></div>
             <div class="empty" style="padding:60px 0;">🏥 Health card generator coming soon.</div>
+        </div>
+
+        <!-- Set / Reset Patient PIN -->
+        <div id="pm-pin" class="pm-sub">
+            <button class="pm-back" onclick="pmBack()">&#8592; Back to Patient Management</button>
+            <div class="section-header">
+                <h3>🔐 Set / Reset Patient PIN</h3>
+                <span style="font-size:12px;color:#888;font-weight:400;">PIN (4–6 digits) is required to view a patient's record via QR scan.</span>
+            </div>
+
+            <div style="max-width:520px;">
+                <div class="reg-field">
+                    <label class="reg-label">Patient ID <span class="req">*</span></label>
+                    <input id="pin-pid" type="text" class="reg-input" placeholder="e.g. PAT000012" maxlength="12"
+                           oninput="formatPinPid(this)">
+                    <div class="field-err" id="err-pin-pid"></div>
+                </div>
+
+                <div class="reg-field">
+                    <label class="reg-label">New PIN <span class="req">*</span></label>
+                    <input id="pin-value" type="text" class="reg-input" placeholder="4–6 digits" maxlength="6"
+                           inputmode="numeric"
+                           oninput="this.value=this.value.replace(/\D/g,'');this.classList.remove('input-error')">
+                    <div class="field-err" id="err-pin-value"></div>
+                </div>
+
+                <div class="reg-field">
+                    <label class="reg-label">Confirm PIN <span class="req">*</span></label>
+                    <input id="pin-confirm" type="text" class="reg-input" placeholder="Re-enter PIN" maxlength="6"
+                           inputmode="numeric"
+                           oninput="this.value=this.value.replace(/\D/g,'');this.classList.remove('input-error')">
+                    <div class="field-err" id="err-pin-confirm"></div>
+                </div>
+
+                <div id="pin-msg" style="font-size:13px;min-height:20px;margin:6px 0 12px;"></div>
+
+                <button class="reg-btn-next" onclick="setPatientPin()" style="margin:0;width:100%;">🔐 Set PIN</button>
+            </div>
         </div>
 
     </div>
@@ -1381,6 +1434,7 @@ function badge(status) {
         WAITING_LAB: ["badge-waiting",    "Waiting Lab"],
         LAB_READY:   ["badge-ready",      "Lab Ready"],
         INPROGRESS:  ["badge-inprogress", "In Progress"],
+        CONSULTING:  ["badge-inprogress", "Consulting"],
         COMPLETED:   ["badge-completed",  "Completed"],
         REVIEWED:    ["badge-completed",  "Reviewed"]
     };
@@ -1423,6 +1477,69 @@ function pmShow(id) {
 function pmBack() {
     document.querySelectorAll(".pm-sub").forEach(el => el.classList.remove("active"));
     document.getElementById("pm-dashboard").style.display = "block";
+}
+
+/* ── QR SCANNER ── */
+function openScanner() {
+    window.open(BASE + "/patient-reg/scanner.html", "_blank");
+}
+
+/* Open scanner pre-filled with the just-registered Patient ID */
+function scanNewHealthCard() {
+    const pid = (document.getElementById("hc-pid") || {}).textContent;
+    window.open(BASE + "/patient-reg/scanner.html" + (pid ? "?pid=" + encodeURIComponent(pid.trim()) : ""), "_blank");
+}
+
+/* ── PIN FORMAT ── */
+function formatPinPid(input) {
+    input.classList.remove("input-error");
+    document.getElementById("err-pin-pid").textContent = "";
+    let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (/^\d+$/.test(v)) v = "PAT" + v;
+    const m = v.match(/^([A-Z]+)(\d+)$/);
+    if (m) v = m[1] + m[2].padStart(6, "0");
+    input.value = v;
+}
+
+/* ── SET / RESET PATIENT PIN ── */
+async function setPatientPin() {
+    const pid = document.getElementById("pin-pid").value.trim().toUpperCase();
+    const pin = document.getElementById("pin-value").value.trim();
+    const cnf = document.getElementById("pin-confirm").value.trim();
+    const msg = document.getElementById("pin-msg");
+    msg.textContent = "";
+
+    if (!pid) {
+        document.getElementById("pin-pid").classList.add("input-error");
+        document.getElementById("err-pin-pid").textContent = "Patient ID is required.";
+        return;
+    }
+    if (!/^\d{4,6}$/.test(pin)) {
+        document.getElementById("pin-value").classList.add("input-error");
+        document.getElementById("err-pin-value").textContent = "PIN must be 4–6 digits.";
+        return;
+    }
+    if (pin !== cnf) {
+        document.getElementById("pin-confirm").classList.add("input-error");
+        document.getElementById("err-pin-confirm").textContent = "PINs do not match.";
+        return;
+    }
+
+    try {
+        const res = await fetch(BASE + "/api/patient-reg/set-pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ patient_id: pid, new_pin: pin })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || "Failed to set PIN");
+
+        msg.innerHTML = `<span style="color:#2e7d32;font-weight:700;">✅ PIN set for <b>${data.patient_id}</b>${data.name ? " (" + data.name + ")" : ""}.</span>`;
+        document.getElementById("pin-value").value = "";
+        document.getElementById("pin-confirm").value = "";
+    } catch (err) {
+        msg.innerHTML = `<span style="color:#e53935;font-weight:700;">❌ ${err.message}</span>`;
+    }
 }
 
 /* =====================================================
@@ -2110,10 +2227,10 @@ function showHealthCard() {
     const pinEl = document.getElementById("hc-pin");
     if (pinEl) pinEl.textContent = regData.pin || "——";
 
-    /* QR encodes the full verification URL — patient_id passed as query param */
+    /* QR encodes ONLY the Patient ID — no medical data */
     document.getElementById("hc-qr").innerHTML = "";
     new QRCode(document.getElementById("hc-qr"), {
-        text:         "http://localhost:5000/patient/verify?id=" + regData.patient_id,
+        text:         regData.patient_id,
         width:        100,
         height:       100,
         colorDark:    "#0d3b7a",

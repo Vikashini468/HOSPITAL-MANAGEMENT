@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Dashboard – NALAM AI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body { display: flex; min-height: 100vh; background: #f4f7fb; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: linear-gradient(180deg, #0d47a1, #1565c0);
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 100vh;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .sidebar-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: white;
+      color: #0d47a1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo-text { font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .sidebar-logo-sub  { font-size: 10px; opacity: 0.7; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      transition: 0.2s;
+      color: white;
+      font-size: 13px;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .nav-item:hover  { background: rgba(255,255,255,0.2); }
+    .nav-item.active { background: rgba(255,255,255,0.28); font-weight: 700; }
+    .nav-item .icon  { font-size: 16px; width: 20px; text-align: center; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(255,255,255,0.45);
+      padding: 12px 12px 4px;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* ── MAIN ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 14px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-left { font-size: 15px; font-weight: 700; color: #0d47a1; }
+    .topbar-left span { font-weight: 400; color: #555; font-size: 13px; margin-left: 6px; }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef4ff;
+      border-radius: 20px;
+      padding: 6px 14px 6px 6px;
+      cursor: pointer;
+    }
+
+    .avatar-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .avatar-name { font-size: 13px; font-weight: 600; color: #0d47a1; }
+
+    /* ── CONTENT ── */
+    .content { padding: 24px; flex: 1; }
+
+    /* ── WELCOME BANNER ── */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      border-radius: 16px;
+      padding: 28px 32px;
+      color: white;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .welcome-banner h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .welcome-banner p  { font-size: 14px; opacity: 0.85; }
+
+    .welcome-banner-right {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 14px 20px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .welcome-banner-right .date-label { font-size: 11px; opacity: 0.75; margin-bottom: 2px; }
+    .welcome-banner-right .date-val   { font-size: 15px; font-weight: 700; }
+
+    /* ── SECTION TITLE ── */
+    .sec-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #888;
+      margin-bottom: 16px;
+    }
+
+    /* ── DASHBOARD GRID ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    /* ── DASH CARD ── */
+    .dash-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #e8eef8;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .dash-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .dash-card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .dash-card-body { flex: 1; }
+
+    .dash-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .dash-card-desc {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .dash-card-arrow {
+      font-size: 18px;
+      color: #ccc;
+      align-self: flex-end;
+      margin-top: auto;
+    }
+
+    /* icon colour themes */
+    .ic-blue   { background: #e3f0ff; }
+    .ic-green  { background: #e8f5e9; }
+    .ic-purple { background: #f3e8ff; }
+    .ic-teal   { background: #e0f7f4; }
+    .ic-orange { background: #fff3e0; }
+    .ic-red    { background: #fce4ec; }
+    .ic-indigo { background: #e8eaf6; }
+    .ic-cyan   { background: #e0f7fa; }
+
+    /* ── PROFILE VIEW ── */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      color: #0d47a1;
+      border: 1px solid #d4def0;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin-bottom: 18px;
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover { background: #f0f5ff; }
+
+    .profile-header-card {
+      background: white;
+      border-radius: 16px;
+      padding: 26px 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #e8eef8;
+      max-width: 640px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 22px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .profile-photo {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #e3eaf5;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+
+    .profile-header-info { flex: 1; min-width: 200px; }
+    .profile-header-info .name { font-size: 22px; font-weight: 800; color: #1a1a2e; }
+    .profile-header-info .sub  { font-size: 13px; color: #888; margin-bottom: 10px; }
+
+    .badge-id {
+      display: inline-block;
+      background: #e3f0ff;
+      color: #0d47a1;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .profile-card2 {
+      background: white;
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #e8eef8;
+      max-width: 640px;
+      margin-bottom: 20px;
+    }
+
+    .profile-card2 h3 {
+      color: #0d47a1;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eef1f6;
+    }
+
+    .profile-row2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f2f4f9;
+      font-size: 14px;
+    }
+
+    .profile-row2:last-child { border-bottom: none; }
+    .profile-row2 .lbl { color: #666; font-weight: 600; min-width: 130px; }
+    .profile-row2 .val { color: #222; font-weight: 500; text-align: right; flex: 1; }
+
+    .edit-input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #1565c0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 18px;
+    }
+
+    .info-grid .full { grid-column: 1 / -1; }
+
+    .info-item { font-size: 13px; color: #333; }
+    .info-item .lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.4px; }
+    .info-item .val { font-weight: 600; color: #222; margin-top: 2px; }
+
+    .edit-btn {
+      padding: 9px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 14px;
+    }
+
+    .edit-btn:hover { background: #1565c0; }
+    .save-btn { background: #27ae60; }
+    .save-btn:hover { background: #1e8449; }
+    .cancel-btn { background: #e0e4ea; color: #333; }
+    .cancel-btn:hover { background: #cdd2da; }
+
+    /* ── BOOK APPOINTMENT VIEW ── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 640px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      background: white;
+      border: 1px solid #d4def0;
+      color: #888;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .step.active {
+      background: #0d47a1;
+      color: white;
+      border-color: #0d47a1;
+    }
+
+    .step-line {
+      flex: 1;
+      min-width: 16px;
+      height: 2px;
+      background: #d4def0;
+    }
+
+    .book-step { max-width: 640px; }
+
+    .book-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .book-header .back-btn { margin-bottom: 0; }
+    .book-header .sec-title { margin-bottom: 0; }
+
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .dept-card {
+      background: white;
+      border: 1px solid #e8eef8;
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      font-family: inherit;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .dept-card:hover {
+      transform: translateY(-3px);
+      border-color: #1565c0;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.1);
+    }
+
+    .dept-name { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .dept-count { font-size: 12px; color: #888; }
+
+    .dept-timing {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      background: #eef4ff;
+      color: #1565c0;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .book-field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin: 14px 0 6px;
+    }
+
+    .book-field-label input,
+    .book-field-label select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      margin-top: 6px;
+    }
+
+    .slot-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .slot-btn {
+      padding: 9px 18px;
+      background: #eef4ff;
+      color: #0d47a1;
+      border: 1px solid #d4def0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+    }
+
+    .slot-btn:hover { background: #dbe8ff; }
+    .slot-btn.selected { background: #0d47a1; color: white; border-color: #0d47a1; }
+
+    .no-slots { color: #888; font-size: 13px; margin-top: 12px; }
+
+    .book-success {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .book-error {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #fce4ec;
+      color: #b71c1c;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ── MY APPOINTMENTS ── */
+    .appt-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .appt-tab {
+      padding: 9px 20px;
+      background: white;
+      color: #555;
+      border: 1px solid #e0e6f0;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+    }
+
+    .appt-tab:hover { border-color: #1565c0; color: #0d47a1; }
+    .appt-tab.active { background: #0d47a1; color: white; border-color: #0d47a1; }
+
+    .appt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .appt-card {
+      background: white;
+      border: 1px solid #e8eef8;
+      border-radius: 14px;
+      padding: 18px 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .appt-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .appt-doctor { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+
+    .appt-status {
+      padding: 3px 12px;
+      border-radius: 20px;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .appt-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .appt-meta .lbl {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+
+    .appt-meta .val {
+      color: #1a1a2e;
+      font-weight: 600;
+    }
+
+    .appt-cancel-btn {
+      margin-top: 14px;
+      width: 100%;
+      padding: 9px 12px;
+      background: #fff5f5;
+      color: #c62828;
+      border: 1px solid #f5c2c2;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+    }
+
+    .appt-cancel-btn:hover { background: #c62828; color: white; border-color: #c62828; }
+
+    /* ── DIGITAL HEALTH CARD ── */
+    .hc-wrap { max-width: 430px; margin: 0 auto; }
+
+    .hc-card {
+      background: white;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      border: 1px solid #e0e8f4;
+    }
+
+    .hc-header {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: white;
+    }
+
+    .hc-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: white;
+      object-fit: contain;
+      padding: 5px;
+      flex-shrink: 0;
+    }
+
+    .hc-hosp { font-size: 16px; font-weight: 800; line-height: 1.3; }
+    .hc-tag  { font-size: 11px; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    .hc-body { padding: 22px; }
+
+    .hc-name { font-size: 20px; font-weight: 800; color: #0d47a1; }
+    .hc-id   { font-size: 12px; color: #888; margin-top: 2px; font-weight: 600; }
+
+    .hc-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .hc-info-box { background: #eef5ff; border-radius: 10px; padding: 12px 14px; }
+
+    .hc-label {
+      display: block;
+      font-size: 10px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hc-value {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0d47a1;
+      margin-top: 2px;
+    }
+
+    .hc-qr { text-align: center; margin: 8px 0 4px; }
+
+    .hc-qr img {
+      width: 150px;
+      height: 150px;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 6px;
+      background: white;
+    }
+
+    .hc-scan { font-size: 11px; color: #888; margin-top: 6px; }
+
+    .hc-footer {
+      border-top: 1px dashed #d4def0;
+      margin-top: 14px;
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #888;
+      flex-wrap: wrap;
+    }
+
+    .hc-issue { font-weight: 600; }
+
+    .hc-loading { padding: 30px; text-align: center; color: #888; font-size: 14px; }
+
+    .hc-dl-row { text-align: center; margin: 16px 0 4px; }
+
+    .hc-dl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(13,71,161,0.3);
+      font-family: inherit;
+    }
+
+    .hc-dl-btn:hover { background: #1565c0; }
+    .hc-dl-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ── RECORDS / PRESCRIPTIONS CARDS ── */
+    .p-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      margin-bottom: 16px;
+      border: 1px solid #e3eaf5;
+    }
+
+    .p-card h3 { color: #0d47a1; margin-bottom: 10px; font-size: 16px; }
+    .p-card p { font-size: 14px; color: #444; margin: 5px 0; }
+    .p-card hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+
+    /* ── MEDICAL HISTORY / CONSULTATION TIMELINE ── */
+    .timeline { display: flex; flex-direction: column; gap: 18px; }
+
+    .tl-visit {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid #e3eaf5;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+
+    .tl-visit-head {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+    }
+
+    .tl-visit-head .tl-title { font-size: 15px; font-weight: 700; }
+    .tl-visit-head .tl-sub { font-size: 12px; opacity: 0.92; }
+
+    .tl-status {
+      background: rgba(255,255,255,0.22);
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .tl-body { padding: 4px 18px 12px; }
+
+    .tl-event {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .tl-event:last-child { border-bottom: none; }
+
+    .tl-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+    }
+
+    .tl-content { flex: 1; min-width: 0; }
+
+    .tl-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0d47a1;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tl-time { font-size: 11px; color: #888; font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+    .tl-details { font-size: 13px; color: #333; margin-top: 4px; line-height: 1.5; }
+
+    .tl-details table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .tl-details th { background: #f0f4ff; color: #0d47a1; padding: 6px 10px; text-align: left; }
+    .tl-details td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+    .tl-details tr:last-child td { border-bottom: none; }
+
+    .tl-download {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 6px 14px;
+      background: #0d47a1;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .tl-download:hover { background: #1565c0; }
+
+    .tl-chip {
+      display: inline-block;
+      background: #eef5ff;
+      color: #0d47a1;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      margin: 2px 4px 2px 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">N</div>
+    <div>
+      <div class="sidebar-logo-text">NALAM AI</div>
+      <div class="sidebar-logo-sub">Health Ecosystem</div>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Menu</div>
+
+  <a class="nav-item active" id="nav-home" href="#" onclick="showDashboard(); return false;">
+    <span class="icon">&#127968;</span> Dashboard
+  </a>
+  <a class="nav-item" id="nav-profile" href="#" onclick="showProfile(); return false;">
+    <span class="icon">&#128100;</span> My Profile
+  </a>
+  <a class="nav-item" id="nav-book" href="#" onclick="showBookAppointment(); return false;">
+    <span class="icon">&#128197;</span> Book Appointment
+  </a>
+  <a class="nav-item" id="nav-appointments" href="#" onclick="showAppointments(); return false;">
+    <span class="icon">&#128203;</span> My Appointments
+  </a>
+  <a class="nav-item" id="nav-medical-history" href="#" onclick="showMedicalHistory(); return false;">
+    <span class="icon">&#128196;</span> Medical History
+  </a>
+  <a class="nav-item" id="nav-lab" href="#" onclick="showReports(); return false;">
+    <span class="icon">&#128300;</span> Lab Reports
+  </a>
+  <a class="nav-item" id="nav-rx" href="#" onclick="showPrescriptions(); return false;">
+    <span class="icon">&#128138;</span> Prescriptions
+  </a>
+  <a class="nav-item" id="nav-ai" href="#" onclick="showAI(); return false;">
+    <span class="icon">&#129504;</span> AI Disease Prediction
+  </a>
+
+  <div class="sidebar-bottom">
+    <a class="nav-item" href="/patient-login" style="background:rgba(255,255,255,0.06);">
+      <span class="icon">&#128275;</span> Logout
+    </a>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      Patient Dashboard <span id="topbarDate"></span>
+    </div>
+    <div class="topbar-right">
+      <div class="avatar-chip">
+        <div class="avatar-circle" id="avatarInitial">P</div>
+        <div class="avatar-name"  id="avatarName">Patient</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- WELCOME BANNER -->
+    <div class="welcome-banner">
+      <div>
+        <h2 id="welcomeText">Welcome back!</h2>
+        <p>Here's a summary of your health portal. Select a card to get started.</p>
+      </div>
+      <div class="welcome-banner-right">
+        <div class="date-label">Today</div>
+        <div class="date-val" id="todayDate">—</div>
+      </div>
+    </div>
+
+    <!-- CARDS -->
+    <div id="view-home">
+    <div class="sec-title">Quick Access</div>
+    <div class="dash-grid">
+
+      <!-- My Profile -->
+      <a class="dash-card" href="#" onclick="showProfile(); return false;">
+        <div class="dash-card-icon ic-blue">&#128100;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">My Profile</div>
+          <div class="dash-card-desc">View and manage your personal and medical details.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Book Appointment -->
+      <a class="dash-card" href="#" onclick="showBookAppointment(); return false;">
+        <div class="dash-card-icon ic-green">&#128197;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Book Appointment</div>
+          <div class="dash-card-desc">Browse doctors and book a consultation slot.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- My Appointments -->
+      <a class="dash-card" href="#" onclick="showAppointments(); return false;">
+        <div class="dash-card-icon ic-purple">&#128203;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">My Appointments</div>
+          <div class="dash-card-desc">Track your upcoming and past appointments.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Health Card -->
+      <a class="dash-card" href="#" onclick="showHealthCard(); return false;">
+        <div class="dash-card-icon ic-teal">&#127973;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Health Card</div>
+          <div class="dash-card-desc">View your digital NALAM AI health identity card.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Medical History -->
+      <a class="dash-card" href="#" onclick="showMedicalHistory(); return false;">
+        <div class="dash-card-icon ic-orange">&#128196;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Medical History</div>
+          <div class="dash-card-desc">View your complete consultation timeline with reports and prescriptions.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Lab Reports -->
+      <a class="dash-card" href="#" onclick="showReports(); return false;">
+        <div class="dash-card-icon ic-red">&#128300;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Lab Reports</div>
+          <div class="dash-card-desc">View uploaded lab test results and reports.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Prescriptions -->
+      <a class="dash-card" href="#" onclick="showPrescriptions(); return false;">
+        <div class="dash-card-icon ic-indigo">&#128138;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Prescriptions</div>
+          <div class="dash-card-desc">Review medicines prescribed by your doctors.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- AI Disease Prediction -->
+      <a class="dash-card" href="#" onclick="showAI(); return false;">
+        <div class="dash-card-icon ic-cyan">&#129504;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">AI Disease Prediction</div>
+          <div class="dash-card-desc">Check your AI-powered disease risk predictions.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+    </div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div id="view-profile" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+
+      <div class="profile-header-card">
+        <img id="p_photo" class="profile-photo" src="/uploads/default.png">
+        <div class="profile-header-info">
+          <div class="name" id="p_name">—</div>
+          <div class="sub" id="p_username"></div>
+          <span class="badge-id" id="p_health_id"></span>
+        </div>
+      </div>
+
+      <div class="profile-card2">
+        <h3>Personal Information</h3>
+        <div class="profile-row2"><span class="lbl">Patient ID</span><span class="val" id="p_patient_id">-</span></div>
+        <div class="profile-row2"><span class="lbl">Name</span><span class="val" id="p_patient_name">-</span></div>
+        <div class="profile-row2"><span class="lbl">Age</span><span class="val" id="p_age">-</span></div>
+        <div class="profile-row2"><span class="lbl">Gender</span><span class="val" id="p_gender">-</span></div>
+        <div class="profile-row2"><span class="lbl">Blood Group</span><span class="val" id="p_blood">-</span></div>
+        <div class="profile-row2">
+          <span class="lbl">Mobile Number</span>
+          <span class="val" id="p_mobile_view">-</span>
+          <input id="p_mobile_input" class="edit-input" maxlength="15" style="display:none;">
+        </div>
+        <div class="profile-row2">
+          <span class="lbl">Address</span>
+          <span class="val" id="p_address_view">-</span>
+          <textarea id="p_address_input" class="edit-input" rows="2" style="display:none;"></textarea>
+        </div>
+        <button class="edit-btn" id="profileEditBtn" onclick="toggleProfileEdit()">Edit Profile</button>
+        <button class="edit-btn save-btn" id="profileSaveBtn" style="display:none;" onclick="saveProfile()">Save Changes</button>
+        <button class="edit-btn cancel-btn" id="profileCancelBtn" style="display:none;" onclick="cancelProfileEdit()">Cancel</button>
+      </div>
+
+      <div class="profile-card2">
+        <h3>Family History</h3>
+        <div id="p_family_history" class="info-grid"></div>
+      </div>
+
+      <div class="profile-card2">
+        <h3>Lifestyle Details</h3>
+        <div id="p_lifestyle" class="info-grid"></div>
+      </div>
+
+      <div class="profile-card2">
+        <h3>Medical History</h3>
+        <div id="p_medical" class="info-grid"></div>
+      </div>
+    </div>
+
+    <!-- BOOK APPOINTMENT VIEW -->
+    <div id="view-book" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+
+      <div class="stepper">
+        <div class="step active" id="step1">1. Department</div>
+        <div class="step-line"></div>
+        <div class="step" id="step2">2. Doctor</div>
+        <div class="step-line"></div>
+        <div class="step" id="step3">3. Time Slot</div>
+        <div class="step-line"></div>
+        <div class="step" id="step4">4. Confirm</div>
+      </div>
+
+      <!-- STEP 1: DEPARTMENT -->
+      <div id="book-step1" class="book-step">
+        <div class="sec-title">Select Department</div>
+        <div id="departmentList" class="dept-grid"></div>
+      </div>
+
+      <!-- STEP 2: DOCTOR -->
+      <div id="book-step2" class="book-step" style="display:none;">
+        <div class="book-header">
+          <button class="back-btn" onclick="bookGoStep(1)">&#8592; Back</button>
+          <div class="sec-title">Select Doctor</div>
+        </div>
+        <div id="doctorList2" class="dept-grid"></div>
+      </div>
+
+      <!-- STEP 3: TIME SLOT -->
+      <div id="book-step3" class="book-step" style="display:none;">
+        <div class="book-header">
+          <button class="back-btn" onclick="bookGoStep(2)">&#8592; Back</button>
+          <div class="sec-title">Select Date &amp; Time Slot</div>
+        </div>
+        <div class="profile-card2">
+          <div class="profile-row2"><span class="lbl">Doctor</span><span class="val" id="slotDoctorName">-</span></div>
+          <div class="profile-row2"><span class="lbl">Specialization</span><span class="val" id="slotDoctorSpec">-</span></div>
+          <div class="profile-row2"><span class="lbl">Available Timings</span><span class="val" id="slotTimings">-</span></div>
+          <div class="profile-row2"><span class="lbl">Available Days</span><span class="val" id="slotDays">-</span></div>
+          <label class="book-field-label">Select Date
+            <input type="date" id="slotDate" onchange="loadSlots()">
+          </label>
+          <div id="slotGrid" class="slot-grid"></div>
+        </div>
+      </div>
+
+      <!-- STEP 4: CONFIRM -->
+      <div id="book-step4" class="book-step" style="display:none;">
+        <div class="book-header">
+          <button class="back-btn" onclick="bookGoStep(3)">&#8592; Back</button>
+          <div class="sec-title">Confirm Appointment</div>
+        </div>
+        <div class="profile-card2">
+          <div class="profile-row2"><span class="lbl">Department</span><span class="val" id="cfDept">-</span></div>
+          <div class="profile-row2"><span class="lbl">Doctor</span><span class="val" id="cfDoctor">-</span></div>
+          <div class="profile-row2"><span class="lbl">Specialization</span><span class="val" id="cfSpec">-</span></div>
+          <div class="profile-row2"><span class="lbl">Date</span><span class="val" id="cfDate">-</span></div>
+          <div class="profile-row2"><span class="lbl">Time</span><span class="val" id="cfTime">-</span></div>
+          <div class="profile-row2" id="cfQueueRow" style="display:none;"><span class="lbl">Queue Number</span><span class="val" id="cfQueue">-</span></div>
+          <button class="edit-btn save-btn" id="confirmBtn" onclick="confirmBooking()">Confirm Appointment</button>
+          <div id="bookMsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MY APPOINTMENTS VIEW -->
+<div id="view-appointments" style="display:none;">
+  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+
+  <div class="sec-title" style="margin-top:14px;">My Appointments</div>
+
+  <div class="appt-tabs">
+    <button class="appt-tab active" id="tab-upcoming" onclick="apptTab('upcoming')">Upcoming</button>
+    <button class="appt-tab" id="tab-completed" onclick="apptTab('completed')">Completed</button>
+    <button class="appt-tab" id="tab-cancelled" onclick="apptTab('cancelled')">Cancelled</button>
+  </div>
+
+  <div id="appt-upcoming"></div>
+  <div id="appt-completed" style="display:none;"></div>
+  <div id="appt-cancelled" style="display:none;"></div>
+</div>
+
+<!-- DIGITAL HEALTH CARD VIEW -->
+<div id="view-healthcard" style="display:none;">
+  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+  <div class="sec-title" style="margin-top:14px;">Digital Health Card</div>
+  <div class="hc-dl-row">
+    <button class="hc-dl-btn" id="hcDlBtn" onclick="downloadHealthCardPdf()">Download as PDF</button>
+  </div>
+  <div class="hc-wrap">
+    <div class="hc-card" id="hcCard">
+      <div class="hc-loading" id="hcLoading">Loading health card...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRESCRIPTIONS VIEW -->
+<div id="view-prescriptions" style="display:none;">
+  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+  <div class="sec-title" style="margin-top:14px;">My Prescriptions</div>
+  <div id="prescriptionList"></div>
+</div>
+
+<!-- LAB REPORTS VIEW -->
+<div id="view-reports" style="display:none;">
+  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+  <div class="sec-title" style="margin-top:14px;">My Lab Reports</div>
+  <div id="reportsList"></div>
+</div>
+
+<!-- MEDICAL HISTORY (CONSULTATION TIMELINE) VIEW -->
+<div id="view-medical-history" style="display:none;">
+  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+  <div class="sec-title" style="margin-top:14px;">Medical History &mdash; Consultation Timeline</div>
+  <div id="medicalHistoryList"></div>
+</div>
+
+<!-- AI DISEASE PREDICTION VIEW -->
+<div id="view-ai" style="display:none;">
+  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+  <div class="sec-title" style="margin-top:14px;">AI Disease Prediction</div>
+  <div id="aiPredictionList"></div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const userId = params.get("id");
+
+/* Section → existing patient.html section mapping */
+const sectionMap = {
+  profile:      "profileSection",
+  book:         "doctors",
+  appointments: "appointments",
+  healthcard:   "healthcard",
+  records:      "records",
+  lab:          "reports",
+  prescriptions:"prescriptions",
+  ai:           "ai"
+};
+
+function goTo(section) {
+  const target = sectionMap[section] || section;
+  const base   = userId ? `/patient/dashboard?id=${userId}` : `/patient/dashboard`;
+  window.location.href = `${base}&section=${target}`;
+}
+
+/* Set today's date */
+const now = new Date();
+document.getElementById("todayDate").textContent =
+  now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+document.getElementById("topbarDate").textContent =
+  now.toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long" });
+
+/* Load patient name from existing API */
+async function loadName() {
+  if (!userId) return;
+  try {
+    const res  = await fetch(`/api/patient/profile/${userId}`);
+    const data = await res.json();
+    const name = data.user?.name || data.user?.username || "Patient";
+    document.getElementById("welcomeText").textContent  = `Welcome back, ${name}!`;
+    document.getElementById("avatarName").textContent   = name.split(" ")[0];
+    document.getElementById("avatarInitial").textContent = name.charAt(0).toUpperCase();
+  } catch(e) { /* silent */ }
+}
+
+loadName();
+
+/* ── PROFILE VIEW ── */
+function hideAllViews() {
+  ["view-home","view-profile","view-book","view-appointments","view-healthcard",
+   "view-prescriptions","view-reports","view-medical-history","view-ai"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
+}
+
+function showDashboard() {
+  hideAllViews();
+  document.getElementById("view-home").style.display    = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-home").classList.add("active");
+}
+
+function showProfile() {
+  document.getElementById("view-home").style.display    = "none";
+  document.getElementById("view-profile").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-profile").classList.add("active");
+  loadProfile();
+}
+
+async function loadProfile() {
+  if (!userId) return;
+  try {
+    const res  = await fetch(`/api/patient/profile/${userId}`);
+    const data = await res.json();
+    const user    = data.user    || {};
+    const patient = data.patient || {};
+    const mh      = data.medical_history || {};
+    const ls      = data.lifestyle || {};
+
+    document.getElementById("p_photo").src = patient.photo ? `/uploads/${patient.photo}` : "/uploads/default.png";
+    document.getElementById("p_name").textContent        = user.name || "-";
+    document.getElementById("p_username").textContent    = user.username ? `@${user.username}` : "";
+    document.getElementById("p_health_id").textContent   = patient.health_id ? `Patient ID: ${patient.health_id}` : "Patient ID: -";
+    document.getElementById("p_patient_id").textContent  = patient.health_id || "-";
+    document.getElementById("p_patient_name").textContent = user.name || "-";
+    document.getElementById("p_age").textContent         = patient.age || "-";
+    document.getElementById("p_gender").textContent      = patient.gender || "-";
+    document.getElementById("p_blood").textContent       = patient.blood_group || "-";
+    document.getElementById("p_mobile_view").textContent = user.mobile || "-";
+    document.getElementById("p_mobile_input").value      = user.mobile || "";
+    document.getElementById("p_address_view").textContent = patient.address || "-";
+    document.getElementById("p_address_input").value     = patient.address || "";
+
+    /* Family History */
+    document.getElementById("p_family_history").innerHTML =
+      `<div class="info-item full"><div class="lbl">Family History</div><div class="val">${mh.family_history || "-"}</div></div>`;
+
+    /* Lifestyle Details */
+    const lifestyle = [
+      ["Smoking", ls.smoking],
+      ["Alcohol", ls.alcohol],
+      ["Physical Activity", ls.physical_activity],
+      ["Sleep Hours", ls.sleep_hours],
+      ["Diet", ls.diet],
+      ["Food Habits", ls.food_habits],
+      ["Water Intake", ls.water_intake],
+      ["Stress Level", ls.stress_level],
+      ["Occupation", ls.occupation]
+    ];
+    document.getElementById("p_lifestyle").innerHTML = lifestyle
+      .map(([lbl, val]) => `<div class="info-item"><div class="lbl">${lbl}</div><div class="val">${val || "-"}</div></div>`)
+      .join("");
+
+    /* Medical History */
+    const medical = [
+      ["Existing Conditions", mh.existing_conditions],
+      ["Current Medication", mh.current_medication ? (mh.medication_details || "Yes") : "No"],
+      ["Allergies", mh.allergy_details ? `Yes - ${mh.allergy_details}` : "None"]
+    ];
+    document.getElementById("p_medical").innerHTML = medical
+      .map(([lbl, val]) => `<div class="info-item"><div class="lbl">${lbl}</div><div class="val">${val || "-"}</div></div>`)
+      .join("");
+  } catch (e) { console.error(e); }
+}
+
+let profileEditing = false;
+
+function toggleProfileEdit() {
+  profileEditing = !profileEditing;
+  document.getElementById("p_mobile_input").style.display   = profileEditing ? "block" : "none";
+  document.getElementById("p_mobile_view").style.display   = profileEditing ? "none" : "block";
+  document.getElementById("p_address_input").style.display = profileEditing ? "block" : "none";
+  document.getElementById("p_address_view").style.display  = profileEditing ? "none" : "block";
+  document.getElementById("profileEditBtn").style.display  = profileEditing ? "none" : "inline-block";
+  document.getElementById("profileSaveBtn").style.display  = profileEditing ? "inline-block" : "none";
+  document.getElementById("profileCancelBtn").style.display = profileEditing ? "inline-block" : "none";
+}
+
+function cancelProfileEdit() {
+  if (profileEditing) toggleProfileEdit();
+  loadProfile();
+}
+
+async function saveProfile() {
+  const mobile  = document.getElementById("p_mobile_input").value.trim();
+  const address = document.getElementById("p_address_input").value.trim();
+
+  if (!mobile) { alert("Mobile number cannot be empty."); return; }
+
+  try {
+    const res = await fetch(`/patient/profile/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mobile, address })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("Profile updated successfully.");
+      cancelProfileEdit();
+    } else {
+      alert(data.message || "Update failed.");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Update failed.");
+  }
+}
+
+/* ── BOOK APPOINTMENT VIEW ── */
+let doctorsData   = [];
+let selectedDept  = null;
+let selectedDoctor = null;
+let selectedSlot  = null;
+
+function showBookAppointment() {
+  document.getElementById("view-home").style.display    = "none";
+  document.getElementById("view-profile").style.display = "none";
+  document.getElementById("view-book").style.display    = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-book").classList.add("active");
+  if (!doctorsData.length) loadDepartments();
+  else bookGoStep(1);
+}
+
+/* ── MY APPOINTMENTS VIEW ── */
+let appointmentsData = { upcoming: [], completed: [], cancelled: [] };
+let deptById        = {};   /* doctor_id -> department, for old rows */
+
+function showAppointments() {
+  document.getElementById("view-home").style.display        = "none";
+  document.getElementById("view-profile").style.display     = "none";
+  document.getElementById("view-book").style.display        = "none";
+  document.getElementById("view-appointments").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-appointments").classList.add("active");
+  loadAppointments();
+}
+
+async function loadAppointments() {
+  const lists = {
+    upcoming:  document.getElementById("appt-upcoming"),
+    completed: document.getElementById("appt-completed"),
+    cancelled: document.getElementById("appt-cancelled")
+  };
+  Object.values(lists).forEach(el => { if (el) el.innerHTML = '<p class="no-slots">Loading appointments...</p>'; });
+  if (!userId) { Object.values(lists).forEach(el => { if (el) el.innerHTML = '<p class="no-slots">Please log in to view appointments.</p>'; }); return; }
+
+  try {
+    const [apptRes, docRes] = await Promise.all([
+      fetch(`/patient/appointments/${userId}?all=true`),
+      fetch("/doctors")
+    ]);
+    const rows = await apptRes.json();
+    if (!Array.isArray(rows)) throw new Error("Unexpected response");
+
+    try {
+      const doctors = await docRes.json();
+      if (Array.isArray(doctors)) {
+        deptById = {};
+        doctors.forEach(d => { if (d.id != null) deptById[d.id] = d.specialization || "General"; });
+      }
+    } catch (e) { /* department map optional */ }
+
+    const upcoming = [], completed = [], cancelled = [];
+    for (const a of rows) {
+      const st = String(a.status || "").toUpperCase();
+      if (st === "CANCELLED" || st === "CANCELED" || st === "REJECTED" || st === "VOID") cancelled.push(a);
+      else if (st === "COMPLETED" || st === "REVIEWED" || st === "LAB_COMPLETED") completed.push(a);
+      else upcoming.push(a);
+    }
+    const sortFn = (x, y) =>
+      String(y.appointment_date || "").localeCompare(String(x.appointment_date || "")) ||
+      String(y.appointment_time || "").localeCompare(String(x.appointment_time || ""));
+
+    appointmentsData = {
+      upcoming:  upcoming.sort(sortFn),
+      completed: completed.sort(sortFn),
+      cancelled: cancelled.sort(sortFn)
+    };
+    apptTab("upcoming");
+  } catch (e) {
+    console.error(e);
+    Object.values(lists).forEach(el => { if (el) el.innerHTML = '<p class="no-slots">Failed to load appointments.</p>'; });
+  }
+}
+
+function apptTab(tab) {
+  const tabIds  = { upcoming: "tab-upcoming", completed: "tab-completed", cancelled: "tab-cancelled" };
+  const listIds = { upcoming: "appt-upcoming", completed: "appt-completed", cancelled: "appt-cancelled" };
+
+  Object.keys(tabIds).forEach(k => {
+    const btn  = document.getElementById(tabIds[k]);
+    const list = document.getElementById(listIds[k]);
+    if (btn)  btn.classList.toggle("active", k === tab);
+    if (list) list.style.display = (k === tab) ? "block" : "none";
+  });
+
+  const items = appointmentsData[tab] || [];
+  const el    = document.getElementById(listIds[tab]);
+  if (!el) return;
+
+  if (items.length === 0) {
+    el.innerHTML = `<p class="no-slots">No ${tab} appointments.</p>`;
+    return;
+  }
+  el.innerHTML = `<div class="appt-grid">${items.map(apptCardHtml).join("")}</div>`;
+}
+
+function apptCardHtml(a) {
+  const statusColors = {
+    COMPLETED:   "#2e7d32",
+    REVIEWED:    "#2e7d32",
+    LAB_COMPLETED: "#00695c",
+    WAITING:     "#1565c0",
+    INPROGRESS:  "#6a1b9a",
+    CONSULTING:  "#6a1b9a",
+    LAB_READY:   "#e65100",
+    PENDING:     "#f9a825",
+    CONFIRMED:   "#1565c0",
+    CANCELLED:   "#c62828",
+    REJECTED:    "#c62828"
+  };
+  const st = String(a.status || "Waiting");
+  const color = statusColors[st.toUpperCase()] || "#555";
+
+  const dateStr = new Date(a.appointment_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = a.appointment_time ? formatTime(a.appointment_time) : "-";
+  const cancelBtn = isCancellable(a)
+    ? `<button class="appt-cancel-btn" onclick="cancelAppointment(${a.id})">Cancel Appointment</button>`
+    : "";
+
+  return `
+    <div class="appt-card">
+      <div class="appt-card-top">
+        <span class="appt-doctor">Dr. ${a.doctor_name || "Unknown"}</span>
+        <span class="appt-status" style="background:${color};">${st}</span>
+      </div>
+      <div class="appt-meta">
+        <div><span class="lbl">Department</span><span class="val">${a.department || deptById[a.doctor_id] || "General"}</span></div>
+        <div><span class="lbl">Queue No</span><span class="val">${a.token_no != null ? a.token_no : "-"}</span></div>
+        <div><span class="lbl">Date</span><span class="val">${isNaN(new Date(a.appointment_date)) ? (a.appointment_date || "-") : dateStr}</span></div>
+        <div><span class="lbl">Time</span><span class="val">${timeStr}</span></div>
+      </div>
+      ${cancelBtn}
+    </div>`;
+}
+
+function isCancellable(a) {
+  const st = String(a.status || "").toUpperCase();
+  if (["COMPLETED", "REVIEWED", "LAB_COMPLETED", "CANCELLED", "CANCELED", "REJECTED", "VOID"].includes(st)) return false;
+
+  const scheduled = new Date(a.appointment_date);
+  const [hh, mm] = String(a.appointment_time || "00:00").split(":").map(Number);
+  scheduled.setHours(hh, mm, 0, 0);
+  return scheduled.getTime() > Date.now();
+}
+
+async function cancelAppointment(id) {
+  if (!confirm("Cancel this appointment? This cannot be undone.")) return;
+  try {
+    const res = await fetch(`/patient/appointments/cancel/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patientId: userId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(data.message || "Appointment cancelled.");
+    } else {
+      alert(data.message || "Unable to cancel this appointment.");
+    }
+    loadAppointments();
+  } catch (e) {
+    console.error(e);
+    alert("Unable to cancel. Please try again.");
+    loadAppointments();
+  }
+}
+
+/* ── DIGITAL HEALTH CARD VIEW ── */
+function showHealthCard() {
+  document.getElementById("view-home").style.display         = "none";
+  document.getElementById("view-profile").style.display      = "none";
+  document.getElementById("view-book").style.display         = "none";
+  document.getElementById("view-appointments").style.display = "none";
+  document.getElementById("view-healthcard").style.display   = "block";
+  loadHealthCard();
+}
+
+async function loadHealthCard() {
+  const card = document.getElementById("hcCard");
+  card.innerHTML = '<div class="hc-loading">Loading health card...</div>';
+  if (!userId) { card.innerHTML = '<div class="hc-loading">Please log in to view your health card.</div>'; return; }
+
+  /* Preferred: full health-card endpoint (registered patients) */
+  let hc = null;
+  try {
+    const res = await fetch(`/api/patient-reg/health-card/${userId}`);
+    if (res.ok) hc = await res.json();
+  } catch (e) { /* fall through */ }
+
+  /* Always works: profile endpoint */
+  let profile = null;
+  try {
+    const res = await fetch(`/api/patient/profile/${userId}`);
+    if (res.ok) profile = await res.json();
+  } catch (e) { /* ignore */ }
+
+  const u = (profile && profile.user)    || {};
+  const p = (profile && profile.patient) || {};
+
+  const name      = (hc && hc.name)       || u.name       || "Patient";
+  const healthId  = (hc && hc.health_id)  || p.health_id  || null;
+  const bloodGroup = String((hc && hc.blood_group) || p.blood_group || "Not Provided").toUpperCase();
+  const gender    = (hc && hc.gender)     || p.gender     || "—";
+  const patientId = healthId || "NALAM-" + String(userId).padStart(6, "0");
+
+  /* QR image — real server-generated QR (reuses existing QR module), encodes ONLY the Patient ID */
+  let qrImage = (hc && hc.qr_image) || null;
+  if (!qrImage) {
+    try {
+      const res = await fetch(`/api/qr/generate-image/${encodeURIComponent(patientId)}`);
+      const j = await res.json();
+      if (j.qr_image) qrImage = j.qr_image;
+    } catch (e) { /* keep null */ }
+  }
+
+  const hospName = (hc && hc.hospital_name) || "Aarudhra Multispeciality Hospital";
+  const hospLogo = (hc && hc.hospital_logo) || "/logo-placeholder.svg";
+  const issueDate = hc && hc.issue_date
+    ? new Date(hc.issue_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+  card.innerHTML = `
+    <div class="hc-header">
+      <img class="hc-logo" src="${hospLogo}" alt="Hospital Logo" onerror="this.style.display='none';">
+      <div>
+        <div class="hc-hosp">${hospName}</div>
+        <div class="hc-tag">Digital Health Card</div>
+      </div>
+    </div>
+    <div class="hc-body">
+      <div class="hc-name">${name}</div>
+      <div class="hc-id">Patient ID: ${patientId}</div>
+
+      <div class="hc-info">
+        <div class="hc-info-box">
+          <span class="hc-label">Blood Group</span>
+          <span class="hc-value">${bloodGroup}</span>
+        </div>
+        <div class="hc-info-box">
+          <span class="hc-label">Gender</span>
+          <span class="hc-value">${gender}</span>
+        </div>
+      </div>
+
+      <div class="hc-qr">
+        ${qrImage ? `<img src="${qrImage}" alt="QR Code">` : '<div class="hc-loading">QR unavailable</div>'}
+        <div class="hc-scan">Scan this QR to verify your health details</div>
+      </div>
+
+      <div class="hc-footer">
+        <span class="hc-issue">Issue Date: ${issueDate}</span>
+        <span>NALAM Health Card</span>
+      </div>
+    </div>`;
+}
+
+async function downloadHealthCardPdf() {
+  const btn = document.getElementById("hcDlBtn");
+  const card = document.getElementById("hcCard");
+  if (!card || !card.querySelector(".hc-name")) { alert("Health card not loaded yet."); return; }
+  if (typeof html2pdf === "undefined") { alert("PDF library failed to load. Check your internet connection."); return; }
+  btn.disabled = true;
+  btn.textContent = "Preparing PDF...";
+  try {
+    await html2pdf().set({
+      margin: 0,
+      filename: "Health-Card-" + (userId || "patient") + ".pdf",
+      image: { type: "jpeg", quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { avoid: [".hc-card"] }
+    }).from(card).save();
+  } catch (e) {
+    console.error(e);
+    alert("Unable to generate PDF. Please try again.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Download as PDF";
+  }
+}
+
+function loadDepartments() {
+  const grid = document.getElementById("departmentList");
+  grid.innerHTML = '<p class="no-slots">Loading departments...</p>';
+  fetch("/doctors")
+    .then(res => res.json())
+    .then(doctors => {
+      doctorsData = doctors;
+      const deptMap = {};
+      doctors.forEach(d => {
+        const dept = (d.specialization || "General").trim() || "General";
+        deptMap[dept] = (deptMap[dept] || 0) + 1;
+      });
+      const entries = Object.entries(deptMap).sort((a, b) => a[0].localeCompare(b[0]));
+      grid.innerHTML = entries.length
+        ? entries.map(([dept, count]) => `
+            <button class="dept-card" onclick="selectDepartment('${dept.replace(/'/g, "\\'")}')">
+              <div class="dept-name">${dept}</div>
+              <div class="dept-count">${count} Doctor${count > 1 ? "s" : ""}</div>
+            </button>`).join("")
+        : '<p class="no-slots">No departments available.</p>';
+    })
+    .catch(e => { console.error(e); grid.innerHTML = '<p class="no-slots">Failed to load departments.</p>'; });
+}
+
+function selectDepartment(dept) {
+  selectedDept  = dept;
+  selectedDoctor = null;
+  selectedSlot  = null;
+  document.getElementById("bookMsg").innerHTML = "";
+  bookGoStep(2);
+}
+
+function bookGoStep(n) {
+  [1, 2, 3, 4].forEach(i => {
+    document.getElementById(`book-step${i}`).style.display = i === n ? "block" : "none";
+    document.getElementById(`step${i}`).classList.toggle("active", i <= n);
+  });
+  if (n === 2) renderDoctors();
+  if (n === 1 && !doctorsData.length) loadDepartments();
+  if (n === 3 && selectedDoctor) loadSlots();
+}
+
+let deptRequestId = 0;
+
+function renderDoctors() {
+  const requestId = ++deptRequestId;
+  const list = doctorsData.filter(d => (d.specialization || "General").trim() === selectedDept);
+  const grid = document.getElementById("doctorList2");
+  grid.innerHTML = '<p class="no-slots">Loading available doctors...</p>';
+
+  const today = new Date();
+  const todayISO  = today.toISOString().split("T")[0];
+  const todayName = today.toLocaleDateString("en-US", { weekday: "long" });
+
+  Promise.all(list.map(async d => {
+    try {
+      const [schRes, slotRes] = await Promise.all([
+        fetch(`/doctor/schedule/${d.id}`),
+        fetch(`/doctor/slots/${d.id}/${todayName}?date=${todayISO}`)
+      ]);
+      const sch   = await schRes.json();
+      const slots = await slotRes.json();
+      if (!Array.isArray(slots) || slots.length === 0) return null;
+      return { ...d, schedule: sch, freeSlots: slots };
+    } catch (e) { return null; }
+  })).then(results => {
+    if (requestId !== deptRequestId) return;  /* stale response — user changed department */
+    const available = results.filter(Boolean);
+    grid.innerHTML = available.length
+      ? available.map(d => `
+          <button class="dept-card" onclick="selectDoctor(${d.id})">
+            <div class="dept-name">Dr. ${d.name}</div>
+            <div class="dept-count">${d.specialization || "General"}</div>
+            <div class="dept-timing">Today: ${d.schedule.start_time || "-"} - ${d.schedule.end_time || "-"}</div>
+          </button>`).join("")
+      : '<p class="no-slots">No doctors available today in this department.</p>';
+  });
+}
+
+function selectDoctor(id) {
+  selectedDoctor = doctorsData.find(d => d.id === id);
+  selectedSlot   = null;
+  document.getElementById("bookMsg").innerHTML = "";
+  bookGoStep(3);
+  loadDoctorSchedule();
+}
+
+async function loadDoctorSchedule() {
+  try {
+    const res = await fetch(`/doctor/schedule/${selectedDoctor.id}`);
+    const s = await res.json();
+    document.getElementById("slotDoctorName").textContent = s.name ? `Dr. ${s.name}` : "-";
+    document.getElementById("slotDoctorSpec").textContent = s.specialisation || selectedDoctor.specialization || "-";
+    document.getElementById("slotTimings").textContent = (s.start_time && s.end_time) ? `${s.start_time} - ${s.end_time}` : "-";
+    document.getElementById("slotDays").textContent = s.available_days || "-";
+    const today = new Date();
+    const dateInput = document.getElementById("slotDate");
+    dateInput.min = today.toISOString().split("T")[0];
+    dateInput.value = dateInput.min;
+    loadSlots();
+  } catch (e) { console.error(e); }
+}
+
+let slotRequestId = 0;
+
+async function loadSlots() {
+  const dateInput = document.getElementById("slotDate");
+  const grid = document.getElementById("slotGrid");
+  if (!dateInput || !dateInput.value || !selectedDoctor) return;
+
+  const requestId = ++slotRequestId;
+  grid.innerHTML = '<p class="no-slots">Loading slots...</p>';
+  const date = dateInput.value;
+  const dayName = new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
+  try {
+    const res = await fetch(`/doctor/slots/${selectedDoctor.id}/${dayName}?date=${date}`);
+    const slots = await res.json();
+    if (requestId !== slotRequestId) return;  /* stale response — a newer request won */
+    grid.innerHTML = slots.length
+      ? slots.map(s => `<button class="slot-btn" onclick="selectSlot('${s}')">${formatTime(s)}</button>`).join("")
+      : '<p class="no-slots">No slots available on this date.</p>';
+  } catch (e) {
+    console.error(e);
+    if (requestId !== slotRequestId) return;
+    grid.innerHTML = '<p class="no-slots">Failed to load slots.</p>';
+  }
+}
+
+function selectSlot(time) {
+  selectedSlot = time;
+  document.querySelectorAll(".slot-btn").forEach(b => b.classList.toggle("selected", b.textContent === formatTime(time)));
+  const btn = document.getElementById("confirmBtn");
+  if (btn) { btn.disabled = false; btn.textContent = "Confirm Appointment"; }
+  document.getElementById("cfDept").textContent   = selectedDept;
+  document.getElementById("cfDoctor").textContent = `Dr. ${selectedDoctor.name}`;
+  document.getElementById("cfSpec").textContent   = selectedDoctor.specialization || "General";
+  document.getElementById("cfDate").textContent   = new Date(document.getElementById("slotDate").value + "T00:00:00")
+    .toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  document.getElementById("cfTime").textContent   = formatTime(time);
+  bookGoStep(4);
+}
+
+function formatTime(t) {
+  const [h, m] = t.split(":");
+  const hh = parseInt(h, 10);
+  const ampm = hh >= 12 ? "PM" : "AM";
+  const h12 = hh % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
+}
+
+let isBooking = false;
+
+async function confirmBooking() {
+  if (isBooking) return;  /* prevent double clicks */
+  if (!selectedSlot) return;
+
+  const btn = document.getElementById("confirmBtn");
+  const msg = document.getElementById("bookMsg");
+  if (!userId) {
+    msg.innerHTML = '<div class="book-error">Your patient session is missing. Please log in and open the dashboard again.</div>';
+    return;
+  }
+  isBooking = true;
+  if (btn) { btn.disabled = true; }
+
+  const dateVal = document.getElementById("slotDate").value;
+  const dayName = new Date(dateVal + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
+  msg.innerHTML = '<div class="book-error" style="background:#eef4ff;color:#0d47a1;">Verifying slot availability...</div>';
+
+  try {
+    /* Re-verify that this doctor + time is still free before confirming */
+    let chkRes;
+    try {
+      chkRes = await fetch(`/doctor/slots/${selectedDoctor.id}/${dayName}?date=${dateVal}`);
+    } catch (e) {
+      msg.innerHTML = '<div class="book-error">Unable to check availability. Please try again.</div>';
+      return;
+    }
+    const freeSlots = await chkRes.json();
+    if (!Array.isArray(freeSlots) || !freeSlots.includes(selectedSlot)) {
+      msg.innerHTML = '<div class="book-error">This slot is no longer available.</div>';
+      loadSlots();
+      return;
+    }
+
+    const res = await fetch("/patient/book-appointment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        doctorId:        selectedDoctor.id,
+        patientId:       userId,
+        appointmentDate: dateVal,
+        appointmentTime: selectedSlot,
+        appointmentDay:  dayName,
+        symptoms:        ""
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const queueNo = data.queue_no ?? data.token;
+      msg.innerHTML = `<div class="book-success">Appointment booked!<br>Queue Number: <b>${queueNo}</b></div>`;
+      const qRow = document.getElementById("cfQueueRow");
+      const qVal = document.getElementById("cfQueue");
+      if (qRow && qVal) { qVal.textContent = queueNo; qRow.style.display = "flex"; }
+      if (btn) { btn.textContent = "Appointment Booked"; }
+      selectedSlot = null;  /* require selecting a fresh slot for the next booking */
+      loadSlots();
+    } else if (res.status === 409) {
+      /* Another patient took this slot in the meantime */
+      msg.innerHTML = '<div class="book-error">This slot is no longer available.</div>';
+      loadSlots();
+    } else {
+      /* Show the real server message instead of a misleading one */
+      msg.innerHTML = `<div class="book-error">${data.message || "Booking failed. Please try again."}</div>`;
+    }
+  } catch (e) {
+    console.error(e);
+    msg.innerHTML = '<div class="book-error">Booking failed. Please try again.</div>';
+  } finally {
+    isBooking = false;
+  }
+}
+
+/* ── PRESCRIPTIONS VIEW ── */
+function showPrescriptions() {
+  hideAllViews();
+  document.getElementById("view-prescriptions").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-rx").classList.add("active");
+  loadPrescriptions();
+}
+
+async function loadPrescriptions() {
+  const box = document.getElementById("prescriptionList");
+  box.innerHTML = '<p class="no-slots">Loading prescriptions...</p>';
+  try {
+    const res = await fetch(`/patient/prescriptions/${userId}`);
+    const prescriptions = await res.json();
+    if (!Array.isArray(prescriptions) || !prescriptions.length) { box.innerHTML = "<p>No prescriptions yet.</p>"; return; }
+    box.innerHTML = prescriptions.map(p => {
+      const date = tlDate(p.appointment_date || p.created_at);
+      const meds = Array.isArray(p.medicines) ? p.medicines : [];
+      const medRows = meds.map(m => `
+        <tr>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.medicine_name}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.dosage || '-'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.frequency || '-'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.quantity || '-'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.duration || '-'}</td>
+        </tr>`).join('');
+      const dispRows = (Array.isArray(p.dispensing) ? p.dispensing : []).map(d => `
+        <tr>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${d.medicine_name}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${d.quantity_dispensed || 0}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${d.medicine_availability || '-'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${d.pharmacist_name || '-'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${tlTime(d.dispensing_date)}</td>
+        </tr>`).join('');
+      return `
+      <div class="p-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div style="font-weight:700;color:#0d47a1;font-size:15px;">${p.doctor_name || 'Doctor'}</div>
+            <div style="font-size:12px;color:#888;">${p.doctor_specialisation || 'General'}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:600;color:#333;">${date}</div>
+            ${p.symptoms ? `<div style="font-size:12px;color:#666;margin-top:2px;">Symptoms: ${p.symptoms}</div>` : ''}
+          </div>
+        </div>
+        <hr style="margin:10px 0;border:none;border-top:1px solid #eee;">
+        <div style="font-size:12px;font-weight:700;color:#0d47a1;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Medicines</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:#f0f4ff;">
+              <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Medicine</th>
+              <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Dosage</th>
+              <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Frequency</th>
+              <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Qty</th>
+              <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Duration</th>
+            </tr>
+          </thead>
+          <tbody>${medRows || '<tr><td colspan="5" style="padding:6px 10px;color:#aaa;">No medicines recorded.</td></tr>'}</tbody>
+        </table>
+        ${dispRows ? `
+        <div style="font-size:12px;font-weight:700;color:#00695c;text-transform:uppercase;letter-spacing:0.4px;margin:12px 0 6px;">Pharmacy Dispensing</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:#e0f7f4;">
+              <th style="padding:6px 10px;text-align:left;color:#00695c;">Medicine</th>
+              <th style="padding:6px 10px;text-align:left;color:#00695c;">Dispensed Qty</th>
+              <th style="padding:6px 10px;text-align:left;color:#00695c;">Availability</th>
+              <th style="padding:6px 10px;text-align:left;color:#00695c;">Pharmacist</th>
+              <th style="padding:6px 10px;text-align:left;color:#00695c;">Dispensed At</th>
+            </tr>
+          </thead>
+          <tbody>${dispRows}</tbody>
+        </table>` : ''}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load prescriptions.</p>';
+  }
+}
+
+/* ── LAB REPORTS VIEW ── */
+function showReports() {
+  hideAllViews();
+  document.getElementById("view-reports").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-lab").classList.add("active");
+  loadReports();
+}
+
+async function loadReports() {
+  const box = document.getElementById("reportsList");
+  box.innerHTML = '<p class="no-slots">Loading lab reports...</p>';
+  try {
+    const res = await fetch(`/lab/patient-reports/${userId}`);
+    const reports = await res.json();
+    if (!Array.isArray(reports) || !reports.length) { box.innerHTML = "<p>No lab reports yet.</p>"; return; }
+
+    /* One card per uploaded report file. Every upload is kept —
+       historical files are never replaced. */
+    box.innerHTML = reports.map(r => {
+      const tests = Array.isArray(r.tests) ? r.tests : (typeof r.tests === 'string' ? JSON.parse(r.tests) : []);
+      const files = Array.isArray(r.reports) ? r.reports : [];
+      const uploads = files.length ? files : (r.report_file ? [{ report_file: r.report_file }] : []);
+      const isReviewed = (r.status || '').toUpperCase() === 'REVIEWED';
+      const badgeColor = isReviewed ? '#166534' : '#1565c0';
+      const badgeBg    = isReviewed ? '#dcfce7' : '#e3f0ff';
+      const badgeLabel = isReviewed ? 'Reviewed' : 'Uploaded';
+      const fileRows = uploads.map(f => `
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;">
+          <p><b>Test Name :</b> ${f.test_name || tests.join(', ') || 'Lab Report'}</p>
+          <p><b>Requested Doctor :</b> ${r.doctor_name || '-'}</p>
+          <p><b>Laboratory Technician :</b> ${f.technician_name || '-'}</p>
+          <p><b>Upload Date :</b> ${tlTime(f.upload_date)}</p>
+          <a href="/uploads/${f.report_file}" target="_blank"
+             style="display:inline-block;margin-top:8px;padding:8px 16px;background:#0d47a1;color:white;border-radius:8px;text-decoration:none;font-size:13px;">
+             &#128196; Download Report
+          </a>
+        </div>`).join('');
+      const testSummary = tests.length ? `<p><b>Tests:</b> ${tests.join(', ')}</p>` : '';
+      return `
+      <div class="p-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3 style="margin:0;">Lab Report</h3>
+            <div style="font-size:12px;color:#888;margin-top:2px;">Dr. ${r.doctor_name || '-'}</div>
+          </div>
+          <span style="background:${badgeBg};color:${badgeColor};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">${badgeLabel}</span>
+        </div>
+        <hr>
+        ${testSummary}
+        ${uploads.length ? fileRows : `<p style="color:#e53935;font-size:13px;margin-top:8px;">Report file not yet attached.</p>`}
+      </div>`;
+    }).join("");
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load lab reports.</p>';
+  }
+}
+
+/* ── MEDICAL HISTORY (CONSULTATION TIMELINE) ── */
+function showMedicalHistory() {
+  hideAllViews();
+  document.getElementById("view-medical-history").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-medical-history").classList.add("active");
+  loadMedicalHistory();
+}
+
+/* ── AI DISEASE PREDICTION ── */
+function showAI() {
+  hideAllViews();
+  document.getElementById("view-ai").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-ai").classList.add("active");
+  loadPredictions();
+}
+
+async function loadPredictions() {
+  const box = document.getElementById("aiPredictionList");
+  box.innerHTML = '<p class="no-slots">Loading AI predictions...</p>';
+  if (!userId) { box.innerHTML = "<p>Patient not identified.</p>"; return; }
+
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  try {
+    const res  = await fetch(`/patient/predictions/${userId}`);
+    const preds = await res.json();
+
+    if (!Array.isArray(preds) || !preds.length) {
+      box.innerHTML = `<p>No AI disease predictions yet. Predictions made by your doctor will appear here.</p>`;
+      return;
+    }
+
+    const fmtPct = v => (v == null || isNaN(v)) ? '—' : Number(v) + '%';
+    const highRisk = preds.filter(p => String(p.prediction || "").toUpperCase() === "HIGH RISK").length;
+
+    const summary = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px;">
+        <div class="p-card" style="margin:0;">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">Total Predictions</div>
+          <div style="font-size:24px;font-weight:800;color:#0d47a1;margin-top:4px;">${preds.length}</div>
+        </div>
+        <div class="p-card" style="margin:0;">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">High Risk</div>
+          <div style="font-size:24px;font-weight:800;color:#c62828;margin-top:4px;">${highRisk}</div>
+        </div>
+        <div class="p-card" style="margin:0;">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">Low Risk</div>
+          <div style="font-size:24px;font-weight:800;color:#166534;margin-top:4px;">${preds.length - highRisk}</div>
+        </div>
+        <div class="p-card" style="margin:0;">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">Latest Prediction</div>
+          <div style="font-size:14px;font-weight:700;color:#0d47a1;margin-top:4px;">${tlDate(preds[0].predicted_at)}</div>
+        </div>
+      </div>`;
+
+    box.innerHTML = summary + preds.map(p => {
+      const risk = String(p.prediction || "").toUpperCase();
+      const isHigh = risk === "HIGH RISK";
+      const badgeBg  = isHigh ? '#fdecea' : '#dcfce7';
+      const badgeFg  = isHigh ? '#c62828' : '#166534';
+      return `
+      <div class="p-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <h3 style="margin:0;">&#129504; ${esc(p.disease_name || 'Disease Prediction')}</h3>
+            <div style="font-size:12px;color:#888;margin-top:2px;">${tlTime(p.predicted_at)}</div>
+          </div>
+          <span class="badge-id" style="background:${badgeBg};color:${badgeFg};">${esc(p.prediction || '—')}</span>
+        </div>
+        <hr>
+        <div class="profile-row2"><span class="lbl">Disease Name</span><span class="val">${esc(p.disease_name || '—')}</span></div>
+        <div class="profile-row2"><span class="lbl">Prediction</span><span class="val">${esc(p.prediction || '—')}</span></div>
+        <div class="profile-row2"><span class="lbl">Risk Probability</span><span class="val">${fmtPct(p.probability)}</span></div>
+        <div class="profile-row2"><span class="lbl">Confidence Score</span><span class="val">${fmtPct(p.confidence)}</span></div>
+        <div class="profile-row2"><span class="lbl">Prediction Date</span><span class="val">${tlTime(p.predicted_at) || '—'}</span></div>
+        <div class="profile-row2"><span class="lbl">Doctor Name</span><span class="val">${p.doctor_name ? 'Dr. ' + esc(p.doctor_name) : '—'}</span></div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load AI predictions.</p>';
+  }
+}
+
+function tlDate(v) {
+  if (!v) return '-';
+  /* pg returns DATE as an ISO Date object -> "2026-06-26T18:30:00.000Z"
+     or plain "2026-06-26". Normalize to the local date part. */
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return isNaN(d) ? String(v) : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  const d = new Date(v);
+  return isNaN(d) ? String(v) : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function tlTime(v) {
+  if (!v) return '';
+  const d = new Date(v);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) +
+         ' · ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function tlEvent(icon, iconBg, label, time, detailsHtml) {
+  return `
+      <div class="tl-event">
+        <div class="tl-icon" style="background:${iconBg};">${icon}</div>
+        <div class="tl-content">
+          <div class="tl-label">${label} <span class="tl-time">${time || ''}</span></div>
+          <div class="tl-details">${detailsHtml || ''}</div>
+        </div>
+      </div>`;
+}
+
+function vitalsHtml(v) {
+  const rows = [
+    ['Height (cm)', v.height_cm], ['Weight (kg)', v.weight_kg], ['BMI', v.bmi],
+    ['Temperature (°F)', v.temperature_f], ['Heart Rate', v.heart_rate],
+    ['Respiratory Rate', v.respiratory_rate], ['SpO2 (%)', v.spo2],
+    ['BP (SYS/DIA)', v.bp_systolic && v.bp_diastolic ? `${v.bp_systolic}/${v.bp_diastolic}` : (v.bp_systolic || v.bp_diastolic)],
+    ['Blood Sugar (Random)', v.blood_sugar_random], ['Pain Scale', v.pain_scale]
+  ].filter(([, val]) => val !== null && val !== undefined && val !== '');
+  if (!rows.length) return '<span style="color:#aaa;">No vitals recorded.</span>';
+  return rows.map(([lbl, val]) =>
+    `<span class="tl-chip"><b>${lbl}:</b> ${val}</span>`).join('');
+}
+
+function notesHtml(notes) {
+  if (!Array.isArray(notes) || !notes.length) return '';
+  return notes.map(n => {
+    const fields = [
+      ['Chief Complaint', n.chief_complaint], ['Present Illness', n.present_illness],
+      ['Physical Exam', n.physical_examination], ['Diagnosis', n.diagnosis],
+      ['Clinical Impression', n.clinical_impression], ['Advice', n.advice],
+      ['Follow-up Date', n.follow_up_date]
+    ].filter(([, val]) => val !== null && val !== undefined && String(val).trim() !== '');
+    const inner = fields.map(([lbl, val]) =>
+      `<div style="margin-top:3px;"><b style="color:#0d47a1;">${lbl}:</b> ${val}</div>`).join('');
+    return `
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #eee;">
+        <div style="font-size:11px;color:#888;">Saved at ${tlTime(n.created_at)}</div>
+        ${inner || '<span style="color:#aaa;">Notes saved.</span>'}
+      </div>`;
+  }).join('');
+}
+
+function prescriptionHtml(p) {
+  const meds = Array.isArray(p.medicines) ? p.medicines : [];
+  const disp = Array.isArray(p.dispensing) ? p.dispensing : [];
+  let html = '';
+  if (meds.length) {
+    html += `<table><thead><tr>
+              <th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Qty</th><th>Duration</th>
+            </tr></thead><tbody>`;
+    html += meds.map(m => `<tr>
+              <td>${m.medicine_name}</td>
+              <td>${m.dosage || '-'}</td>
+              <td>${m.frequency || '-'}</td>
+              <td>${m.quantity || '-'}</td>
+              <td>${m.duration || '-'}</td>
+            </tr>`).join('');
+    html += `</tbody></table>`;
+    html += `<div style="font-size:12px;color:#666;margin-top:4px;">Status: <b>${p.status || '-'}</b></div>`;
+  } else {
+    html = '<span style="color:#aaa;">No medicines prescribed.</span>';
+  }
+  return html + dispensingHtml(disp);
+}
+
+function dispensingHtml(disp) {
+  if (!Array.isArray(disp) || !disp.length) return '';
+  return disp.map(d => `
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #eee;font-size:13px;">
+        <b style="color:#00695c;">Dispensed:</b> ${d.medicine_name}
+        <div style="margin-top:3px;color:#555;">
+          Qty: ${d.quantity_prescribed || 0} prescribed → ${d.quantity_dispensed || 0} dispensed ·
+          Availability: <b>${d.medicine_availability || '—'}</b><br>
+          Pharmacist: ${d.pharmacist_name || '-'} ·
+          Date: ${tlTime(d.dispensing_date)}${d.remarks ? `<br>Remarks: ${d.remarks}` : ''}
+        </div>
+      </div>`).join('');
+}
+
+function labRequestHtml(lr) {
+  const tests = Array.isArray(lr.tests) ? lr.tests : [];
+  const reports = Array.isArray(lr.reports) ? lr.reports : [];
+
+  let html = `<span class="tl-chip"><b>Status:</b> ${lr.status || '-'}</span>
+              <span class="tl-chip"><b>Priority:</b> ${lr.priority || 'Normal'}</span>`;
+  if (tests.length) html += `<div style="margin-top:6px;">Tests: ${tests.map(t => `<span class="tl-chip">${t}</span>`).join('')}</div>`;
+  if (lr.clinical_notes) html += `<div style="margin-top:4px;color:#555;"><b>Clinical Notes:</b> ${lr.clinical_notes}</div>`;
+
+  /* Every uploaded file is listed — nothing is ever replaced */
+  if (reports.length) {
+    html += `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #eee;">`;
+    reports.forEach(r => {
+      html += `
+        <div style="margin-top:8px;background:#f8fbff;border:1px solid #e3eaf5;border-radius:8px;padding:10px 12px;">
+          <div><b style="color:#0d47a1;">Test Name:</b> ${r.test_name || tests.join(', ') || 'Lab Report'}</div>
+          <div style="margin-top:2px;"><b>Requested Doctor:</b> ${lr.doctor_name || '-'}</div>
+          <div><b>Laboratory Technician:</b> ${r.technician_name || '-'}</div>
+          <div><b>Upload Date:</b> ${tlTime(r.upload_date)}</div>
+          <a class="tl-download" href="/uploads/${r.report_file}" target="_blank">&#128196; Download Report</a>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+  else if (lr.report_file) {
+    html += `
+      <div style="margin-top:8px;background:#f8fbff;border:1px solid #e3eaf5;border-radius:8px;padding:10px 12px;">
+        <div><b style="color:#0d47a1;">Test Name:</b> ${tests.join(', ') || 'Lab Report'}</div>
+        <div><b>Requested Doctor:</b> ${lr.doctor_name || '-'}</div>
+        <div><b>Upload Date:</b> ${tlTime(lr.completed_at)}</div>
+        <a class="tl-download" href="/uploads/${lr.report_file}" target="_blank">&#128196; Download Report</a>
+      </div>`;
+  }
+
+  return html;
+}
+
+function visitHtml(visit) {
+  const a = visit.appointment || {};
+  const events = [];
+
+  /* 1. Appointment */
+  events.push(tlEvent(
+    '🗓️', '#0d47a1', 'Appointment',
+    `Booked ${tlTime(a.booked_at)}`,
+    `<div>Doctor: <b>${a.doctor_name || '-'}</b>${a.doctor_specialisation ? ' (' + a.doctor_specialisation + ')' : ''}</div>
+     <div>Scheduled: <b>${tlDate(a.date)}</b> · ${a.time || '-'} · Token #${a.token_no || '-'}</div>
+     ${a.symptoms ? `<div>Symptoms: ${a.symptoms}</div>` : ''}`
+  ));
+
+  /* 2. Vitals */
+  if (visit.vitals) {
+    events.push(tlEvent(
+      '🩺', '#e65100', 'Vitals',
+      `Recorded ${tlTime(visit.vitals.consultation_started_at || visit.vitals.created_at)}`,
+      vitalsHtml(visit.vitals)
+    ));
+  }
+
+  /* 3. Clinical Notes (append-only) */
+  if (Array.isArray(visit.notes) && visit.notes.length) {
+    visit.notes.forEach(n => {
+      events.push(tlEvent(
+        '📝', '#7a4a0d', 'Clinical Note',
+        tlTime(n.created_at),
+        notesHtml([n])
+      ));
+    });
+  }
+
+  /* 4. Prescription */
+  if (visit.prescription) {
+    events.push(tlEvent(
+      '💊', '#2e7d32', 'Prescription',
+      tlTime(visit.prescription.created_at),
+      prescriptionHtml(visit.prescription)
+    ));
+  }
+
+  /* 5. Laboratory Request (+ reports attached automatically) */
+  if (Array.isArray(visit.lab_requests) && visit.lab_requests.length) {
+    visit.lab_requests.forEach(lr => {
+      events.push(tlEvent(
+        '🧪', '#6a1b9a', 'Laboratory Request',
+        tlTime(lr.created_at),
+        labRequestHtml(lr)
+      ));
+    });
+  }
+
+  return `
+      <div class="tl-visit">
+        <div class="tl-visit-head">
+          <div>
+            <div class="tl-title">${tlDate(a.date)} · ${a.time || '-'} · Dr. ${a.doctor_name || '-'}</div>
+            <div class="tl-sub">Token #${a.token_no || '-'}${a.symptoms ? ' · ' + a.symptoms : ''}</div>
+          </div>
+          <span class="tl-status">${a.status || '-'}</span>
+        </div>
+        <div class="tl-body">${events.join('')}</div>
+      </div>`;
+}
+
+async function loadMedicalHistory() {
+  const box = document.getElementById("medicalHistoryList");
+  box.innerHTML = '<p class="no-slots">Loading medical history...</p>';
+
+  try {
+    const res  = await fetch(`/patient/medical-history/${userId}`);
+    const data = await res.json();
+
+    if (!data || !Array.isArray(data.visits) || !data.visits.length) {
+      box.innerHTML = '<p>No consultations yet.</p>';
+      return;
+    }
+
+    let html = '<div class="timeline">' + data.visits.map(visitHtml).join('') + '</div>';
+
+    /* AI Health Predictions (chronological, each with timestamp) */
+    const ai = Array.isArray(data.ai_predictions) ? data.ai_predictions : [];
+    if (ai.length) {
+      html += `
+        <div class="tl-visit" style="margin-top:18px;">
+          <div class="tl-visit-head" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);">
+            <div>
+              <div class="tl-title">🤖 AI Health Predictions</div>
+              <div class="tl-sub">Automated health risk assessments</div>
+            </div>
+          </div>
+          <div class="tl-body">
+            ${ai.map(p => tlEvent(
+              '🤖', '#6a1b9a', (p.model_type || 'Prediction'),
+              tlTime(p.predicted_at),
+              `<div>Prediction: <b>${p.prediction || '-'}</b>${p.probability != null ? ' · Confidence: ' + p.probability + '%' : ''}</div>`
+            )).join('')}
+          </div>
+        </div>`;
+    }
+
+    box.innerHTML = html;
+  }
+  catch (err) {
+    console.error(err);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load medical history.</p>';
+  }
+}
+
+/* Show profile directly when landing with ?section=profileSection */
+if (params.get("section") === "profileSection" || params.get("section") === "profile") {
+  showProfile();
+} else if (params.get("section") === "doctors" || params.get("section") === "book") {
+  showBookAppointment();
+} else if (params.get("section") === "appointments") {
+  showAppointments();
+} else if (params.get("section") === "healthcard") {
+  showHealthCard();
+} else if (params.get("section") === "prescriptions") {
+  showPrescriptions();
+} else if (params.get("section") === "reports" || params.get("section") === "lab") {
+  showReports();
+} else if (params.get("section") === "medicalHistory" || params.get("section") === "records") {
+  showMedicalHistory();
+} else if (params.get("section") === "ai" || params.get("section") === "predictions") {
+  showAI();
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</body>
+</html>

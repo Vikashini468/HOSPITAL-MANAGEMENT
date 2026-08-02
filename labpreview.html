@@ -138,6 +138,10 @@
 
 <p><b>Appointment ID :</b> <span id="appointment">-</span></p>
 
+<p><b>Priority :</b> <span id="priority">-</span></p>
+
+<p><b>Clinical Notes :</b> <span id="clinicalNotes">-</span></p>
+
 </div>
 
 <h3 class="test-title">Requested Tests</h3>
@@ -172,9 +176,15 @@ const doctorName=localStorage.getItem("doctorName") || "Doctor";
 
 const tests=JSON.parse(localStorage.getItem("selectedTests")) || [];
 
+const priority=localStorage.getItem("priority") || "Normal";
+
+const clinicalNotes=localStorage.getItem("clinicalNotes") || "";
+
 document.getElementById("doctor").textContent=doctorName;
 document.getElementById("patient").textContent=patientId || "-";
 document.getElementById("appointment").textContent=appointmentId || "-";
+document.getElementById("priority").textContent=priority;
+document.getElementById("clinicalNotes").textContent=clinicalNotes || "—";
 
 const testDiv=document.getElementById("tests");
 
@@ -216,6 +226,8 @@ async function confirmReport(){
             patientId,
             appointmentId,
             tests,
+            priority,
+            clinicalNotes,
             date:new Date()
 
         };

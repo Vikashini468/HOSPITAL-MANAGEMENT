@@ -13,47 +13,146 @@ body {
 
 /* CENTER BOX (MAIN FIX) */
 .box {
-    width: 400px;
-    margin: 60px auto;
+    width: 620px;
+    margin: 40px auto;
     background: white;
     padding: 25px;
     border-radius: 12px;
     box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
 }
 
 /* TITLE */
 h3 {
     color: #1e3a8a;
+    margin-top: 0;
+}
+
+/* MEDICINE ROW */
+.med-row {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+    background: #fbfcff;
+}
+
+.med-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.med-title {
+    font-weight: 700;
+    color: #1e3a8a;
+    font-size: 13px;
+}
+
+.remove-btn {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.remove-btn:hover {
+    background: #fecaca;
 }
 
 /* INPUT */
-input {
-    width: 90%;   /* centered */
-    padding: 10px;
-    margin: 8px 0;
+input, select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px;
+    margin: 5px 0;
     border-radius: 6px;
     border: 1px solid #d1d5db;
+    font-size: 13px;
 }
 
-input:focus {
+input:focus, select:focus {
     border-color: #2563eb;
     outline: none;
 }
 
+input[readonly] {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+.row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.timing {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 0;
+    font-size: 13px;
+    color: #333;
+}
+
+.timing label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.timing input {
+    width: auto;
+    margin: 0;
+}
+
+.special-wrap {
+    grid-column: 1 / -1;
+}
+
 /* BUTTON */
 button {
-    width: 90%;   /* centered */
-    padding: 12px;
-    margin-top: 15px;
-    background: linear-gradient(to right, #1e3a8a, #2563eb);
-    color: white;
-    border: none;
+    padding: 11px;
     border-radius: 8px;
     cursor: pointer;
+    font-size: 14px;
+    border: none;
 }
 
 button:hover {
+    opacity: 0.92;
+}
+
+.add-btn {
+    width: 100%;
+    background: #eef2ff;
+    color: #1e3a8a;
+    border: 1px dashed #a5b4fc;
+    margin: 4px 0 16px;
+}
+
+.add-btn:hover {
+    background: #e0e7ff;
+}
+
+.save-btn {
+    width: 100%;
+    background: linear-gradient(to right, #1e3a8a, #2563eb);
+    color: white;
+    margin-top: 6px;
+}
+
+.save-btn:hover {
     background: #f97316;
 }
 
@@ -65,6 +164,44 @@ button:hover {
     border-radius: 8px;
     background: #f9fafb;
     text-align: left;
+    font-size: 13px;
+}
+
+#previewBox table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#previewBox th {
+    text-align: left;
+    color: #1e3a8a;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+#previewBox td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+}
+
+#previewBox .ver-btn {
+    width: 100%;
+    background: #16a34a;
+    color: white;
+    margin-top: 10px;
+}
+
+.status-msg {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #16a34a;
+    min-height: 16px;
+}
+
+.error-msg {
+    color: #dc2626;
 }
 </style>
 </head>
@@ -72,21 +209,18 @@ button:hover {
 <body>
 
 <div class="box">
-    <h3>Prescription window</h3>
+    <h3>Prescription Window</h3>
 
-    <!-- <input type="text" id="search" placeholder="Search Medicine"> -->
-     <input type="text" id="search" list="medicineList" placeholder="Search Medicine">
-     <datalist id="medicineList"></datalist>
+    <datalist id="medicineList"></datalist>
 
-     <input type="text" id="type" placeholder="Type" readonly>
-     <input type="text" id="power" placeholder="Composition" readonly>
-     <input type="text" id="rate" placeholder="Price" readonly>
-     <input type="number" id="quantity" placeholder="Quantity">
-    <input type="number" id="days" placeholder="Enter Days">
+    <div id="medRows"></div>
 
-    <button onclick="previewData()">Submit</button>
+    <button class="add-btn" onclick="addMedRow()">＋ Add Medicine</button>
 
     <div id="previewBox"></div>
+
+    <button class="save-btn" onclick="previewData()">Preview Prescription</button>
+    <div class="status-msg" id="statusMsg"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
@@ -130,12 +264,87 @@ Papa.parse("medicine.csv", {
 });
 
 /* ==============================
-   AUTO FILL
+   MEDICINE ROW MANAGEMENT
 ============================== */
 
-document.getElementById("search").addEventListener("change", function () {
+let medCount = 0;
 
-    const selected = this.value.trim().toLowerCase();
+function medRowTemplate() {
+
+    medCount++;
+
+    return `
+        <div class="med-row" data-idx="${medCount - 1}">
+            <div class="med-head">
+                <span class="med-title">Medicine #${medCount}</span>
+                <button class="remove-btn" onclick="removeMedRow(this)">✕ Remove</button>
+            </div>
+
+            <input type="text" class="search" list="medicineList" placeholder="Medicine Name">
+            <div class="row-3">
+                <input type="text" class="type" placeholder="Type" readonly>
+                <input type="text" class="composition" placeholder="Composition" readonly>
+                <input type="text" class="price" placeholder="Price" readonly>
+            </div>
+            <div class="row-3">
+                <input type="text" class="dosage" placeholder="Dosage (e.g. 500mg)">
+                <input type="text" class="frequency" placeholder="Frequency (e.g. 1-0-1)">
+                <input type="number" class="days" min="1" placeholder="Duration (days)">
+            </div>
+            <div class="row-3">
+                <input type="number" class="quantity" min="1" placeholder="Quantity">
+                <select class="food">
+                    <option value="">Before / After Food</option>
+                    <option>Before Food</option>
+                    <option>After Food</option>
+                </select>
+                <div class="timing">
+                    <label><input type="checkbox" class="morning"> Morning</label>
+                    <label><input type="checkbox" class="afternoon"> Afternoon</label>
+                    <label><input type="checkbox" class="night"> Night</label>
+                </div>
+            </div>
+            <div class="row-2 special-wrap">
+                <input type="text" class="instructions" placeholder="Special Instructions">
+            </div>
+        </div>
+    `;
+}
+
+function addMedRow() {
+    const box = document.getElementById("medRows");
+    box.insertAdjacentHTML("beforeend", medRowTemplate());
+    bindAutofill(box.lastElementChild);
+}
+
+function removeMedRow(btn) {
+    const rows = document.querySelectorAll(".med-row");
+    if (rows.length === 1) {
+        alert("At least one medicine is required.");
+        return;
+    }
+    const row = btn.closest(".med-row");
+    row.remove();
+    // Re-number remaining rows
+    document.querySelectorAll(".med-row .med-title").forEach((el, i) => {
+        el.textContent = "Medicine #" + (i + 1);
+    });
+}
+
+/* ==============================
+   AUTO FILL (medicine details)
+============================== */
+
+function bindAutofill(row) {
+    const search = row.querySelector(".search");
+    search.addEventListener("change", function () {
+        autofillRow(row);
+    });
+}
+
+function autofillRow(row) {
+    const search = row.querySelector(".search");
+    const selected = search.value.trim().toLowerCase();
 
     const med = medicines.find(m =>
         m.medicine &&
@@ -143,22 +352,70 @@ document.getElementById("search").addEventListener("change", function () {
     );
 
     if (!med) {
-
-        alert("Medicine not found");
-
-        document.getElementById("type").value = "";
-        document.getElementById("power").value = "";
-        document.getElementById("rate").value = "";
-
+        row.querySelector(".type").value = "";
+        row.querySelector(".composition").value = "";
+        row.querySelector(".price").value = "";
         return;
     }
 
-    document.getElementById("type").value = med.type;
-    document.getElementById("power").value = med.composition;
-    document.getElementById("rate").value = "₹" + med.price;
+    row.querySelector(".type").value = med.type;
+    row.querySelector(".composition").value = med.composition;
+    row.querySelector(".price").value = "₹" + med.price;
 
-});
+    // Default dosage to the medicine composition strength if empty
+    const dosage = row.querySelector(".dosage");
+    if (!dosage.value && med.composition) {
+        dosage.value = med.composition.trim();
+    }
+}
 
+/* ==============================
+   VALIDATION
+============================== */
+
+function collectMedicines() {
+    const rows = document.querySelectorAll(".med-row");
+    const list = [];
+
+    for (const row of rows) {
+        const name = row.querySelector(".search").value.trim();
+        const quantity = parseInt(row.querySelector(".quantity").value);
+        const days = parseInt(row.querySelector(".days").value);
+
+        if (!name) {
+            alert("Please enter a medicine name in every row.");
+            return null;
+        }
+
+        if (!quantity || quantity < 1) {
+            alert("Please enter a valid quantity for: " + name);
+            return null;
+        }
+
+        if (!days || days < 1) {
+            alert("Please enter a valid duration (days) for: " + name);
+            return null;
+        }
+
+        list.push({
+            name: name,
+            type: row.querySelector(".type").value,
+            composition: row.querySelector(".composition").value,
+            price: parseFloat((row.querySelector(".price").value || "").replace("₹", "")) || 0,
+            quantity: quantity,
+            days: days,
+            dosage: row.querySelector(".dosage").value.trim(),
+            frequency: row.querySelector(".frequency").value.trim(),
+            food_timing: row.querySelector(".food").value,
+            morning: row.querySelector(".morning").checked,
+            afternoon: row.querySelector(".afternoon").checked,
+            night: row.querySelector(".night").checked,
+            special_instructions: row.querySelector(".instructions").value.trim()
+        });
+    }
+
+    return list;
+}
 
 /* ==============================
    PREVIEW
@@ -166,58 +423,73 @@ document.getElementById("search").addEventListener("change", function () {
 
 function previewData() {
 
-    const medicine = document.getElementById("search").value;
-    const type = document.getElementById("type").value;
-    const composition = document.getElementById("power").value;
-    const price = document.getElementById("rate").value;
-    const quantity = document.getElementById("quantity").value;
-    const days = document.getElementById("days").value;
+    const rows = collectMedicines();
 
-    if (
-        !medicine ||
-        !type ||
-        !composition ||
-        !price ||
-        !quantity ||
-        !days
-    ) {
-
-        alert("Please fill all fields");
-        return;
-
-    }
+    if (!rows) return;
 
     const today = new Date();
 
-    const end = new Date();
+    const rowsHtml = rows.map((m, i) => {
 
-    end.setDate(today.getDate() + Number(days));
+        const timing = [
+            m.morning ? "Morning" : "",
+            m.afternoon ? "Afternoon" : "",
+            m.night ? "Night" : ""
+        ].filter(Boolean).join(", ") || "—";
+
+        const end = new Date();
+        end.setDate(today.getDate() + m.days);
+
+        return `
+            <tr>
+                <td><b>${m.name}</b><br><span style="color:#666;font-size:11px;">${m.composition || ""}</span></td>
+                <td>${m.dosage || "—"}</td>
+                <td>${m.frequency || "—"}</td>
+                <td>${m.days} days<br><span style="color:#666;font-size:11px;">${today.toDateString()} → ${end.toDateString()}</span></td>
+                <td>${m.food_timing || "—"}</td>
+                <td>${timing}</td>
+                <td>${m.special_instructions || "—"}</td>
+                <td>${m.quantity}</td>
+            </tr>
+        `;
+    }).join("");
 
     document.getElementById("previewBox").innerHTML = `
-        <h3>Prescription Preview</h3>
-
-        <p><b>Medicine :</b> ${medicine}</p>
-        <p><b>Type :</b> ${type}</p>
-        <p><b>Composition :</b> ${composition}</p>
-        <p><b>Price :</b> ${price}</p>
-        <p><b>Quantity :</b> ${quantity}</p>
-        <p><b>Days :</b> ${days}</p>
-
-        <p><b>Start :</b> ${today.toDateString()}</p>
-        <p><b>End :</b> ${end.toDateString()}</p>
-
-        <button onclick="verifyPrescription()">
-            Verify Prescription
+        <h3 style="font-size:14px;color:#1e3a8a;margin:4px 0 8px;">Prescription Preview (${rows.length} medicine${rows.length > 1 ? "s" : ""})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Duration</th>
+                    <th>Food</th>
+                    <th>Timing</th>
+                    <th>Instructions</th>
+                    <th>Qty</th>
+                </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>
+        <button class="ver-btn" onclick="verifyPrescription()">
+            ✅ Save Prescription
         </button>
     `;
 }
-
 
 /* ==============================
    SAVE PRESCRIPTION
 ============================== */
 
 async function verifyPrescription() {
+
+    const msg = document.getElementById("statusMsg");
+    msg.className = "status-msg";
+    msg.textContent = "Saving...";
+
+    const rows = collectMedicines();
+
+    if (!rows) return;
 
     try {
 
@@ -235,52 +507,38 @@ async function verifyPrescription() {
             appointmentId,
             patientName: patient.name,
             doctorName: doctor.name,
-            medicines: [
-                {
-                    name: document.getElementById("search").value,
-                    type: document.getElementById("type").value,
-                    composition: document.getElementById("power").value,
-                    price: parseFloat(document.getElementById("rate").value.replace("₹", "")),
-                    quantity: parseInt(document.getElementById("quantity").value),
-                    days: parseInt(document.getElementById("days").value)
-                }
-            ]
+            medicines: rows
         };
 
-        /* Deduct Stock */
-        await fetch("/medicine/deduct-stock", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: document.getElementById("search").value,
-                quantity: parseInt(document.getElementById("quantity").value)
-            })
-        });
-
-        /* Save Prescription */
+        /* Save Prescription (sent to Pharmacy automatically with
+           status = Pending; stock is deducted by Pharmacy only when
+           the prescription is actually dispensed). */
         const saveRes = await fetch("/pharmacy/prescriptions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(prescription)
         });
 
-        if (!saveRes.ok) throw new Error("Failed to save prescription");
+        const saveData = await saveRes.json();
 
-        /* Complete Appointment only if NOT from lab report flow */
-        const fromLab = new URLSearchParams(window.location.search).get("fromLab");
-        if (!fromLab) {
-            await fetch(`/appointment/complete/${appointmentId}`, { method: "POST" });
-        }
+        if (!saveData.success) throw new Error(saveData.message || "Failed to save prescription");
 
-        alert("Prescription Saved Successfully");
-        window.close();
+        msg.className = "status-msg";
+        msg.textContent = "✅ Prescription sent to Pharmacy (Visit ID: " + (saveData.visit_id || "—") + ")";
+
+        setTimeout(() => window.close(), 1500);
 
     } catch (err) {
         console.error(err);
-        alert("Failed to save prescription: " + err.message);
+        msg.className = "status-msg error-msg";
+        msg.textContent = "Failed to save prescription: " + err.message;
     }
 }
 
+/* Init: first medicine row */
+document.addEventListener("DOMContentLoaded", function () {
+    addMedRow();
+});
 </script>
 
 </body>

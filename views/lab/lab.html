@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Lab Dashboard</title>
-  
+
   <style>
     * {
       margin: 0;
@@ -20,81 +20,156 @@
     /* SIDEBAR */
     .sidebar {
       width: 220px;
-      background: #0d47a1;
+      min-width: 220px;
+      background: linear-gradient(180deg, #0d47a1, #1565c0);
       color: white;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100vh;
     }
 
-    .sidebar h2 {
-      margin-bottom: 20px;
-    }
+    .sidebar h2 { margin-bottom: 16px; font-size: 20px; }
 
     .nav-item {
-      padding: 10px;
-      margin: 8px 0;
-      background: rgba(255,255,255,0.1);
+      padding: 10px 14px;
       border-radius: 8px;
       cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      transition: 0.2s;
+      color: white;
+      user-select: none;
     }
 
-    .nav-item:hover {
+    .nav-item:hover { background: rgba(255,255,255,0.22); }
+    .nav-item.active { background: rgba(255,255,255,0.3); font-weight: bold; }
+
+    .nav-item .count {
+      float: right;
       background: rgba(255,255,255,0.25);
+      padding: 1px 8px;
+      border-radius: 20px;
+      font-size: 12px;
     }
 
     /* MAIN */
-    .main {
-      flex: 1;
-      padding: 20px;
-    }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
 
     .topbar {
-      background: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      align-items: center;
+      background: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
 
-    .profile {
-      color: #0d47a1;
-      font-weight: bold;
+    .topbar input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 320px;
+      font-size: 14px;
     }
+
+    .profile { color: #0d47a1; font-weight: bold; }
+
+    .content { padding: 20px; flex: 1; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-title { color: #0d47a1; margin-bottom: 16px; }
 
     /* CARDS */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 15px;
+      gap: 16px;
     }
 
     .card {
       background: white;
-      padding: 15px;
+      padding: 16px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1px solid #e3eaf5;
     }
 
-    .card h3 {
-      color: #0d47a1;
-      margin-bottom: 8px;
+    .card h3 { color: #0d47a1; margin-bottom: 6px; }
+    .card p { color: #333; font-size: 14px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
     }
+
+    .prio-normal  { background: #1565c0; }
+    .prio-high    { background: #ef6c00; }
+    .prio-urgent  { background: #c62828; }
+
+    .tests-box {
+      background: #eef5ff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #0d47a1;
+      max-height: 96px;
+      overflow: auto;
+    }
+
+    .notes-box {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #555;
+      white-space: pre-wrap;
+      max-height: 72px;
+      overflow: auto;
+    }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
     .btn {
-      margin-top: 10px;
-      padding: 8px;
-      width: 100%;
+      flex: 1;
+      padding: 9px;
       border: none;
-      border-radius: 6px;
+      border-radius: 7px;
       cursor: pointer;
       background: #1565c0;
       color: white;
+      font-size: 13px;
     }
 
-    .btn:hover {
+    .btn:hover { background: #0d47a1; }
+    .btn.green { background: #2e7d32; }
+    .btn.green:hover { background: #1b5e20; }
+    .btn.amber { background: #ef6c00; }
+    .btn.amber:hover { background: #e65100; }
+
+    .report-link {
+      display: block;
+      padding: 7px 10px;
       background: #0d47a1;
+      color: white;
+      border-radius: 6px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 13px;
+      margin-top: 4px;
     }
+
+    .report-link:hover { background: #09337a; }
 
     /* MODAL */
     .modal {
@@ -106,12 +181,16 @@
       background: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
+      z-index: 100;
     }
 
     .modal-content {
       background: white;
       padding: 25px;
-      width: 500px;
+      width: 540px;
+      max-width: 94vw;
+      max-height: 90vh;
+      overflow: auto;
       border-radius: 12px;
     }
 
@@ -119,14 +198,24 @@
       float: right;
       cursor: pointer;
       font-size: 20px;
+      color: #555;
     }
 
-    .upload {
-      margin-top: 15px;
-    }
+    .modal h3 { color: #0d47a1; margin-bottom: 10px; }
+    .modal p { font-size: 14px; color: #333; margin: 4px 0; }
 
-    input[type="file"] {
-      margin-top: 10px;
+    .upload { margin-top: 15px; }
+
+    input[type="file"] { margin-top: 10px; }
+
+    .empty {
+      grid-column: 1 / -1;
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      color: #888;
+      border: 1px dashed #ccc;
     }
   </style>
 </head>
@@ -136,25 +225,50 @@
 <!-- SIDEBAR -->
 <div class="sidebar">
   <h2>Lab Panel</h2>
-  <div class="nav-item">Test Requests</div>
-  <div class="nav-item">Completed Reports</div>
+  <div class="nav-item active" id="nav-pending" onclick="showTab('pending')">
+    Test Requests <span class="count" id="count-pending">0</span>
+  </div>
+  <div class="nav-item" id="nav-progress" onclick="showTab('in_progress')">
+    In Progress <span class="count" id="count-in_progress">0</span>
+  </div>
+  <div class="nav-item" id="nav-completed" onclick="showTab('completed')">
+    Completed <span class="count" id="count-completed">0</span>
+  </div>
 </div>
 
 <!-- MAIN -->
 <div class="main">
 
   <div class="topbar">
-    <input placeholder="Search patient">
-    <div class="profile">Lab Technician</div>
+    <input id="searchBox" placeholder="Search Patient ID / Visit ID / Patient Name / Doctor Name" oninput="renderCurrentTab()">
+    <div class="profile" id="profile">Lab Technician</div>
   </div>
 
-  <h2 style="margin-bottom:15px;">Pending Lab Requests</h2>
+  <div class="content">
 
-  <div id="labGrid" class="grid"></div>
+    <!-- PENDING -->
+    <div id="tab-pending" class="section active">
+      <h2 class="section-title">Pending Lab Requests</h2>
+      <div id="grid-pending" class="grid"></div>
+    </div>
+
+    <!-- IN PROGRESS -->
+    <div id="tab-in_progress" class="section">
+      <h2 class="section-title">In Progress</h2>
+      <div id="grid-in_progress" class="grid"></div>
+    </div>
+
+    <!-- COMPLETED -->
+    <div id="tab-completed" class="section">
+      <h2 class="section-title">Completed Reports</h2>
+      <div id="grid-completed" class="grid"></div>
+    </div>
+
+  </div>
 
 </div>
 
-<!-- MODAL -->
+<!-- UPLOAD MODAL -->
 <div id="modal" class="modal">
   <div class="modal-content">
 
@@ -162,223 +276,383 @@
 
     <h3 id="mPatient">Patient</h3>
     <p id="mDoctor"></p>
+    <p id="mVisit"></p>
+    <p id="mPriority"></p>
     <p id="mTests"></p>
+    <p id="mNotes"></p>
 
-    <hr style="margin:15px 0;">
+    <hr style="margin:15px 0;border:none;border-top:1px solid #ddd;">
 
-    <h4>Upload Report (PDF)</h4>
+    <h4>Upload Report (PDF / JPEG / PNG)</h4>
 
-    <input type="file" id="reportFile">
+    <input type="file" id="reportFiles" accept=".pdf,.jpg,.jpeg,.png" multiple>
 
-    <button class="btn" onclick="uploadReport()">Upload</button>
+    <label style="display:block;margin-top:10px;font-size:13px;color:#555;"><b>Test Name (optional)</b></label>
+    <input type="text" id="testName" placeholder="e.g. Complete Blood Count (CBC)" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;margin-top:4px;">
+
+    <button class="btn green" style="width:100%;margin-top:14px;" onclick="uploadReport()">Upload</button>
 
   </div>
 </div>
 
 <script>
   let currentRequestId = null;
+  let currentTab = 'pending';
+  let technicianId = null;
 
-/* ===========================
-   LOAD PENDING LAB REQUESTS
-=========================== */
+  window.__labData = [];
 
-async function loadLabRequests() {
+  const params = new URLSearchParams(window.location.search);
+  technicianId = params.get('id') || null;
+
+  /* ===========================
+     LOAD LAB REQUESTS (all)
+  =========================== */
+
+  async function loadLabRequests() {
 
     try {
 
-        const response = await fetch("/lab/requests");
-        const requests = await response.json();
+      const response = await fetch("/lab/requests");
+      const requests = await response.json();
 
-        const grid = document.getElementById("labGrid");
-        grid.innerHTML = "";
+      window.__labData = Array.isArray(requests) ? requests : [];
 
-        if (!Array.isArray(requests) || requests.length === 0) {
-
-            grid.innerHTML = `
-                <div class="card">
-                    <h3>No Pending Lab Requests</h3>
-                </div>
-            `;
-            return;
-        }
-
-        requests.forEach(item => {
-
-            let tests = [];
-
-            if (Array.isArray(item.tests)) {
-
-                tests = item.tests;
-
-            } else {
-
-                try {
-                    tests = JSON.parse(item.tests);
-                } catch {
-                    tests = [];
-                }
-
-            }
-
-            const card = document.createElement("div");
-            card.className = "card";
-
-            card.innerHTML = `
-                <h3>${item.patient_name || "Unknown Patient"}</h3>
-
-                <p>
-                    <b>Doctor :</b>
-                    ${item.doctor_name || "-"}
-                </p>
-
-                <p>
-                    <b>Status :</b>
-                    ${item.status}
-                </p>
-
-                <p>
-                    <b>Tests :</b><br>
-                    ${tests.join("<br>")}
-                </p>
-
-                <button class="btn">
-                    View
-                </button>
-            `;
-
-            card.querySelector("button").addEventListener("click", () => {
-
-                openRequest(
-                    item.id,
-                    item.patient_name || "Unknown Patient",
-                    item.doctor_name || "-",
-                    tests
-                );
-
-            });
-
-            grid.appendChild(card);
-
-        });
+      updateCounts();
+      renderCurrentTab();
 
     }
 
     catch (err) {
 
-        console.error(err);
-
-        document.getElementById("labGrid").innerHTML =
-            "<p>Unable to load requests.</p>";
+      console.error(err);
+      document.getElementById("grid-pending").innerHTML =
+          '<div class="empty">Unable to load requests.</div>';
 
     }
 
-}
+  }
 
-/* ===========================
-   OPEN MODAL
-=========================== */
+  /* ===========================
+     STATUS NORMALISATION
+  =========================== */
 
-function openRequest(id, patient, doctor, tests) {
+  function normStatus(s) {
+    const st = String(s || '').toUpperCase();
+    if (st === 'IN_PROGRESS' || st === 'INPROGRESS') return 'in_progress';
+    if (st === 'COMPLETED' || st === 'REVIEWED' || st === 'LAB_COMPLETED') return 'completed';
+    return 'pending';
+  }
+
+  function bucketOf(status) {
+    return window.__labData.filter(r => normStatus(r.status) === status);
+  }
+
+  /* ===========================
+     COUNTS
+  =========================== */
+
+  function updateCounts() {
+    document.getElementById('count-pending').textContent    = bucketOf('pending').length;
+    document.getElementById('count-in_progress').textContent = bucketOf('in_progress').length;
+    document.getElementById('count-completed').textContent   = bucketOf('completed').length;
+  }
+
+  /* ===========================
+     SEARCH FILTER
+  =========================== */
+
+  function matchesSearch(r, q) {
+    if (!q) return true;
+    const hay = [
+      String(r.patient_name || ''),
+      String(r.patient_display_id || r.patient_id || ''),
+      String(r.visit_id || ''),
+      String(r.doctor_name || '')
+    ].join(' ').toLowerCase();
+    return hay.includes(q);
+  }
+
+  /* ===========================
+     RENDER CURRENT TAB
+  =========================== */
+
+  function renderCurrentTab() {
+
+    const q = (document.getElementById('searchBox').value || '').trim().toLowerCase();
+
+    const list = bucketOf(currentTab).filter(r => matchesSearch(r, q));
+
+    const grid = document.getElementById('grid-' + currentTab);
+    grid.innerHTML = '';
+
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty">No ' + currentTab.replace('_',' ') + ' lab requests found.</div>';
+      return;
+    }
+
+    list.forEach(item => grid.appendChild(buildCard(item, currentTab)));
+
+  }
+
+  function parseTests(item) {
+    if (Array.isArray(item.tests)) return item.tests;
+    try { return JSON.parse(item.tests || '[]'); } catch { return []; }
+  }
+
+  function fmtDate(v) {
+    if (!v) return '-';
+    const d = new Date(v);
+    if (isNaN(d)) return '-';
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function prioBadge(priority) {
+    const p = String(priority || 'Normal').toLowerCase();
+    const cls = p === 'urgent' ? 'prio-urgent' : (p === 'high' ? 'prio-high' : 'prio-normal');
+    const lbl = p === 'urgent' ? 'Urgent' : (p === 'high' ? 'High' : 'Normal');
+    return '<span class="badge ' + cls + '">' + lbl + '</span>';
+  }
+
+  function buildCard(item, tab) {
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const tests = parseTests(item);
+    const reports = Array.isArray(item.reports) ? item.reports : [];
+    const priority = String(item.priority || 'Normal');
+
+    let html = '';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<h3 style="margin:0;">' + (item.patient_name || 'Unknown Patient') + '</h3>' +
+                prioBadge(priority) +
+            '</div>';
+
+    html += '<p><b>Patient ID :</b> ' + (item.patient_display_id || item.patient_id || '-') +
+            ' | <b>Visit ID :</b> ' + (item.visit_id || '-') + '</p>';
+
+    html += '<p><b>Doctor :</b> ' + (item.doctor_name || '-') + '</p>';
+
+    html += '<p><b>Requested :</b> ' + fmtDate(item.created_at) + '</p>';
+
+    html += '<div class="tests-box">' + tests.map(t => '✔ ' + t).join('<br>') + '</div>';
+
+    if (item.clinical_notes && String(item.clinical_notes).trim()) {
+      html += '<p style="font-size:12px;color:#777;margin-top:4px;"><b>Clinical Notes :</b></p>' +
+              '<div class="notes-box">' + escapeHtml(item.clinical_notes) + '</div>';
+    }
+
+    /* Actions per tab */
+    if (tab === 'pending') {
+      html += '<div class="btn-row">' +
+                '<button class="btn amber" onclick="markInProgress(' + item.id + ')">Mark In Progress</button>' +
+                '<button class="btn green" onclick="openUpload(' + item.id + ')">Upload Report</button>' +
+              '</div>';
+    }
+    else if (tab === 'in_progress') {
+      html += '<div class="btn-row">' +
+                '<button class="btn green" onclick="openUpload(' + item.id + ')">Upload Report</button>' +
+              '</div>';
+    }
+    else {
+      /* Completed */
+      if (reports.length) {
+        html += '<p style="font-size:12px;color:#777;margin-top:6px;"><b>Reports (' + reports.length + ') :</b></p>';
+        reports.forEach(r => {
+          html += '<a class="report-link" href="/uploads/' + r.report_file + '" target="_blank">' +
+                  '📄 ' + (r.test_name || 'Report') + ' — ' + fmtDate(r.upload_date) +
+                  '</a>';
+        });
+      } else if (item.report_file) {
+        html += '<a class="report-link" href="/uploads/' + item.report_file + '" target="_blank">📄 View Report</a>';
+      } else {
+        html += '<p style="color:#e53935;margin-top:6px;">No file attached</p>';
+      }
+      html += '<p style="font-size:12px;color:#888;"><b>Completed :</b> ' + fmtDate(item.completed_at) + '</p>';
+    }
+
+    card.innerHTML = html;
+
+    return card;
+
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* ===========================
+     TAB SWITCH
+  =========================== */
+
+  function showTab(tab) {
+
+    currentTab = tab;
+
+    ['pending', 'in_progress', 'completed'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+      document.getElementById('nav-' + t).classList.toggle('active', t === tab);
+    });
+
+    renderCurrentTab();
+
+  }
+
+  /* ===========================
+     MARK IN PROGRESS
+  =========================== */
+
+  async function markInProgress(id) {
+
+    try {
+
+      const res = await fetch('/lab/status/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'IN_PROGRESS' })
+      });
+
+      const result = await res.json();
+
+      if (result.success) loadLabRequests();
+      else alert(result.message || 'Unable to update status.');
+
+    }
+    catch (err) {
+      console.error(err);
+      alert('Server Error');
+    }
+
+  }
+
+  /* ===========================
+     OPEN UPLOAD MODAL
+  =========================== */
+
+  function openUpload(id) {
 
     currentRequestId = id;
 
-    document.getElementById("mPatient").innerText =
-        "Patient : " + patient;
+    const item = window.__labData.find(r => r.id === id);
 
-    document.getElementById("mDoctor").innerText =
-        "Doctor : " + doctor;
+    if (!item) return;
 
-    document.getElementById("mTests").innerHTML =
-        "<b>Requested Tests</b><br><br>" +
-        tests.map(test => "✔ " + test).join("<br>");
+    const tests = parseTests(item);
+    const priority = String(item.priority || 'Normal');
 
-    document.getElementById("modal").style.display = "flex";
+    document.getElementById('mPatient').innerText  = 'Patient : ' + (item.patient_name || 'Unknown');
+    document.getElementById('mDoctor').innerText   = 'Doctor : ' + (item.doctor_name || '-');
+    document.getElementById('mVisit').innerText    = 'Visit ID : ' + (item.visit_id || '-');
+    document.getElementById('mPriority').innerText = 'Priority : ' + priority;
+    document.getElementById('mTests').innerHTML    = '<b>Requested Tests</b><br><br>' + tests.map(t => '✔ ' + t).join('<br>');
+    document.getElementById('mNotes').innerHTML    = '<b>Clinical Notes</b><br>' + escapeHtml(item.clinical_notes || '—');
 
-}
+    document.getElementById('testName').value = tests.join(', ');
+    document.getElementById('reportFiles').value = '';
 
-/* ===========================
-   CLOSE MODAL
-=========================== */
+    document.getElementById('modal').style.display = 'flex';
 
-function closeModal() {
+  }
 
-    document.getElementById("modal").style.display = "none";
+  /* ===========================
+     CLOSE MODAL
+  =========================== */
 
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
     currentRequestId = null;
+  }
 
-    document.getElementById("reportFile").value = "";
+  /* ===========================
+     UPLOAD REPORT FILES
+  =========================== */
 
-}
+  async function uploadReport() {
 
-/* ===========================
-   UPLOAD PDF REPORT
-=========================== */
+    const files = document.getElementById('reportFiles').files;
 
-async function uploadReport() {
-
-    const file = document.getElementById("reportFile").files[0];
-
-    if (!file) {
-
-        alert("Please select a PDF report.");
-
-        return;
-
+    if (!files || files.length === 0) {
+      alert('Please select at least one file (PDF, JPEG or PNG).');
+      return;
     }
 
     const formData = new FormData();
 
-    formData.append("report", file);
+    for (const file of files) {
+      formData.append('reports', file);
+    }
+
+    if (technicianId) formData.append('technicianId', technicianId);
+    formData.append('testName', document.getElementById('testName').value.trim() || 'General');
 
     try {
 
-        const response = await fetch(
-            `/lab/upload/${currentRequestId}`,
-            {
-                method: "POST",
-                body: formData
-            }
-        );
+      const response = await fetch('/lab/upload/' + currentRequestId, {
+        method: 'POST',
+        body: formData
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (result.success) {
-
-            alert("Report uploaded successfully.");
-
-            closeModal();
-
-            loadLabRequests();
-
-        }
-
-        else {
-
-            alert(result.message);
-
-        }
+      if (result.success) {
+        alert('Report uploaded successfully. The requesting doctor has been notified.');
+        closeModal();
+        loadLabRequests();
+      }
+      else {
+        alert(result.message || 'Upload failed.');
+      }
 
     }
 
     catch (err) {
-
-        console.error(err);
-
-        alert("Upload failed.");
-
+      console.error(err);
+      alert('Upload failed.');
     }
 
-}
+  }
 
-/* ===========================
-   INITIAL LOAD
-=========================== */
+  /* ===========================
+     LOAD TECHNICIAN PROFILE
+  =========================== */
 
-window.addEventListener("load", () => {
+  async function loadTechnician() {
 
+    if (!technicianId) return;
+
+    try {
+
+      const res = await fetch('/api/user/' + technicianId);
+      const user = await res.json();
+
+      if (user && user.name) {
+        document.getElementById('profile').textContent = user.name;
+      }
+
+    }
+    catch (err) {
+      console.error(err);
+    }
+
+  }
+
+  /* ===========================
+     INITIAL LOAD
+  =========================== */
+
+  window.addEventListener('load', () => {
+    loadTechnician();
     loadLabRequests();
+  });
 
-});
+  /* auto-refresh every 30s */
+  setInterval(() => {
+    loadLabRequests();
+  }, 30000);
+
 </script>
 
 </body>

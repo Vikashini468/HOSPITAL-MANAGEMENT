@@ -92,7 +92,27 @@
 <input
 id="doctorName"
 type="text"
-placeholder="Enter Doctor Name">
+placeholder="Loading doctor..."
+readonly
+style="background:#eef2f7;">
+
+<label><b>Priority</b></label>
+
+<select
+id="priority"
+style="width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+    <option value="Normal">Normal</option>
+    <option value="High">High</option>
+    <option value="Urgent">Urgent</option>
+</select>
+
+<label><b>Clinical Notes</b></label>
+
+<textarea
+id="clinicalNotes"
+rows="3"
+placeholder="Clinical notes for the lab (optional)"
+style="width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:5px;font-size:15px;font-family:Arial;resize:vertical;"></textarea>
 
 <h3>Search Test</h3>
 
@@ -139,6 +159,16 @@ console.log("Doctor:",doctorId);
 
 let labTests=[];
 let selectedTests=[];
+
+/* Auto-fill the doctor name (read-only) from the logged-in user */
+fetch(`/api/user/${doctorId}`)
+.then(res=>res.json())
+.then(user=>{
+    if(user && user.name){
+        document.getElementById("doctorName").value=user.name;
+    }
+})
+.catch(()=>{});
 
 fetch("labTests.csv")
 .then(res=>res.text())
@@ -298,7 +328,7 @@ const doctorName=document.getElementById("doctorName").value.trim();
 
 if(doctorName===""){
 
-alert("Please enter Doctor Name");
+alert("Doctor name could not be loaded. Please go back and try again.");
 
 return;
 
@@ -312,9 +342,17 @@ return;
 
 }
 
+const priority=document.getElementById("priority").value;
+
+const clinicalNotes=document.getElementById("clinicalNotes").value.trim();
+
 localStorage.setItem("doctorName",doctorName);
 
 localStorage.setItem("selectedTests",JSON.stringify(selectedTests));
+
+localStorage.setItem("priority",priority);
+
+localStorage.setItem("clinicalNotes",clinicalNotes);
 
 window.location.href=`labpreview.html?appointmentId=${appointmentId}&patientId=${patientId}&doctorId=${doctorId}`;
 

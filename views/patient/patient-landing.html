@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Portal – NALAM AI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(0,0,0,0.15);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: white;
+      color: #0d47a1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    .logo-text { color: white; }
+    .logo-text .name { font-size: 18px; font-weight: 700; display: block; }
+    .logo-text .sub  { font-size: 11px; opacity: 0.8; display: block; }
+
+    .topbar-right {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 52px 20px 36px;
+      color: white;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-size: 34px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 15px;
+      opacity: 0.85;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* CARDS */
+    .cards-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 24px 52px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      width: 100%;
+      max-width: 760px;
+    }
+
+    .landing-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      display: block;
+    }
+
+    .landing-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 28px 70px rgba(0,0,0,0.28);
+    }
+
+    .card-icon-wrap {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 22px;
+      font-size: 36px;
+    }
+
+    .icon-blue  { background: linear-gradient(135deg, #0d47a1, #1976d2); }
+    .icon-teal  { background: linear-gradient(135deg, #00695c, #00897b); }
+
+    .landing-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .landing-card p {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .card-btn {
+      display: inline-block;
+      padding: 12px 32px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+
+    .card-btn:hover { opacity: 0.88; }
+    .btn-blue { background: linear-gradient(135deg, #0d47a1, #1976d2); }
+    .btn-teal { background: linear-gradient(135deg, #00695c, #00897b); }
+
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      padding: 18px;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a class="logo" href="/">
+      <div class="logo-icon">N</div>
+      <div class="logo-text">
+        <span class="name">NALAM AI</span>
+        <span class="sub">Unified Health Record Ecosystem</span>
+      </div>
+    </a>
+    <div class="topbar-right">Patient Portal</div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">&#127973; Welcome to NALAM AI</div>
+    <h1>Your Health, Your Choice</h1>
+    <p>Book appointments, view prescriptions, access lab reports, and manage your complete health record — all in one place.</p>
+  </div>
+
+  <!-- TWO CARDS -->
+  <div class="cards-wrapper">
+    <div class="cards-grid">
+
+      <!-- Card 1: Patient Dashboard Login -->
+      <a class="landing-card" href="#" id="dashboardCard">
+        <div class="card-icon-wrap icon-blue">&#128100;</div>
+        <h2>Patient Dashboard</h2>
+        <p>Login to book appointments, view your prescriptions, track lab reports, and manage your health profile.</p>
+        <div class="card-btn btn-blue">Go to Dashboard</div>
+      </a>
+
+      <!-- Card 2: Access Health Records -->
+      <a class="landing-card" href="#" id="healthRecordsCard">
+        <div class="card-icon-wrap icon-teal">&#128196;</div>
+        <h2>Access Health Records</h2>
+        <p>View your complete medical history, AI health predictions, lab results, and digital health locker securely.</p>
+        <div class="card-btn btn-teal">View Health Records</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">&#169; 2025 NALAM AI – Unified Health Record Ecosystem. All rights reserved.</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+
+  document.getElementById("dashboardCard").href =
+    id ? `/patient/dashboard?id=${id}` : `/patient-login`;
+
+  document.getElementById("healthRecordsCard").href = id ? `/patient/verify?id=${id}` : `/patient/verify`;
+</script>
+
+</body>
+</html>

@@ -185,21 +185,27 @@ router.get("/doctor/slots/:doctorId/:day", async (req, res) => {
             );
         }
 
-        // booked slots
-        const booked = await pool.query(
-            `
-            SELECT appointment_time
-            FROM appointments
-            WHERE doctor_id=$1
-            AND appointment_day=$2
-            AND status!='Cancelled'
-            `,
-            [doctorId, day]
-        );
+        /* date param is optional — if provided, filter by exact date; else filter by day name */
+        const { date } = req.query;
 
-        const bookedTimes = booked.rows.map(r =>
-            r.appointment_time.substring(0, 5)
-        );
+        let bookedTimes = [];
+        if (date) {
+            const booked = await pool.query(
+                `SELECT appointment_time FROM appointments
+                 WHERE doctor_id=$1 AND appointment_date=$2
+                 AND UPPER(status) NOT IN ('CANCELLED')`,
+                [doctorId, date]
+            );
+            bookedTimes = booked.rows.map(r => r.appointment_time.substring(0, 5));
+        } else {
+            const booked = await pool.query(
+                `SELECT appointment_time FROM appointments
+                 WHERE doctor_id=$1 AND appointment_day=$2
+                 AND UPPER(status) NOT IN ('CANCELLED')`,
+                [doctorId, day]
+            );
+            bookedTimes = booked.rows.map(r => r.appointment_time.substring(0, 5));
+        }
 
         const freeSlots = slots.filter(slot => !bookedTimes.includes(slot));
 
@@ -214,9 +220,8 @@ router.get("/doctor/slots/:doctorId/:day", async (req, res) => {
 
 /* =====================================================
    GET DOCTOR APPOINTMENTS
-===================================================== */
-/* =====================================================
-   GET DOCTOR APPOINTMENTS
+   Returns today's full queue for the doctor, including
+   Patient ID (health_id), token, time, status and lab info.
 ===================================================== */
 router.get("/doctor/appointments/:id", async (req, res) => {
 
@@ -241,6 +246,8 @@ SELECT
 
     u.name AS patient_name,
 
+    phi.health_id AS patient_id_display,
+
     p.age,
     p.gender,
     p.blood_group,
@@ -261,6 +268,9 @@ ON u.id=a.patient_id
 LEFT JOIN patients p
 ON p.user_id=a.patient_id
 
+LEFT JOIN patient_health_ids phi
+ON phi.user_id=a.patient_id
+
 LEFT JOIN lab_requests lr
 ON lr.appointment_id=a.id
 
@@ -268,14 +278,6 @@ WHERE
     a.doctor_id=$1
 AND
     a.appointment_date=CURRENT_DATE
-AND
-(
-    UPPER(a.status)='WAITING'
-    OR
-    UPPER(a.status)='INPROGRESS'
-    OR
-    UPPER(a.status)='LAB_READY'
-)
 
 ORDER BY a.token_no
 `,

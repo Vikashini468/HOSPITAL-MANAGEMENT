@@ -18,7 +18,10 @@ router.get("/otp.html", (req, res) => res.sendFile(path.join(__dirname, "../view
 
 router.get("/prescription.html", (req, res) => res.sendFile(path.join(__dirname, "../prescription.html")));
 router.get("/lab_selection.html", (req, res) => res.sendFile(path.join(__dirname, "../lab_selection.html")));
-router.get("/patient", (req, res) => res.sendFile(path.join(__dirname, "../views/patient/patient.html")));
+router.get(["/patient", "/patient/"], (req, res) => res.sendFile(path.join(__dirname, "../views/patient/patient-landing.html")));
+router.get("/patient-login", (req, res) => res.sendFile(path.join(__dirname, "../views/patient/patient-login.html")));
+router.get("/patient/dashboard", (req, res) => res.sendFile(path.join(__dirname, "../views/patient/patient-dashboard.html")));
+router.get("/patient/portal",    (req, res) => res.sendFile(path.join(__dirname, "../views/patient/patient.html")));
 router.get("/doctor", (req, res) => res.sendFile(path.join(__dirname, "../views/doctor/doctor.html")));
 router.get("/lab", (req, res) => res.sendFile(path.join(__dirname, "../views/lab/lab.html")));
 router.get("/pharmacy", (req, res) => res.sendFile(path.join(__dirname, "../views/pharmacy/pharmacy.html")));
@@ -145,11 +148,33 @@ router.post("/login", async (req, res) => {
             return res.redirect(`/admin?username=${encodeURIComponent(user.username)}`);
         }
 
-        const routes = { patient: "/patient", doctor: "/doctor", nurse: "/nurse", lab: "/lab", pharmacist: "/pharmacy", receptionist: "/receptionist" };
+        const routes = { patient: "/patient", doctor: "/doctor", nurse: "/nurse", lab: "/lab", pharmacist: "/pharmacy", receptionist: "/receptionist" }; // /patient → landing page
         return res.redirect(`${routes[user.role]}?id=${user.id}`);
     } catch (err) {
         console.error(err);
         res.status(500).send("Login Failed");
+    }
+});
+
+// -------------------- PATIENT LOGIN (mobile + password) --------------------
+router.post("/patient-login", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const { mobile, password } = req.body;
+        if (!mobile || !password) return res.status(400).send("Mobile and password are required.");
+
+        const result = await pool.query(`SELECT * FROM users WHERE mobile=$1 AND role='patient'`, [mobile]);
+        if (result.rows.length === 0) return res.status(401).send("No patient account found with this mobile number.");
+
+        const user = result.rows[0];
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.status(401).send("Incorrect password.");
+        if (!user.verified) return res.status(401).send("Please verify your email OTP first.");
+
+        return res.redirect(`/patient?id=${user.id}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Login failed. Please try again.");
     }
 });
 

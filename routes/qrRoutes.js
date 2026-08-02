@@ -143,11 +143,19 @@ router.get("/scan-logs", async (req, res) => {
 });
 
 /* =====================================================
+   QR IMAGE UTILITY — shared with other modules
+   Reuses the `qrcode` package; encodes ONLY the given text
+===================================================== */
+function generateQRImage(text) {
+    return QRCode.toDataURL(text, { width: 250, margin: 1 });
+}
+
+/* =====================================================
    GENERATE QR IMAGE for a token string (utility)
 ===================================================== */
 router.get("/generate-image/:token", async (req, res) => {
     try {
-        const img = await QRCode.toDataURL(req.params.token, { width: 250, margin: 1 });
+        const img = await generateQRImage(req.params.token);
         res.json({ qr_image: img });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -234,3 +242,4 @@ async function getStaffRecord(pool, userId, role) {
 }
 
 module.exports = router;
+module.exports.generateQRImage = generateQRImage;

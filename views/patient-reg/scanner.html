@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>QR Scanner — Patient Records</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0d3b7a 0%,#1565c0 60%,#1976d2 100%);
+  display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px 48px;
+}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;gap:12px;width:100%;max-width:760px;margin-bottom:20px;}
+.topbar .logo-box{width:46px;height:46px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.topbar .logo-box img{width:100%;height:100%;object-fit:contain;}
+.topbar .t-name{color:white;font-size:17px;font-weight:800;}
+.topbar .t-sub{color:rgba(255,255,255,.8);font-size:12px;margin-top:2px;}
+
+/* ── PANEL CARDS ── */
+.panel{width:100%;max-width:520px;}
+.card{background:white;border-radius:18px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.card h2{font-size:18px;color:#0d3b7a;margin-bottom:6px;}
+.card .subtitle{font-size:13px;color:#888;margin-bottom:20px;}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;font-weight:700;color:#333;margin-bottom:6px;}
+.field input{width:100%;padding:12px 14px;border:1.5px solid #d0d9ee;border-radius:10px;font-size:15px;outline:none;background:#fafcff;letter-spacing:1px;}
+.field input:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.1);background:white;}
+.field input.err{border-color:#e53935;box-shadow:0 0 0 3px rgba(229,57,53,.1);}
+
+.err-msg{font-size:12px;color:#e53935;min-height:16px;margin-bottom:8px;}
+
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,#0d3b7a,#1565c0);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.btn:hover{opacity:.9;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn.secondary{background:#eef2ff;color:#0d3b7a;margin-top:8px;}
+
+/* ── CAMERA ── */
+.cam-wrap{position:relative;border-radius:14px;overflow:hidden;background:#0a1f3f;min-height:220px;display:flex;align-items:center;justify-content:center;}
+.cam-wrap video{width:100%;height:260px;object-fit:cover;display:block;}
+.cam-msg{position:absolute;left:0;right:0;bottom:0;padding:10px;background:rgba(0,0,0,.55);color:white;font-size:12px;text-align:center;}
+.cam-msg.idle{position:static;color:#7c9bd6;padding:40px 16px;font-size:13px;}
+.or{text-align:center;color:#999;font-size:12px;margin:14px 0 10px;letter-spacing:.5px;}
+.scan-hint{color:#bbb;font-size:11px;text-align:center;margin-top:10px;}
+
+/* ── STEP INDICATOR ── */
+.steps{display:flex;gap:8px;margin-bottom:18px;width:100%;max-width:520px;}
+.step{flex:1;text-align:center;font-size:11px;font-weight:700;color:rgba(255,255,255,.65);padding:8px 6px;border-radius:8px;background:rgba(255,255,255,.1);}
+.step.active{color:#0d3b7a;background:white;}
+.step.done{color:#fff;background:#2e7d32;}
+
+/* ── PIN BOX ── */
+.pin-big{font-size:15px;font-weight:700;color:#0d3b7a;margin-bottom:16px;padding:12px 14px;background:#eef2ff;border-radius:10px;word-break:break-all;}
+
+/* ── RECORD SCREEN ── */
+#recordPanel{width:100%;max-width:760px;display:none;}
+.dl-bar{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.dl-btn{padding:11px 22px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.2s;font-family:inherit;}
+.dl-pdf{background:#e53935;color:white;}
+.dl-pdf:hover{background:#c62828;}
+.dl-word{background:#1565c0;color:white;}
+.dl-word:hover{background:#0d47a1;}
+.dl-back{background:#eef2ff;color:#0d3b7a;}
+.dl-back:hover{background:#dbe4ff;}
+
+.pdf-card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.15);}
+.pdf-header{background:linear-gradient(135deg,#0d3b7a,#1565c0);color:white;padding:24px 30px;display:flex;align-items:center;gap:20px;}
+.pdf-header .h-logo{width:52px;height:52px;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.pdf-header .h-logo img{width:100%;height:100%;object-fit:contain;}
+.pdf-header-text h2{font-size:20px;margin-bottom:4px;}
+.pdf-header-text p{font-size:13px;opacity:.85;}
+.pdf-body{padding:26px 30px;}
+
+.hero{display:flex;align-items:center;gap:18px;margin-bottom:22px;padding-bottom:20px;border-bottom:2px solid #e3f2fd;}
+.hero-avatar{width:64px;height:64px;border-radius:50%;background:#e3f2fd;color:#1565c0;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.hero-info h2{color:#0d3b7a;font-size:20px;margin-bottom:4px;}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;}
+.badge-blue{background:#e3f2fd;color:#1565c0;}
+.badge-green{background:#e8f5e9;color:#2e7d32;}
+
+.sec-title{font-size:11px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:.7px;margin:22px 0 12px;padding-bottom:6px;border-bottom:2px solid #e3f2fd;}
+
+.rec-row{padding:11px 0;border-bottom:1px solid #eee;font-size:13px;line-height:1.55;}
+.rec-row:last-child{border:none;}
+.rec-row b{color:#0d3b7a;}
+.rec-row .tag{display:inline-block;background:#e3f2fd;color:#1565c0;padding:2px 10px;border-radius:14px;font-size:11px;font-weight:600;margin-left:6px;}
+.rec-row .tag.red{background:#fce4ec;color:#c62828;}
+.rec-row a{color:#1565c0;}
+
+.empty{color:#bbb;font-style:italic;font-size:13px;}
+
+.ai-box{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-left:3px solid #1565c0;border-radius:10px;padding:11px 14px;margin-bottom:10px;font-size:13px;}
+.ai-box b{color:#0d3b7a;}
+
+.pdf-footer{background:#f4f8ff;padding:14px 30px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #e3f2fd;}
+
+.access-denied{background:#fff5f5;border:2px solid #e53935;color:#c62828;border-radius:14px;padding:18px;text-align:center;font-weight:700;margin-top:16px;}
+
+@media print{
+  body{background:white;padding:0;}
+  .topbar,.dl-bar{display:none;}
+  #recordPanel{display:block!important;}
+  .pdf-card{box-shadow:none;border-radius:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-box"><img src="/logo-placeholder.svg" alt="logo" onerror="this.style.display='none';this.parentNode.textContent='H+';"></div>
+  <div>
+    <div class="t-name">Aarudhra Multispeciality Hospital</div>
+    <div class="t-sub">Secure QR Scan Access</div>
+  </div>
+</div>
+
+<!-- STEP INDICATOR -->
+<div class="steps">
+  <div class="step active" id="step1">1 · Scan QR</div>
+  <div class="step" id="step2">2 · PIN</div>
+  <div class="step" id="step3">3 · Records</div>
+</div>
+
+<!-- STEP 1 : SCAN -->
+<div class="panel" id="scanPanel">
+  <div class="card">
+    <h2>Step 1 — Scan Patient QR</h2>
+    <p class="subtitle">Scan the patient's QR code to read the Patient ID.</p>
+
+    <div class="cam-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas" style="display:none;"></canvas>
+      <div class="cam-msg idle" id="camMsg">Starting camera…</div>
+    </div>
+
+    <div class="or">— or enter manually —</div>
+
+    <div class="field">
+      <label>Patient ID</label>
+      <input id="inp-pid" type="text" placeholder="e.g. PAT000012" autocomplete="off"
+             oninput="formatPid(this)">
+    </div>
+    <div class="err-msg" id="err-scan"></div>
+    <button class="btn" id="btn-scan" onclick="confirmPid()">Continue →</button>
+    <button class="btn secondary" onclick="startCamera()">Re-scan QR</button>
+  </div>
+</div>
+
+<!-- STEP 2 : PIN -->
+<div class="panel" id="pinPanel" style="display:none;">
+  <div class="card">
+    <h2>Step 2 — Enter Patient PIN</h2>
+    <p class="subtitle">Ask the patient for their 6-digit PIN to verify identity.</p>
+
+    <div class="pin-big">Patient ID: <span id="pid-display"></span></div>
+
+    <div class="field">
+      <label>6-Digit PIN</label>
+      <input id="inp-pin" type="password" placeholder="••••••" maxlength="6" inputmode="numeric"
+             oninput="this.value=this.value.replace(/\D/g,'');this.classList.remove('err')"
+             onkeydown="if(event.key==='Enter')verifyPin()">
+    </div>
+    <div class="err-msg" id="err-pin"></div>
+    <button class="btn" id="btn-verify" onclick="verifyPin()">Verify &amp; View Record →</button>
+    <button class="btn secondary" onclick="backToScan()">← Back</button>
+  </div>
+  <div class="access-denied" id="deniedBox" style="display:none;">⛔ Access Denied — Incorrect PIN.</div>
+</div>
+
+<!-- STEP 3 : RECORD -->
+<div id="recordPanel">
+  <div class="dl-bar">
+    <button class="dl-btn dl-back" onclick="backToScan()">← New Scan</button>
+    <button class="dl-btn dl-pdf" onclick="downloadPDF()">📄 Download PDF</button>
+    <button class="dl-btn dl-word" onclick="downloadWord()">📝 Download Word</button>
+  </div>
+
+  <div class="pdf-card" id="printArea">
+    <div class="pdf-header">
+      <div class="h-logo"><img src="/logo-placeholder.svg" alt="logo" onerror="this.style.display='none';this.parentNode.textContent='🏥';"></div>
+      <div class="pdf-header-text">
+        <h2>Aarudhra Multispeciality Hospital</h2>
+        <p>Patient Medical Record — Confidential</p>
+      </div>
+    </div>
+
+    <div class="pdf-body">
+      <div class="hero">
+        <div class="hero-avatar" id="heroAvatar">👤</div>
+        <div class="hero-info">
+          <h2 id="heroName"></h2>
+          <span class="badge badge-blue" id="heroPid"></span>&nbsp;
+          <span class="badge badge-green">✅ Verified</span>
+        </div>
+      </div>
+
+      <div class="sec-title">1. Doctor Visits</div>
+      <div id="secVisits"></div>
+
+      <div class="sec-title">2. Vitals</div>
+      <div id="secVitals"></div>
+
+      <div class="sec-title">3. Diagnosis</div>
+      <div id="secDiagnosis"></div>
+
+      <div class="sec-title">4. Prescriptions</div>
+      <div id="secRx"></div>
+
+      <div class="sec-title">5. Lab Reports</div>
+      <div id="secLab"></div>
+
+      <div class="sec-title">6. AI Predictions</div>
+      <div id="secAI"></div>
+    </div>
+
+    <div class="pdf-footer">
+      Generated on <span id="genDate"></span> &nbsp;|&nbsp; Aarudhra Multispeciality Hospital &nbsp;|&nbsp; Confidential
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;   /* users.id after successful PIN verification (legacy) */
+let currentPid  = null;   /* patient_id PAT… (both systems) */
+let currentSource = "legacy";
+
+function formatPid(input) {
+  input.classList.remove('err');
+  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (/^\d+$/.test(v)) v = 'PAT' + v;
+  const m = v.match(/^([A-Z]+)(\d+)$/);
+  if (m) v = m[1] + m[2].padStart(6, '0');
+  input.value = v;
+}
+
+/* ── CAMERA QR SCANNING (reuses the QR module's token = Patient ID) ── */
+let stream = null, scanning = false;
+
+async function startCamera() {
+  const msg = document.getElementById("camMsg");
+  const video = document.getElementById("video");
+  msg.className = "cam-msg idle";
+  msg.textContent = "Starting camera…";
+  stopCamera();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = stream;
+    await video.play();
+    msg.className = "cam-msg";
+    msg.textContent = "Point the camera at the patient's QR code";
+    scanning = true;
+    requestAnimationFrame(scanLoop);
+  } catch (e) {
+    msg.className = "cam-msg idle";
+    msg.textContent = "Camera unavailable — enter the Patient ID manually below.";
+  }
+}
+
+function stopCamera() {
+  scanning = false;
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+
+function scanLoop() {
+  if (!scanning) return;
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+    if (code && code.data) {
+      const pid = String(code.data).trim().toUpperCase();
+      document.getElementById("inp-pid").value = pid;
+      scanning = false;
+      document.getElementById("camMsg").className = "cam-msg";
+      document.getElementById("camMsg").textContent = "QR detected — " + pid;
+      stopCamera();
+      confirmPid();
+      return;
+    }
+  }
+  requestAnimationFrame(scanLoop);
+}
+
+/* ── STEP 1 → 2 ── */
+function confirmPid() {
+  const pid = document.getElementById("inp-pid").value.trim().toUpperCase();
+  const err = document.getElementById("err-scan");
+  err.textContent = "";
+  if (!pid) { document.getElementById("inp-pid").classList.add("err"); err.textContent = "Patient ID is required."; return; }
+  stopCamera();
+  document.getElementById("pid-display").textContent = pid;
+  document.getElementById("scanPanel").style.display = "none";
+  document.getElementById("pinPanel").style.display  = "block";
+  document.getElementById("deniedBox").style.display = "none";
+  document.getElementById("err-pin").textContent = "";
+  document.getElementById("inp-pin").value = "";
+  setStep(2);
+  document.getElementById("inp-pin").focus();
+}
+
+function backToScan() {
+  stopCamera();
+  document.getElementById("pinPanel").style.display    = "none";
+  document.getElementById("recordPanel").style.display = "none";
+  document.getElementById("scanPanel").style.display   = "block";
+  document.getElementById("deniedBox").style.display   = "none";
+  setStep(1);
+  startCamera();
+}
+
+function setStep(n) {
+  document.getElementById("step1").className = "step" + (n >= 1 ? " done" : "");
+  document.getElementById("step2").className = "step" + (n === 2 ? " active" : (n > 2 ? " done" : ""));
+  document.getElementById("step3").className = "step" + (n === 3 ? " active" : "");
+}
+
+/* ── STEP 2: VERIFY PIN ── */
+async function verifyPin() {
+  const pid = document.getElementById("pid-display").textContent.trim();
+  const pin = document.getElementById("inp-pin").value.trim();
+  const err = document.getElementById("err-pin");
+  const btn = document.getElementById("btn-verify");
+  err.textContent = "";
+  document.getElementById("deniedBox").style.display = "none";
+
+  if (!pin || pin.length < 4 || pin.length > 6) {
+    document.getElementById("inp-pin").classList.add("err");
+    err.textContent = "Enter the 4–6 digit PIN.";
+    return;
+  }
+
+  btn.textContent = "Verifying…"; btn.disabled = true;
+
+  try {
+    const res = await fetch("/api/patient-reg/verify-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: pid, pin })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      document.getElementById("deniedBox").style.display = "block";
+      err.textContent = res.status === 401 ? "Incorrect PIN. Access denied." : (data.message || "Verification failed.");
+      btn.textContent = "Verify & View Record →"; btn.disabled = false;
+      return;
+    }
+
+    /* Correct PIN — load the medical record.
+       Both registration systems are supported:
+         source "legacy" → record keyed by users.id
+         source "new"    → record keyed by patient_id (PAT…)   */
+    currentSource = data.source === "new" ? "new" : "legacy";
+    currentUser   = data.source === "new" ? null : (data.user_id || null);
+    currentPid    = (data.patient_id || pid).toUpperCase();
+    await loadRecord();
+  } catch (e) {
+    err.textContent = "Cannot reach server. (" + e.message + ")";
+  }
+  btn.textContent = "Verify & View Record →"; btn.disabled = false;
+}
+
+/* ── STEP 3: MEDICAL RECORDS (reuses existing records, newest first) ── */
+async function loadRecord() {
+  try {
+    const url = currentSource === "new"
+      ? `/api/patient/full-record/${encodeURIComponent(currentPid)}`
+      : `/api/patient-reg/medical-record/${currentUser}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Could not load record.");
+    renderRecord(data);
+  } catch (e) {
+    document.getElementById("err-pin").textContent = "Record error: " + e.message;
+  }
+}
+
+function fmt(d) { return d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"; }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+function renderRecord(d) {
+  /* Normalise new-system record shape to the aggregated medical-record shape */
+  if (d.visits && !d.doctor_visits) {
+    d.doctor_visits = (d.visits || []).map(v => ({ ...v, vitals: {} }));
+    d.vitals        = d.vitals || [];
+    d.diagnosis     = [];
+    d.prescriptions = d.prescriptions || [];
+    d.lab_reports   = d.lab_reports || [];
+    d.ai_predictions = [];
+  }
+  const b = d.basic || {};
+
+  document.getElementById("heroName").textContent = b.name || "—";
+  document.getElementById("heroPid").textContent  = b.patient_id || "";
+  document.getElementById("heroAvatar").textContent = (b.name || "?").trim().charAt(0).toUpperCase();
+  document.getElementById("genDate").textContent = new Date().toLocaleString("en-IN");
+
+  /* 1. Doctor Visits — newest first */
+  const visits = d.doctor_visits || [];
+  document.getElementById("secVisits").innerHTML = visits.length
+    ? visits.map(v => {
+        const vt = v.vitals || {};
+        const hasV = vt.bp_systolic || vt.heart_rate || vt.temperature_f;
+        return `<div class="rec-row">
+          <b>${fmt(v.appointment_date)}</b> ${esc(v.appointment_time || "")} — Dr. ${esc(v.doctor_name || "—")}
+          <span class="tag">Queue ${v.token_no || "—"}</span>
+          <span class="tag ${String(v.status||"").toUpperCase()==="COMPLETED" ? "" : "red"}">${esc(v.status || "—")}</span><br>
+          Symptoms: ${esc(v.symptoms || "—")}
+          ${hasV ? `<br>Vitals: BP ${esc(vt.bp_systolic || "—")}/${esc(vt.bp_diastolic || "—")} mmHg · HR ${esc(vt.heart_rate || "—")} bpm · Temp ${esc(vt.temperature_f || "—")}°F` : ""}
+        </div>`;
+      }).join("")
+    : '<div class="empty">No visits recorded.</div>';
+
+  /* 2. Vitals — newest first */
+  const vitals = d.vitals || [];
+  document.getElementById("secVitals").innerHTML = vitals.length
+    ? vitals.map(v => `<div class="rec-row">
+        <b>${fmt(v.appointment_date)}</b> — Dr. ${esc(v.doctor_name || "—")}<br>
+        BP: ${esc(v.bp_systolic || "—")}/${esc(v.bp_diastolic || "—")} mmHg ·
+        Heart Rate: ${esc(v.heart_rate || "—")} bpm ·
+        Temp: ${esc(v.temperature_f || "—")}°F ·
+        Height: ${esc(v.height_cm || "—")} cm ·
+        Weight: ${esc(v.weight_kg || "—")} kg ·
+        BMI: ${esc(v.bmi || "—")}
+      </div>`).join("")
+    : '<div class="empty">No vitals recorded.</div>';
+
+  /* 3. Diagnosis — newest first */
+  const diag = d.diagnosis || [];
+  document.getElementById("secDiagnosis").innerHTML = diag.length
+    ? diag.map(x => `<div class="rec-row"><b>${fmt(x.created_at)}</b> — Dr. ${esc(x.doctor_name || "—")}<br>${esc(x.notes)}</div>`).join("")
+    : '<div class="empty">No diagnosis recorded.</div>';
+
+  /* 4. Prescriptions — newest first */
+  const rxs = d.prescriptions || [];
+  document.getElementById("secRx").innerHTML = rxs.length
+    ? rxs.map(p => {
+        const meds = Array.isArray(p.medicines) ? p.medicines : [];
+        return `<div class="rec-row">
+          <b>${fmt(p.created_at)}</b> — Dr. ${esc(p.doctor_name || "—")}<br>
+          ${meds.map(m => `${esc(m.medicine)} (${esc(m.dosage || "—")}, ${esc(m.quantity || "—")} × ${esc(m.duration || "—")})`).join(" | ") || "—"}
+        </div>`;
+      }).join("")
+    : '<div class="empty">No prescriptions found.</div>';
+
+  /* 5. Lab Reports — newest first */
+  const labs = d.lab_reports || [];
+  document.getElementById("secLab").innerHTML = labs.length
+    ? labs.map(r => `<div class="rec-row">
+        <b>${fmt(r.created_at)}</b> — Dr. ${esc(r.doctor_name || "—")}<br>
+        Tests: ${esc((r.tests || []).join(", ")) || "—"} &nbsp;|&nbsp; Status: ${esc(r.status || "—")}
+        ${r.report_file ? ` &nbsp;|&nbsp; <a href="/uploads/${esc(r.report_file)}" target="_blank" rel="noopener">View Report</a>` : ""}
+      </div>`).join("")
+    : '<div class="empty">No lab reports found.</div>';
+
+  /* 6. AI Predictions — newest first */
+  const ai = d.ai_predictions || [];
+  document.getElementById("secAI").innerHTML = ai.length
+    ? ai.map(p => `<div class="ai-box">
+        <b>${esc(p.model_type || "AI Model")}:</b> ${esc(p.prediction)}
+        ${p.probability != null ? ` (${Math.round(Number(p.probability) * 100)}%)` : ""}
+        <br><span style="font-size:11px;color:#888;">${fmt(p.predicted_at)}</span>
+      </div>`).join("")
+    : '<div class="empty">No AI predictions yet.</div>';
+
+  document.getElementById("pinPanel").style.display    = "none";
+  document.getElementById("scanPanel").style.display   = "none";
+  document.getElementById("recordPanel").style.display = "block";
+  setStep(3);
+}
+
+/* ── DOWNLOADS ── */
+function downloadPDF() {
+  const el = document.getElementById("printArea");
+  html2pdf().set({
+    margin: 8,
+    filename: `Medical_Record_${document.getElementById("heroPid").textContent || "patient"}.pdf`,
+    image: { type: "jpeg", quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  }).from(el).save();
+}
+
+function downloadWord() {
+  if (currentSource === "new") {
+    if (!currentPid) return;
+    window.location.href = `/api/patient/record-docx/${encodeURIComponent(currentPid)}`;
+  } else {
+    if (!currentUser) return;
+    window.location.href = `/api/patient-reg/medical-docx/${currentUser}`;
+  }
+}
+
+window.addEventListener("load", () => {
+  document.getElementById("video").style.display = "none";
+  const pid = new URLSearchParams(location.search).get("pid");
+  if (pid) {
+    const inp = document.getElementById("inp-pid");
+    inp.value = String(pid).toUpperCase();
+    stopCamera();
+    confirmPid();
+    return;
+  }
+  startCamera();
+});
+</script>
+</body>
+</html>

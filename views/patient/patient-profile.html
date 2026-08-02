@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile – NALAM AI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { display: flex; min-height: 100vh; background: #f4f7fb; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px; min-width: 220px;
+      background: linear-gradient(180deg, #0d47a1, #1565c0);
+      color: white; padding: 20px;
+      display: flex; flex-direction: column; gap: 6px; min-height: 100vh;
+    }
+    .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .sidebar-logo-icon { width: 36px; height: 36px; background: white; color: #0d47a1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; }
+    .sidebar-logo-text { font-size: 15px; font-weight: 700; }
+    .sidebar-logo-sub  { font-size: 10px; opacity: 0.7; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08); transition: 0.2s; color: white; font-size: 13px; text-decoration: none; }
+    .nav-item:hover  { background: rgba(255,255,255,0.2); }
+    .nav-item.active { background: rgba(255,255,255,0.28); font-weight: 700; }
+    .nav-item .icon  { font-size: 16px; width: 20px; text-align: center; }
+    .nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.45); padding: 12px 12px 4px; }
+    .sidebar-bottom { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 14px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .topbar-title { font-size: 16px; font-weight: 700; color: #0d47a1; }
+    .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #0d47a1; text-decoration: none; font-weight: 600; }
+    .back-btn:hover { text-decoration: underline; }
+
+    .content { padding: 24px; flex: 1; max-width: 860px; }
+
+    /* PROFILE HEADER */
+    .profile-header {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      border-radius: 16px; padding: 28px 32px;
+      display: flex; align-items: center; gap: 24px;
+      color: white; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .avatar-circle {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 3px solid rgba(255,255,255,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 800; flex-shrink: 0;
+    }
+    .profile-header-info h2 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .profile-header-info p  { font-size: 13px; opacity: 0.8; }
+    .pid-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px; padding: 10px 18px; text-align: center;
+    }
+    .pid-badge .lbl { font-size: 10px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pid-badge .val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+
+    /* SECTION CARD */
+    .section-card {
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      border: 1px solid #e8eef8;
+      margin-bottom: 20px; overflow: hidden;
+    }
+    .section-card-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f4ff;
+      background: #fafcff;
+    }
+    .section-card-header .icon { font-size: 18px; }
+    .section-card-header h3 { font-size: 14px; font-weight: 700; color: #0d47a1; }
+    .section-card-body { padding: 20px; }
+
+    /* INFO GRID */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+    .info-box { background: #f4f8ff; border-radius: 10px; padding: 12px 14px; }
+    .info-box .lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .info-box .val { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+    .info-box .val.na { color: #bbb; font-weight: 400; font-style: italic; }
+
+    /* EDITABLE FIELD */
+    .edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .edit-field label { display: block; font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .edit-field input, .edit-field textarea {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #d0d9ee; border-radius: 10px;
+      font-size: 14px; outline: none; background: #fafcff;
+      transition: 0.2s; font-family: Arial, sans-serif;
+    }
+    .edit-field input:focus, .edit-field textarea:focus {
+      border-color: #1565c0; box-shadow: 0 0 0 3px rgba(21,101,192,0.1); background: white;
+    }
+    .edit-field textarea { resize: vertical; min-height: 80px; }
+
+    /* TAG LIST */
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .tag-blue { background: #e3f0ff; color: #1565c0; }
+    .tag-red  { background: #fce4ec; color: #c62828; }
+    .tag-green{ background: #e8f5e9; color: #2e7d32; }
+    .tag-gray { background: #f0f0f0; color: #666; font-style: italic; }
+
+    /* SAVE BUTTON */
+    .save-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+    .btn-save {
+      padding: 11px 28px;
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.88; }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .save-msg { font-size: 13px; font-weight: 600; }
+    .save-msg.ok  { color: #2e7d32; }
+    .save-msg.err { color: #c62828; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">N</div>
+    <div>
+      <div class="sidebar-logo-text">NALAM AI</div>
+      <div class="sidebar-logo-sub">Health Ecosystem</div>
+    </div>
+  </div>
+  <div class="nav-section-label">Menu</div>
+  <a class="nav-item" id="nav-home"         href="#" onclick="goBack(); return false;"><span class="icon">&#127968;</span> Dashboard</a>
+  <a class="nav-item active"                href="#" onclick="return false;"><span class="icon">&#128100;</span> My Profile</a>
+  <a class="nav-item" id="nav-book"         href="#" onclick="goSection('book'); return false;"><span class="icon">&#128197;</span> Book Appointment</a>
+  <a class="nav-item" id="nav-appointments" href="#" onclick="goSection('appointments'); return false;"><span class="icon">&#128203;</span> My Appointments</a>
+  <a class="nav-item" id="nav-records"      href="#" onclick="goSection('records'); return false;"><span class="icon">&#128196;</span> Medical Records</a>
+  <a class="nav-item" id="nav-lab"          href="#" onclick="goSection('lab'); return false;"><span class="icon">&#128300;</span> Lab Reports</a>
+  <a class="nav-item" id="nav-rx"           href="#" onclick="goSection('prescriptions'); return false;"><span class="icon">&#128138;</span> Prescriptions</a>
+  <a class="nav-item" id="nav-ai"           href="#" onclick="goSection('ai'); return false;"><span class="icon">&#129504;</span> AI Predictions</a>
+  <div class="sidebar-bottom">
+    <a class="nav-item" href="/patient-login"><span class="icon">&#128275;</span> Logout</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">&#128100; My Profile</div>
+    <a class="back-btn" href="#" onclick="goBack(); return false;">&#8592; Back to Dashboard</a>
+  </div>
+
+  <div class="content">
+
+    <!-- PROFILE HEADER -->
+    <div class="profile-header">
+      <div class="avatar-circle" id="avatarInitial">P</div>
+      <div class="profile-header-info">
+        <h2 id="hdrName">—</h2>
+        <p id="hdrUsername">—</p>
+      </div>
+      <div class="pid-badge">
+        <div class="lbl">Patient ID</div>
+        <div class="val" id="hdrId">—</div>
+      </div>
+    </div>
+
+    <!-- 1. BASIC INFORMATION (read-only) -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="icon">&#128203;</span>
+        <h3>Basic Information</h3>
+      </div>
+      <div class="section-card-body">
+        <div class="info-grid">
+          <div class="info-box"><div class="lbl">Full Name</div><div class="val" id="f_name">—</div></div>
+          <div class="info-box"><div class="lbl">Age</div><div class="val" id="f_age">—</div></div>
+          <div class="info-box"><div class="lbl">Gender</div><div class="val" id="f_gender">—</div></div>
+          <div class="info-box"><div class="lbl">Blood Group</div><div class="val" id="f_blood">—</div></div>
+          <div class="info-box"><div class="lbl">Email</div><div class="val" id="f_email">—</div></div>
+          <div class="info-box"><div class="lbl">Weight</div><div class="val" id="f_weight">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. EDITABLE FIELDS -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="icon">&#9999;&#65039;</span>
+        <h3>Contact Details <span style="font-size:11px;color:#888;font-weight:400;">(editable)</span></h3>
+      </div>
+      <div class="section-card-body">
+        <div class="edit-grid">
+          <div class="edit-field">
+            <label>Mobile Number</label>
+            <input type="tel" id="e_mobile" placeholder="Enter mobile number">
+          </div>
+          <div class="edit-field" style="grid-column: 1 / -1;">
+            <label>Address</label>
+            <textarea id="e_address" placeholder="Enter your address"></textarea>
+          </div>
+        </div>
+        <div class="save-row">
+          <button class="btn-save" id="btnSave" onclick="saveProfile()">Save Changes</button>
+          <span class="save-msg" id="saveMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. FAMILY HISTORY -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="icon">&#128106;</span>
+        <h3>Family History</h3>
+      </div>
+      <div class="section-card-body">
+        <div class="tag-list" id="f_family"></div>
+      </div>
+    </div>
+
+    <!-- 4. LIFESTYLE -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="icon">&#127939;</span>
+        <h3>Lifestyle Details</h3>
+      </div>
+      <div class="section-card-body">
+        <div class="info-grid" id="f_lifestyle"></div>
+      </div>
+    </div>
+
+    <!-- 5. MEDICAL HISTORY -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="icon">&#128138;</span>
+        <h3>Medical History</h3>
+      </div>
+      <div class="section-card-body" id="f_medical"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const params   = new URLSearchParams(window.location.search);
+const userId   = params.get("id");
+
+function goBack()        { window.location.href = userId ? `/patient/dashboard?id=${userId}` : `/patient/dashboard`; }
+function goSection(sec)  { window.location.href = userId ? `/patient/dashboard?id=${userId}&section=${sec}` : `/patient/dashboard`; }
+
+function val(v)  { return v || "—"; }
+function tags(arr, cls) {
+  if (!arr || !arr.length) return `<span class="tag tag-gray">None recorded</span>`;
+  return arr.map(t => `<span class="tag ${cls}">${t}</span>`).join("");
+}
+function infoBox(lbl, v) {
+  const na = !v || v === "—";
+  return `<div class="info-box"><div class="lbl">${lbl}</div><div class="val${na ? " na" : ""}">${v || "Not provided"}</div></div>`;
+}
+
+/* ── Load profile from existing API ── */
+async function loadProfile() {
+  if (!userId) return;
+  try {
+    const res  = await fetch(`/api/patient/profile/${userId}`);
+    const data = await res.json();
+    const u = data.user    || {};
+    const p = data.patient || {};
+
+    /* Header */
+    const name = u.name || "Patient";
+    document.getElementById("hdrName").textContent     = name;
+    document.getElementById("hdrUsername").textContent = u.username ? `@${u.username}` : "—";
+    document.getElementById("hdrId").textContent       = `#${userId}`;
+    document.getElementById("avatarInitial").textContent = name.charAt(0).toUpperCase();
+
+    /* Basic info (read-only) */
+    document.getElementById("f_name").textContent   = val(u.name);
+    document.getElementById("f_age").textContent    = p.age   ? `${p.age} yrs` : "—";
+    document.getElementById("f_gender").textContent = val(p.gender);
+    document.getElementById("f_blood").textContent  = val(p.blood_group);
+    document.getElementById("f_email").textContent  = val(u.email);
+    document.getElementById("f_weight").textContent = p.weight ? `${p.weight} kg` : "—";
+
+    /* Editable fields pre-filled */
+    document.getElementById("e_mobile").value  = u.mobile  || "";
+    document.getElementById("e_address").value = p.address || "";
+
+  } catch(e) { console.error(e); }
+}
+
+/* ── Load pat_ tables for family / lifestyle / medical history ── */
+async function loadExtended() {
+  if (!userId) return;
+  try {
+    /* Get mobile first to look up pat_patients */
+    const res  = await fetch(`/api/patient/profile/${userId}`);
+    const data = await res.json();
+    const mobile = data.user?.mobile;
+    if (!mobile) return;
+
+    const rec = await fetch(`/api/patient/full-record-by-mobile/${mobile}`);
+    if (!rec.ok) return;
+    const d = await rec.json();
+
+    /* Family history */
+    const fam = d.family_history || [];
+    document.getElementById("f_family").innerHTML = tags(fam, "tag-blue");
+
+    /* Lifestyle */
+    const ls = d.lifestyle || {};
+    document.getElementById("f_lifestyle").innerHTML =
+      infoBox("Smoking",           val(ls.smoking)) +
+      infoBox("Alcohol",           val(ls.alcohol)) +
+      infoBox("Physical Activity", val(ls.physical_activity)) +
+      infoBox("Diet Quality",      val(ls.diet_quality)) +
+      infoBox("Sleep Hours",       val(ls.sleep_hours)) +
+      infoBox("Sleep Quality",     val(ls.sleep_quality)) +
+      infoBox("Stress Level",      val(ls.stress_level)) +
+      infoBox("Occupation",        val(ls.occupation));
+
+    /* Medical history */
+    const mh = d.medical_history || {};
+    document.getElementById("f_medical").innerHTML = `
+      <div style="margin-bottom:14px;">
+        <div class="lbl" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Existing Diseases</div>
+        <div class="tag-list">${tags(mh.existing_diseases, "tag-red")}</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="lbl" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Surgeries</div>
+        <div class="tag-list">${tags(mh.surgeries, "tag-blue")}</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="lbl" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Allergies</div>
+        <div class="tag-list">${tags(mh.allergies, "tag-red")}</div>
+      </div>
+      <div>
+        <div class="lbl" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Current Medications</div>
+        <div class="tag-list">${tags(mh.medications, "tag-green")}</div>
+      </div>`;
+
+  } catch(e) { /* extended data not available — silent */ }
+}
+
+/* ── Save mobile + address ── */
+async function saveProfile() {
+  const btn    = document.getElementById("btnSave");
+  const msgEl  = document.getElementById("saveMsg");
+  const mobile  = document.getElementById("e_mobile").value.trim();
+  const address = document.getElementById("e_address").value.trim();
+
+  msgEl.textContent = "";
+  if (!mobile) { msgEl.className = "save-msg err"; msgEl.textContent = "Mobile number is required."; return; }
+
+  btn.disabled = true; btn.textContent = "Saving…";
+
+  try {
+    const res  = await fetch(`/patient/profile/${userId}`, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ mobile, address })
+    });
+    const data = await res.json();
+    if (data.success) {
+      msgEl.className = "save-msg ok";
+      msgEl.textContent = "Saved successfully.";
+    } else {
+      msgEl.className = "save-msg err";
+      msgEl.textContent = data.message || "Save failed.";
+    }
+  } catch(e) {
+    msgEl.className = "save-msg err";
+    msgEl.textContent = "Could not reach server.";
+  }
+
+  btn.disabled = false; btn.textContent = "Save Changes";
+  setTimeout(() => { msgEl.textContent = ""; }, 3000);
+}
+
+loadProfile();
+loadExtended();
+</script>
+</body>
+</html>

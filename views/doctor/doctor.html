@@ -60,6 +60,79 @@
       color: #0d47a1;
     }
 
+    /* NOTIFICATION BELL */
+    .bell-wrap { position: relative; display: inline-block; }
+
+    .bell-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      position: relative;
+      color: #0d47a1;
+      padding: 4px;
+    }
+
+    .bell-badge {
+      position: absolute;
+      top: -2px;
+      right: -6px;
+      background: #c62828;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+    }
+
+    .bell-drop {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 34px;
+      width: 340px;
+      max-height: 380px;
+      overflow: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+      z-index: 50;
+      border: 1px solid #e3eaf5;
+    }
+
+    .bell-drop.open { display: block; }
+
+    .bell-item {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .bell-item:hover { background: #f4f8ff; }
+    .bell-item.unread { background: #eef5ff; }
+    .bell-item .b-title { font-weight: 700; color: #0d47a1; margin-bottom: 3px; }
+    .bell-item .b-time { font-size: 11px; color: #888; margin-top: 4px; }
+
+    .bell-empty { padding: 20px; text-align: center; color: #888; font-size: 13px; }
+
+    .bell-header {
+      padding: 10px 14px;
+      font-weight: 700;
+      color: #0d47a1;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bell-header span { color: #1565c0; cursor: pointer; font-weight: 600; font-size: 12px; }
+
     .content { padding: 20px; flex: 1; }
 
     /* SECTIONS */
@@ -220,7 +293,16 @@
 
     <div class="topbar">
         <input placeholder="Search patient">
-        <div class="profile">Doctor</div>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div class="bell-wrap">
+                <button class="bell-btn" onclick="toggleBell(event)" title="Notifications">🔔<span class="bell-badge" id="bell-badge" style="display:none;">0</span></button>
+                <div class="bell-drop" id="bell-drop">
+                    <div class="bell-header">Notifications <span onclick="markAllRead()">Mark all read</span></div>
+                    <div id="bell-list"><div class="bell-empty">No notifications.</div></div>
+                </div>
+            </div>
+            <div class="profile">Doctor</div>
+        </div>
     </div>
 
     <div class="content">
@@ -228,8 +310,42 @@
         <!-- ================= PATIENTS ================= -->
         <div id="patients" class="section active">
             <div class="panel">
-                <h3>Today's Patients</h3>
-                <div id="patientList"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="margin:0;">Today's Appointment Queue</h3>
+                    <span id="queue-live" style="font-size:12px;color:#888;">⏳ Loading...</span>
+                </div>
+
+                <!-- Queue summary bar -->
+                <div id="queue-summary" style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;"></div>
+
+                <!-- Waiting Patients -->
+                <div id="waiting-section" style="margin-bottom:26px;">
+                    <h4 style="color:#e65100;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                        ⏳ Waiting Patients
+                        <span id="waiting-count" style="background:#fff3e0;color:#e65100;font-size:12px;padding:2px 10px;border-radius:20px;"></span>
+                    </h4>
+                    <div id="waitingList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;"></div>
+                </div>
+
+                <!-- Current Consultation -->
+                <div id="consulting-section" style="margin-bottom:26px;display:none;">
+                    <h4 style="color:#6a1b9a;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                        🩺 Current Consultation
+                        <span id="consulting-count" style="background:#f3e5f5;color:#6a1b9a;font-size:12px;padding:2px 10px;border-radius:20px;"></span>
+                    </h4>
+                    <div id="consultingList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;"></div>
+                </div>
+
+                <!-- Completed Consultations -->
+                <div id="completed-section" style="display:none;">
+                    <h4 style="color:#2e7d32;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                        ✅ Completed Consultations
+                        <span id="completed-count" style="background:#e8f5e9;color:#2e7d32;font-size:12px;padding:2px 10px;border-radius:20px;"></span>
+                    </h4>
+                    <div id="completedList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;"></div>
+                </div>
+
+                <div id="patientList" style="display:none;"></div>
             </div>
         </div>
 
@@ -663,160 +779,132 @@ async function loadAppointments() {
         const res = await fetch(`/doctor/appointments/${doctorId}`);
         const appointments = await res.json();
 
-        const patientList = document.getElementById("patientList");
-
-        patientList.innerHTML = "";
-
-        if (!appointments || appointments.length === 0) {
-
-            patientList.innerHTML = `
-                <p>No patients scheduled for today.</p>
-            `;
-
-            return;
-
+        const liveEl = document.getElementById('queue-live');
+        if (liveEl) {
+            liveEl.textContent = 'Live - ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            liveEl.style.color = '#2e7d32';
         }
 
-        appointments.forEach(appointment => {
+        const waitingList     = document.getElementById('waitingList');
+        const consultingList  = document.getElementById('consultingList');
+        const completedList   = document.getElementById('completedList');
+        const summary         = document.getElementById('queue-summary');
 
-            let statusBadge = "";
+        if (!appointments || appointments.length === 0) {
+            if (summary) summary.innerHTML = '';
+            waitingList.innerHTML = '<p style="color:#888">No patients scheduled for today.</p>';
+            document.getElementById('waiting-section').style.display = 'block';
+            document.getElementById('waiting-count').textContent = '0';
+            document.getElementById('consulting-section').style.display = 'none';
+            document.getElementById('completed-section').style.display = 'none';
+            return;
+        }
 
-            let actionButtons = "";
+        /* Normalise legacy statuses into Waiting / Consulting / Completed */
+        const norm = (s) => {
+            const st = String(s || '').toUpperCase();
+            if (st === 'COMPLETED' || st === 'REVIEWED' || st === 'LAB_COMPLETED') return 'COMPLETED';
+            if (st === 'CONSULTING' || st === 'INPROGRESS') return 'CONSULTING';
+            if (st === 'LAB_READY') return 'LAB_READY';
+            return 'WAITING';
+        };
 
-            // ----------------------------------------
-            // LAB REPORT READY
-            // ----------------------------------------
+        const waiting    = [];
+        const consulting = [];
+        const completed  = [];
 
-            if (appointment.status === "LAB_READY") {
-
-                statusBadge = `
-
-                    <div
-                        style="
-                            display:inline-block;
-                            background:#2e7d32;
-                            color:white;
-                            padding:6px 12px;
-                            border-radius:20px;
-                            font-size:13px;
-                            margin-bottom:12px;
-                        ">
-
-                        🧪 Lab Report Ready
-
-                    </div>
-
-                `;
-
-                actionButtons = `
-
-                    <button
-                        class="primary-btn"
-                        onclick="reviewLabReport(${appointment.id})">
-
-                        Review Lab Report
-
-                    </button>
-
-                `;
-
-            }
-
-            // ----------------------------------------
-            // NORMAL CONSULTATION
-            // ----------------------------------------
-
-            else {
-
-                statusBadge = `
-
-                    <div
-                        style="
-                            display:inline-block;
-                            background:#1565c0;
-                            color:white;
-                            padding:6px 12px;
-                            border-radius:20px;
-                            font-size:13px;
-                            margin-bottom:12px;
-                        ">
-
-                        👨‍⚕ Consultation Pending
-
-                    </div>
-
-                `;
-
-                actionButtons = `
-
-                    <button
-                        class="primary-btn"
-                        onclick="startConsultation(${appointment.id})">
-
-                        Start Consultation
-
-                    </button>
-
-                `;
-
-            }
-
-            patientList.innerHTML += `
-
-                <div class="d-card">
-
-                    ${statusBadge}
-
-                    <h3>${appointment.patient_name}</h3>
-
-                    <hr style="border:none;border-top:1px solid #eee;margin:8px 0;">
-
-                    <p><b>Token :</b> ${appointment.token_no ?? "-"}</p>
-
-                    <p><b>Date :</b> ${appointment.appointment_date ?? "-"}</p>
-
-                    <p><b>Time :</b> ${appointment.appointment_time ?? "-"}</p>
-
-                    <p><b>Age :</b> ${appointment.age ?? "-"}</p>
-
-                    <p><b>Gender :</b> ${appointment.gender ?? "-"}</p>
-
-                    <p><b>Blood Group :</b> ${appointment.blood_group ?? "-"}</p>
-
-                    <p><b>Symptoms :</b> ${appointment.symptoms ?? "-"}</p>
-
-                    <p><b>Status :</b> ${appointment.status}</p>
-
-                    <div
-                        style="
-                            margin-top:15px;
-                            display:flex;
-                            flex-direction:column;
-                            gap:10px;
-                        ">
-
-                        ${actionButtons}
-
-                    </div>
-
-                </div>
-
-            `;
-
+        appointments.forEach(a => {
+            const n = norm(a.status);
+            if (n === 'COMPLETED') completed.push(a);
+            else if (n === 'CONSULTING') consulting.push(a);
+            else if (n === 'LAB_READY') waiting.push(a);
+            else waiting.push(a);
         });
+
+        if (summary) {
+            const counts = [
+                ['Total',      appointments.length, '#1565c0', '#e3f0ff'],
+                ['Waiting',    waiting.length,      '#e65100', '#fff3e0'],
+                ['Consulting', consulting.length,   '#6a1b9a', '#f3e5f5'],
+                ['Completed',  completed.length,    '#2e7d32', '#e8f5e9']
+            ];
+            summary.innerHTML = counts.map(([label, count, color, bg]) =>
+                `<div style="background:${bg};border-radius:10px;padding:10px 18px;min-width:90px;">` +
+                `<div style="font-size:11px;color:${color};font-weight:600;text-transform:uppercase;">${label}</div>` +
+                `<div style="font-size:24px;font-weight:700;color:${color};">${count}</div></div>`
+            ).join('');
+        }
+
+        /* ── Card renderer ── */
+        const cardHtml = (appointment, { showLabReview = false } = {}) => {
+            const s  = norm(appointment.status);
+            const badgeMap = {
+                WAITING:    ['#1565c0', 'Waiting'],
+                CONSULTING: ['#6a1b9a', 'Consulting'],
+                COMPLETED:  ['#2e7d32', 'Completed'],
+                LAB_READY:  ['#2e7d32', 'Lab Ready']
+            };
+            const [bc, bl] = badgeMap[s] || ['#555', appointment.status || '—'];
+            const statusBadge = `<span style="display:inline-block;background:${bc};color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:10px;">${bl}</span>`;
+
+            const actionBtn = (s === 'COMPLETED')
+                ? ''
+                : (showLabReview
+                    ? `<button class="primary-btn" onclick="reviewLabReport(${appointment.id})">Review Lab Report</button>`
+                    : `<button class="primary-btn" onclick="startConsultation(${appointment.id})">Start Consultation</button>`);
+
+            const token = appointment.token_no != null ? appointment.token_no : (appointment.id);
+
+            return `<div class="d-card">` +
+                `<div style="display:flex;justify-content:space-between;align-items:flex-start;">` +
+                statusBadge +
+                `<span style="background:#0d47a1;color:white;font-weight:700;font-size:13px;padding:4px 12px;border-radius:20px;">#${token}</span>` +
+                `</div>` +
+                `<h3>${appointment.patient_name || '—'}</h3>` +
+                `<hr style="border:none;border-top:1px solid #eee;margin:8px 0;">` +
+                `<p><b>Patient ID :</b> ${appointment.patient_id_display || appointment.patient_id || '-'}</p>` +
+                `<p><b>Time :</b> ${appointment.appointment_time || '-'}</p>` +
+                `<p><b>Status :</b> ${bl}</p>` +
+                `<p><b>Age :</b> ${appointment.age || '-'} | <b>Gender :</b> ${appointment.gender || '-'}</p>` +
+                `<p><b>Blood Group :</b> ${appointment.blood_group || '-'}</p>` +
+                `<p><b>Symptoms :</b> ${appointment.symptoms || '-'}</p>` +
+                `<div style="margin-top:12px;">${actionBtn}</div>` +
+                `</div>`;
+        };
+
+        /* Waiting Patients */
+        waitingList.innerHTML = waiting.length
+            ? waiting.map(a => cardHtml(a)).join('')
+            : '<p style="color:#888">No patients waiting.</p>';
+        document.getElementById('waiting-section').style.display = 'block';
+        document.getElementById('waiting-count').textContent = waiting.length;
+
+        /* Current Consultation */
+        consultingList.innerHTML = consulting.length
+            ? consulting.map(a => cardHtml(a)).join('')
+            : '<p style="color:#888">No consultation in progress.</p>';
+        document.getElementById('consulting-section').style.display = consulting.length ? 'block' : 'none';
+        document.getElementById('consulting-count').textContent = consulting.length;
+
+        /* Completed Consultations */
+        completedList.innerHTML = completed.length
+            ? completed.map(a => cardHtml(a)).join('')
+            : '<p style="color:#888">No completed consultations yet.</p>';
+        document.getElementById('completed-section').style.display = completed.length ? 'block' : 'none';
+        document.getElementById('completed-count').textContent = completed.length;
 
     }
 
     catch (err) {
 
         console.error(err);
-
-        alert("Unable to load today's appointments.");
+        const liveEl = document.getElementById('queue-live');
+        if (liveEl) { liveEl.textContent = 'Failed to load'; liveEl.style.color = '#c62828'; }
 
     }
 
 }
-// =====================================================
+
 // START CONSULTATION
 // =====================================================
 
@@ -826,16 +914,24 @@ async function startConsultation(appointmentId) {
 
         currentAppointmentId = appointmentId;
 
-        // Update appointment status
         await fetch(`/appointment/start/${appointmentId}`, {
-            method: "POST"
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ doctor_id: doctorId })
         });
 
-        // Load patient details
-        const res = await fetch(`/appointment/details/${appointmentId}`);
+        const res  = await fetch(`/appointment/details/${appointmentId}`);
         const data = await res.json();
 
         currentPatientId = data.patient_id;
+
+        /* Load any previously saved vitals for this appointment */
+        const vRes    = await fetch(`/appointment/vitals/${appointmentId}`);
+        const vitals  = await vRes.json();
+
+        /* Load any previously saved clinical notes for this appointment */
+        const nRes   = await fetch(`/appointment/notes/${appointmentId}`);
+        const notes  = await nRes.json();
 
         document.getElementById("consultationDetails").innerHTML = `
 
@@ -846,44 +942,195 @@ async function startConsultation(appointmentId) {
                 <hr style="margin:15px 0;">
 
                 <p><b>Age :</b> ${data.age}</p>
-
                 <p><b>Gender :</b> ${data.gender}</p>
-
                 <p><b>Blood Group :</b> ${data.blood_group}</p>
-
                 <p><b>Symptoms :</b> ${data.symptoms}</p>
 
-                <div
-                    style="
-                        margin-top:25px;
-                        display:flex;
-                        flex-direction:column;
-                        gap:12px;
-                    ">
+                <!-- ── VITALS FORM ── -->
+                <div style="margin-top:20px;background:#f4f8ff;border:1px solid #d0e4ff;border-radius:10px;padding:16px;">
 
-                    <button
-                        class="primary-btn"
-                        onclick="openPrescription()">
+                    <div style="font-size:13px;font-weight:700;color:#0d47a1;margin-bottom:12px;">Patient Vitals</div>
 
-                        💊 Prescribe Medicine
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
 
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Height (cm)</label>
+                            <input id="v-height" type="number" step="0.1" placeholder="e.g. 165"
+                                value="${vitals.height_cm || ''}"
+                                oninput="calcBMI()"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Weight (kg)</label>
+                            <input id="v-weight" type="number" step="0.1" placeholder="e.g. 70"
+                                value="${vitals.weight_kg || ''}"
+                                oninput="calcBMI()"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">BMI</label>
+                            <input id="v-bmi" type="text" readonly placeholder="Auto"
+                                value="${vitals.bmi || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;background:#eef4ff;font-weight:600;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Temperature (°F)</label>
+                            <input id="v-temp" type="number" step="0.1" placeholder="e.g. 98.6"
+                                value="${vitals.temperature_f || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Heart Rate (bpm)</label>
+                            <input id="v-hr" type="number" placeholder="e.g. 72"
+                                value="${vitals.heart_rate || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Respiratory Rate</label>
+                            <input id="v-rr" type="number" placeholder="e.g. 16"
+                                value="${vitals.respiratory_rate || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Oxygen Saturation (SpO2 %)</label>
+                            <input id="v-spo2" type="number" placeholder="e.g. 98"
+                                value="${vitals.spo2 || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">BP Systolic (mmHg)</label>
+                            <input id="v-bp-sys" type="number" placeholder="e.g. 120"
+                                value="${vitals.bp_systolic || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">BP Diastolic (mmHg)</label>
+                            <input id="v-bp-dia" type="number" placeholder="e.g. 80"
+                                value="${vitals.bp_diastolic || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Blood Sugar (Random)</label>
+                            <input id="v-sugar" type="number" step="0.1" placeholder="e.g. 110"
+                                value="${vitals.blood_sugar_random || ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Pain Scale (0–10)</label>
+                            <input id="v-pain" type="number" min="0" max="10" placeholder="e.g. 3"
+                                value="${vitals.pain_scale != null ? vitals.pain_scale : ''}"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                    </div>
+
+                    <div style="margin-top:10px;display:flex;align-items:center;gap:12px;">
+                        <button class="primary-btn" style="padding:8px 18px;font-size:13px;" onclick="saveVitals()">Save Vitals</button>
+                        <span id="vitals-msg" style="font-size:12px;color:#2e7d32;"></span>
+                    </div>
+
+                </div>
+                <!-- ── END VITALS ── -->
+
+                <!-- ── CLINICAL NOTES FORM ── -->
+                <div style="margin-top:20px;background:#fff8f0;border:1px solid #f0d9b8;border-radius:10px;padding:16px;">
+
+                    <div style="font-size:13px;font-weight:700;color:#7a4a0d;margin-bottom:12px;">Clinical Notes</div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+
+                        <div style="grid-column:1 / -1;">
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Chief Complaint</label>
+                            <textarea id="n-chief-complaint" rows="2" placeholder="e.g. Fever and headache for 2 days"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                        </div>
+
+                        <div style="grid-column:1 / -1;">
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Present Illness</label>
+                            <textarea id="n-present-illness" rows="3" placeholder="History of present illness"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                        </div>
+
+                        <div style="grid-column:1 / -1;">
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Physical Examination</label>
+                            <textarea id="n-physical-exam" rows="3" placeholder="Findings on examination"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Diagnosis</label>
+                            <textarea id="n-diagnosis" rows="2" placeholder="e.g. Viral fever"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Clinical Impression</label>
+                            <textarea id="n-clinical-impression" rows="2" placeholder="Overall clinical impression"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                        </div>
+
+                        <div style="grid-column:1 / -1;">
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Advice</label>
+                            <textarea id="n-advice" rows="2" placeholder="Advice given to the patient"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;color:#555;display:block;margin-bottom:3px;">Follow-up Date</label>
+                            <input id="n-follow-up-date" type="date"
+                                style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+                        </div>
+
+                    </div>
+
+                    <div style="margin-top:10px;display:flex;align-items:center;gap:12px;">
+                        <button class="primary-btn" style="padding:8px 18px;font-size:13px;background:#7a4a0d;" onclick="saveClinicalNotes()">Save Clinical Notes</button>
+                        <span id="notes-msg" style="font-size:12px;color:#2e7d32;"></span>
+                    </div>
+
+                    <div id="notes-history" style="margin-top:14px;display:none;">
+                        <div style="font-size:12px;font-weight:700;color:#7a4a0d;margin-bottom:8px;">Previous Notes</div>
+                    </div>
+
+                </div>
+                <!-- ── END CLINICAL NOTES ── -->
+
+                <!-- ── AI DIABETES PREDICTION ── -->
+                <div style="margin-top:20px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:16px;">
+
+                    <div style="font-size:13px;font-weight:700;color:#1b5e20;margin-bottom:12px;">🤖 AI Diabetes Prediction</div>
+
+                    <button class="primary-btn" style="background:#2e7d32;padding:8px 18px;font-size:13px;" onclick="runAIPrediction()">
+                        Run Prediction
                     </button>
 
-                    <button
-                        class="primary-btn"
-                        onclick="requestLabTest()">
+                    <div id="ai-prediction-result" style="margin-top:12px;"></div>
 
-                        🧪 Request Lab Test
+                </div>
+                <!-- ── END AI PREDICTION ── -->
 
+                <div style="margin-top:25px;display:flex;flex-direction:column;gap:12px;">
+
+                    <button class="primary-btn" onclick="openPrescription()">
+                        Prescribe Medicine
                     </button>
 
-                    <button
-                        class="primary-btn"
-                        style="background:green;"
-                        onclick="completeAppointment(currentAppointmentId)">
+                    <button class="primary-btn" onclick="requestLabTest()">
+                        Request Lab Test
+                    </button>
 
-                        ✅ Complete Consultation
-
+                    <button class="primary-btn" style="background:green;" onclick="completeAppointment(currentAppointmentId)">
+                        Complete Consultation
                     </button>
 
                 </div>
@@ -893,6 +1140,8 @@ async function startConsultation(appointmentId) {
         `;
 
         showSection("consultation");
+
+        renderNotesHistory(notes);
 
     }
 
@@ -904,9 +1153,161 @@ async function startConsultation(appointmentId) {
 
 }
 
-// =====================================================
-// REVIEW LAB REPORT
-// =====================================================
+function fmtDate(v) {
+    if (!v) return null;
+    /* pg returns DATE as an ISO Date object -> "2026-08-09T18:30:00.000Z"
+       or plain "2026-08-10". Normalize to the local date part. */
+    const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return String(v);
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return isNaN(d) ? String(v) : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function renderNotesHistory(notes) {
+
+    const container = document.getElementById('notes-history');
+
+    if (!container) return;
+
+    if (!Array.isArray(notes) || !notes.length) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const items = notes.map(n => {
+
+        const fields = [
+            ['Chief Complaint',        n.chief_complaint],
+            ['Present Illness',        n.present_illness],
+            ['Physical Examination',   n.physical_examination],
+            ['Diagnosis',              n.diagnosis],
+            ['Clinical Impression',    n.clinical_impression],
+            ['Advice',                 n.advice],
+            ['Follow-up Date',         n.follow_up_date ? fmtDate(n.follow_up_date) : null]
+        ].filter(([label, v]) => v && String(v).trim());
+
+        const when = n.created_at
+            ? new Date(n.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+            : '';
+
+        const rows = fields.map(([label, v]) =>
+            `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:700;color:#7a4a0d;">${label} : </span><span style="font-size:12px;color:#333;">${v}</span></div>`
+        ).join('');
+
+        return `
+            <div style="border:1px solid #e8d5b5;background:#fffdf8;border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+                ${when ? `<div style="font-size:11px;color:#999;margin-bottom:6px;">${when}</div>` : ''}
+                ${rows || '<div style="font-size:12px;color:#999;">Empty note.</div>'}
+            </div>
+        `;
+
+    }).join('');
+
+    container.innerHTML = `<div style="font-size:12px;font-weight:700;color:#7a4a0d;margin-bottom:8px;">Previous Notes</div>` + items;
+    container.style.display = 'block';
+
+}
+
+function calcBMI() {
+    const h = parseFloat(document.getElementById('v-height').value);
+    const w = parseFloat(document.getElementById('v-weight').value);
+    const bmiEl = document.getElementById('v-bmi');
+    if (bmiEl) {
+        bmiEl.value = (h > 0 && w > 0) ? (w / ((h / 100) * (h / 100))).toFixed(1) : '';
+    }
+}
+
+async function saveVitals() {
+    const msg = document.getElementById('vitals-msg');
+    msg.textContent = 'Saving...';
+    msg.style.color = '#888';
+
+    const payload = {
+        height:          document.getElementById('v-height').value,
+        weight:          document.getElementById('v-weight').value,
+        temperature:     document.getElementById('v-temp').value,
+        heart_rate:      document.getElementById('v-hr').value,
+        respiratory_rate: document.getElementById('v-rr').value,
+        spo2:            document.getElementById('v-spo2').value,
+        bp_systolic:     document.getElementById('v-bp-sys').value,
+        bp_diastolic:    document.getElementById('v-bp-dia').value,
+        blood_sugar:     document.getElementById('v-sugar').value,
+        pain_scale:      document.getElementById('v-pain').value
+    };
+
+    try {
+        const res  = await fetch(`/appointment/vitals/${currentAppointmentId}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            if (data.bmi) document.getElementById('v-bmi').value = data.bmi;
+            msg.textContent = 'Vitals saved.';
+            msg.style.color = '#2e7d32';
+        } else {
+            msg.textContent = data.message || 'Failed to save.';
+            msg.style.color = '#c62828';
+        }
+    } catch (err) {
+        msg.textContent = 'Network error.';
+        msg.style.color = '#c62828';
+    }
+}
+
+async function saveClinicalNotes() {
+
+    const msg = document.getElementById('notes-msg');
+    msg.textContent = 'Saving...';
+    msg.style.color = '#888';
+
+    const payload = {
+        chief_complaint:      document.getElementById('n-chief-complaint').value,
+        present_illness:      document.getElementById('n-present-illness').value,
+        physical_examination: document.getElementById('n-physical-exam').value,
+        diagnosis:            document.getElementById('n-diagnosis').value,
+        clinical_impression:  document.getElementById('n-clinical-impression').value,
+        advice:               document.getElementById('n-advice').value,
+        follow_up_date:       document.getElementById('n-follow-up-date').value
+    };
+
+    if (!Object.values(payload).some(v => String(v).trim())) {
+        msg.textContent = 'Enter at least one field.';
+        msg.style.color = '#c62828';
+        return;
+    }
+
+    try {
+        const res  = await fetch(`/appointment/notes/${currentAppointmentId}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            msg.textContent = 'Clinical notes saved.';
+            msg.style.color = '#2e7d32';
+
+            ['n-chief-complaint','n-present-illness','n-physical-exam','n-diagnosis',
+             'n-clinical-impression','n-advice','n-follow-up-date'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            const nRes  = await fetch(`/appointment/notes/${currentAppointmentId}`);
+            const notes = await nRes.json();
+            renderNotesHistory(notes);
+        } else {
+            msg.textContent = data.message || 'Failed to save.';
+            msg.style.color = '#c62828';
+        }
+    } catch (err) {
+        msg.textContent = 'Network error.';
+        msg.style.color = '#c62828';
+    }
+}
 
 async function reviewLabReport(appointmentId){
 
@@ -919,6 +1320,42 @@ async function reviewLabReport(appointmentId){
         const data = await res.json();
 
         currentPatientId = data.patient_id;
+
+        const tests = Array.isArray(data.tests)
+            ? data.tests
+            : (() => { try { return JSON.parse(data.tests || '[]'); } catch { return []; } })();
+
+        const reports = Array.isArray(data.lab_reports) ? data.lab_reports : [];
+
+        let reportLinks = '';
+
+        if (reports.length) {
+            reportLinks = reports.map(r => `
+                <a
+                    href="/uploads/${r.report_file}"
+                    target="_blank"
+                    class="primary-btn"
+                    style="
+                        text-align:center;
+                        text-decoration:none;
+                    ">
+                    📄 ${r.test_name || 'Lab Report'}
+                </a>
+            `).join('');
+        } else if (data.report_file) {
+            reportLinks = `
+                <a
+                    href="/uploads/${data.report_file}"
+                    target="_blank"
+                    class="primary-btn"
+                    style="
+                        text-align:center;
+                        text-decoration:none;
+                    ">
+                    📄 Download Lab Report
+                </a>
+            `;
+        }
 
         document.getElementById("consultationDetails").innerHTML = `
 
@@ -936,6 +1373,8 @@ async function reviewLabReport(appointmentId){
 
             <p><b>Symptoms :</b> ${data.symptoms}</p>
 
+            ${tests.length ? `<p><b>Requested Tests :</b> ${tests.join(', ')}</p>` : ''}
+
             <div
                 style="
                     margin-top:25px;
@@ -944,18 +1383,7 @@ async function reviewLabReport(appointmentId){
                     gap:12px;
                 ">
 
-                <a
-                    href="/uploads/${data.report_file}"
-                    target="_blank"
-                    class="primary-btn"
-                    style="
-                        text-align:center;
-                        text-decoration:none;
-                    ">
-
-                    📄 Download Lab Report
-
-                </a>
+                ${reportLinks}
 
                 <button
                     class="primary-btn"
@@ -1029,12 +1457,40 @@ async function completeAppointment(appointmentId){
 
     try{
 
+        /* Auto-save any entered vitals / clinical notes so that
+           no entered information is lost. Diagnosis and Follow-up
+           Date are part of the clinical notes. */
+        const vitals = {
+            height:          document.getElementById('v-height')          ? document.getElementById('v-height').value          : '',
+            weight:          document.getElementById('v-weight')          ? document.getElementById('v-weight').value          : '',
+            temperature:     document.getElementById('v-temp')            ? document.getElementById('v-temp').value            : '',
+            heart_rate:      document.getElementById('v-hr')              ? document.getElementById('v-hr').value              : '',
+            respiratory_rate: document.getElementById('v-rr')             ? document.getElementById('v-rr').value             : '',
+            spo2:            document.getElementById('v-spo2')            ? document.getElementById('v-spo2').value            : '',
+            bp_systolic:     document.getElementById('v-bp-sys')          ? document.getElementById('v-bp-sys').value          : '',
+            bp_diastolic:    document.getElementById('v-bp-dia')          ? document.getElementById('v-bp-dia').value          : '',
+            blood_sugar:     document.getElementById('v-sugar')           ? document.getElementById('v-sugar').value           : '',
+            pain_scale:      document.getElementById('v-pain')            ? document.getElementById('v-pain').value            : ''
+        };
+
+        const notes = {
+            chief_complaint:      document.getElementById('n-chief-complaint')      ? document.getElementById('n-chief-complaint').value      : '',
+            present_illness:      document.getElementById('n-present-illness')      ? document.getElementById('n-present-illness').value      : '',
+            physical_examination: document.getElementById('n-physical-exam')        ? document.getElementById('n-physical-exam').value        : '',
+            diagnosis:            document.getElementById('n-diagnosis')            ? document.getElementById('n-diagnosis').value            : '',
+            clinical_impression:  document.getElementById('n-clinical-impression')  ? document.getElementById('n-clinical-impression').value  : '',
+            advice:               document.getElementById('n-advice')               ? document.getElementById('n-advice').value               : '',
+            follow_up_date:       document.getElementById('n-follow-up-date')       ? document.getElementById('n-follow-up-date').value       : ''
+        };
+
         const res = await fetch(
 
             `/appointment/complete/${appointmentId}`,
 
             {
-                method:"POST"
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ vitals, notes })
             }
 
         );
@@ -1066,6 +1522,72 @@ async function completeAppointment(appointmentId){
 
         console.error(err);
 
+    }
+
+}
+
+// =====================================================
+// RUN AI DIABETES PREDICTION (Consultation page)
+// Sends the prepared patient JSON to the Python API and
+// displays Prediction / Risk Probability / Confidence.
+// =====================================================
+
+async function runAIPrediction() {
+
+    const box = document.getElementById('ai-prediction-result');
+    if (!box) return;
+
+    if (!currentAppointmentId) {
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">No appointment selected.</span>';
+        return;
+    }
+
+    box.innerHTML = '<span style="color:#1b5e20;font-size:13px;">⏳ Running AI prediction…</span>';
+
+    try {
+
+        const res = await fetch(`/appointment/predict/${currentAppointmentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            box.innerHTML = `<span style="color:#c62828;font-size:13px;">⚠️ ${data.message || 'Prediction failed'}</span>`;
+            return;
+        }
+
+        const highRisk = String(data.prediction).toUpperCase() === 'HIGH RISK';
+        const riskColor = highRisk ? '#c62828' : '#2e7d32';
+        const riskBg    = highRisk ? '#ffebee' : '#e8f5e9';
+
+        box.innerHTML = `
+            <div style="background:#f4f8ff;border:1px solid #d0e4ff;border-radius:10px;padding:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span style="font-size:13px;font-weight:700;color:#0d47a1;">Diabetes Risk Assessment</span>
+                    <span style="background:${riskBg};color:${riskColor};font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;">${data.prediction}</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+                    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">Prediction</div>
+                        <div style="font-size:14px;font-weight:700;color:${riskColor};">${data.prediction}</div>
+                    </div>
+                    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">Risk Probability</div>
+                        <div style="font-size:16px;font-weight:700;color:#0d47a1;">${data.probability}%</div>
+                    </div>
+                    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">Confidence Score</div>
+                        <div style="font-size:16px;font-weight:700;color:#1565c0;">${data.confidence}%</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    } catch (err) {
+        console.error(err);
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Network error while running prediction.</span>';
     }
 
 }
@@ -1202,6 +1724,120 @@ async function loadStock(){
 }
 
 // =====================================================
+// IN-APP NOTIFICATIONS
+// =====================================================
+
+let __notifications = [];
+
+async function loadNotifications() {
+
+    if (!doctorId) return;
+
+    try {
+
+        const res = await fetch(`/lab/notifications/${doctorId}`);
+        const data = await res.json();
+
+        if (!data || !data.success) return;
+
+        __notifications = data.notifications || [];
+
+        const badge = document.getElementById('bell-badge');
+
+        if (data.unread > 0) {
+            badge.textContent = data.unread;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const list = document.getElementById('bell-list');
+        const items = __notifications;
+
+        if (!items.length) {
+            list.innerHTML = '<div class="bell-empty">No notifications.</div>';
+            return;
+        }
+
+        list.innerHTML = items.map((n, i) => {
+
+            const time = new Date(n.created_at).toLocaleString('en-IN', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
+
+            return `
+                <div class="bell-item ${n.is_read ? '' : 'unread'}" onclick="openNotification(${i})">
+                    <div class="b-title">${n.title || 'Notification'}</div>
+                    <div>${n.message || ''}</div>
+                    <div class="b-time">${time}</div>
+                </div>
+            `;
+
+        }).join('');
+
+    }
+    catch (err) {
+        console.error(err);
+    }
+
+}
+
+function toggleBell(event) {
+
+    event.stopPropagation();
+
+    document.getElementById('bell-drop').classList.toggle('open');
+
+}
+
+function openNotification(index) {
+
+    const n = __notifications[index];
+
+    if (!n) return;
+
+    /* Parse the appointment id from the link (…&openReport=<id>) */
+    const link = n.link || '';
+    const m = link.match(/[?&]openReport=(\d+)/);
+
+    if (m && m[1]) {
+        reviewLabReport(m[1]);
+    }
+
+    document.getElementById('bell-drop').classList.remove('open');
+
+    if (!n.is_read) {
+        fetch(`/lab/notifications/${n.id}/read`, { method: 'POST' }).catch(() => {});
+    }
+
+}
+
+async function markAllRead() {
+
+    if (!doctorId) return;
+
+    try {
+
+        await fetch(`/lab/notifications/read-all/${doctorId}`, { method: 'POST' });
+
+        loadNotifications();
+
+    }
+    catch (err) {
+        console.error(err);
+    }
+
+}
+
+/* Close the bell dropdown when clicking elsewhere */
+document.addEventListener('click', (event) => {
+    const drop = document.getElementById('bell-drop');
+    if (drop && drop.classList.contains('open') && !event.target.closest('.bell-wrap')) {
+        drop.classList.remove('open');
+    }
+});
+
+// =====================================================
 // PAGE LOAD
 // =====================================================
 
@@ -1213,6 +1849,15 @@ window.onload = function(){
 
     loadStock();
 
+    loadNotifications();
+
+    /* Deep link: ?openReport=<appointmentId> (from a lab notification) */
+    const openReport = new URLSearchParams(window.location.search).get("openReport");
+
+    if (openReport) {
+        setTimeout(() => reviewLabReport(openReport), 400);
+    }
+
 };
 
 // =====================================================
@@ -1222,6 +1867,13 @@ window.onload = function(){
 setInterval(function(){
 
     loadAppointments();
+
+},30000);
+
+/* refresh notifications every 30s too */
+setInterval(function(){
+
+    loadNotifications();
 
 },30000);
 </script>

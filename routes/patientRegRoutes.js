@@ -4,8 +4,8 @@ const bcrypt   = require("bcrypt");
 const multer   = require("multer");
 const path     = require("path");
 const crypto   = require("crypto");
-const QRCode   = require("qrcode");
 const hospital = require("../config/hospital");
+const { generateQRImage } = require("./qrRoutes");
 
 /* ── multer ── */
 const storage = multer.diskStorage({
@@ -158,11 +158,8 @@ router.post("/register", upload.single("face_image"), async (req, res) => {
             VALUES ($1,true,$2,$3)
         `, [userId, consent_version || "1.0", registered_by || null]);
 
-        /* Generate QR image — encode full URL so phone camera opens the verify page */
-        const serverHost = process.env.SERVER_HOST || "192.168.1.6";
-        const serverPort = process.env.PORT || 5000;
-        const verifyUrl  = `http://${serverHost}:${serverPort}/patient/verify?id=${patientId}`;
-        const qrImage = await QRCode.toDataURL(verifyUrl, { width: 250, margin: 1 });
+        /* Generate QR image — encodes ONLY the Patient ID (no medical data) */
+        const qrImage = await generateQRImage(patientId);
 
         res.json({
             success:    true,
@@ -200,10 +197,8 @@ router.get("/health-card/:userId", async (req, res) => {
         if (!result.rows.length) return res.status(404).json({ message: "Not found" });
         const pat = result.rows[0];
 
-        const serverHost = process.env.SERVER_HOST || "192.168.1.6";
-        const serverPort = process.env.PORT || 5000;
-        const verifyUrl  = `http://${serverHost}:${serverPort}/patient/verify?id=${pat.qr_token}`;
-        const qrImage = await QRCode.toDataURL(verifyUrl, { width: 250, margin: 1 });
+        /* QR image — encodes ONLY the Patient ID (no medical data) */
+        const qrImage = await generateQRImage(pat.qr_token || pat.health_id);
 
         res.json({
             hospital_name: hospital.name,
@@ -278,6 +273,9 @@ router.get("/list", async (req, res) => {
    VERIFY PIN  (step 1 of QR scan access)
    POST /api/patient-reg/verify-pin
    Body: { patient_id, pin }
+   Handles both registration systems:
+     - new system : pat_patients / pat_pin  (keyed by patient_id)
+     - legacy     : patient_health_ids / patient_pin (keyed by user_id)
 ===================================================== */
 router.post("/verify-pin", async (req, res) => {
     const pool = req.app.locals.pool;
@@ -286,39 +284,127 @@ router.post("/verify-pin", async (req, res) => {
         if (!patient_id || !pin)
             return res.status(400).json({ success: false, message: "patient_id and pin required" });
 
-        /* Resolve user_id from health_id */
+        /* ── Try new system (pat_patients + pat_pin) ── */
+        const newSys = await pool.query(`
+            SELECT p.patient_id, p.name, p.gender, p.blood_group, p.age, p.registered_at,
+                   pp.pin_hash
+            FROM   pat_patients p
+            JOIN   pat_pin      pp ON pp.patient_id = p.patient_id
+            WHERE  p.patient_id = $1
+        `, [patient_id]);
+
+        if (newSys.rows.length) {
+            const row   = newSys.rows[0];
+            const match = await bcrypt.compare(String(pin), row.pin_hash);
+            if (!match)
+                return res.status(401).json({ success: false, message: "Incorrect PIN" });
+            return res.json({
+                success:    true,
+                source:     "new",
+                patient_id: row.patient_id,
+                name:       row.name,
+                gender:     row.gender,
+                blood_group: row.blood_group,
+                age:        row.age,
+                registered_at: row.registered_at
+            });
+        }
+
+        /* ── Try legacy system (patient_health_ids + patient_pin) ── */
         const phi = await pool.query(
             `SELECT user_id FROM patient_health_ids WHERE health_id=$1`, [patient_id]
         );
-        if (!phi.rows.length)
-            return res.status(404).json({ success: false, message: "Patient ID not found" });
+        if (phi.rows.length) {
+            const userId = phi.rows[0].user_id;
 
-        const userId = phi.rows[0].user_id;
+            const pinRow = await pool.query(
+                `SELECT pin_hash FROM patient_pin WHERE patient_id=$1`, [userId]
+            );
+            if (!pinRow.rows.length)
+                return res.status(404).json({ success: false, message: "No PIN set for this patient" });
 
-        const pinRow = await pool.query(
-            `SELECT pin_hash FROM patient_pin WHERE patient_id=$1`, [userId]
-        );
-        if (!pinRow.rows.length)
-            return res.status(404).json({ success: false, message: "No PIN set for this patient" });
+            const match = await bcrypt.compare(pin.toString(), pinRow.rows[0].pin_hash);
+            if (!match)
+                return res.status(401).json({ success: false, message: "Incorrect PIN" });
 
-        const match = await bcrypt.compare(pin.toString(), pinRow.rows[0].pin_hash);
-        if (!match)
-            return res.status(401).json({ success: false, message: "Incorrect PIN" });
+            /* Return face embedding for client-side comparison */
+            const faceRow = await pool.query(
+                `SELECT face_embedding, face_image_path FROM patient_face WHERE patient_id=$1 AND status='ACTIVE'`,
+                [userId]
+            );
 
-        /* Return face embedding for client-side comparison */
-        const faceRow = await pool.query(
-            `SELECT face_embedding, face_image_path FROM patient_face WHERE patient_id=$1 AND status='ACTIVE'`,
-            [userId]
-        );
+            return res.json({
+                success:         true,
+                source:          "legacy",
+                user_id:         userId,
+                face_embedding:  faceRow.rows[0]?.face_embedding || null,
+                face_image_path: faceRow.rows[0]?.face_image_path || null
+            });
+        }
 
-        res.json({
-            success:         true,
-            user_id:         userId,
-            face_embedding:  faceRow.rows[0]?.face_embedding || null,
-            face_image_path: faceRow.rows[0]?.face_image_path || null
-        });
+        return res.status(404).json({ success: false, message: "Patient ID not found" });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+
+/* =====================================================
+   SET / RESET PATIENT PIN  (receptionist)
+   POST /api/patient-reg/set-pin
+   Body: { patient_id, new_pin }   (new_pin = 4–6 digits)
+   Covers both registration systems.
+===================================================== */
+router.post("/set-pin", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const { patient_id, new_pin } = req.body;
+        if (!patient_id)
+            return res.status(400).json({ success: false, message: "patient_id required" });
+        if (!new_pin || !/^\d{4,6}$/.test(String(new_pin)))
+            return res.status(400).json({ success: false, message: "new_pin must be 4–6 digits" });
+
+        const pinHash = await bcrypt.hash(String(new_pin), 10);
+
+        /* ── New system ── */
+        const newPat = await pool.query(
+            `SELECT patient_id, name FROM pat_patients WHERE patient_id=$1`, [patient_id]
+        );
+        if (newPat.rows.length) {
+            await pool.query(`
+                INSERT INTO pat_pin (patient_id, pin_hash)
+                VALUES ($1,$2)
+                ON CONFLICT (patient_id) DO UPDATE SET pin_hash=$2, created_at=NOW()
+            `, [patient_id, pinHash]);
+            return res.json({
+                success: true, source: "new", patient_id, name: newPat.rows[0].name
+            });
+        }
+
+        /* ── Legacy system ── */
+        const phi = await pool.query(
+            `SELECT user_id FROM patient_health_ids WHERE health_id=$1`, [patient_id]
+        );
+        if (phi.rows.length) {
+            const userId = phi.rows[0].user_id;
+            const pat = await pool.query(
+                `SELECT name FROM users WHERE id=$1`, [userId]
+            );
+            await pool.query(`
+                INSERT INTO patient_pin (patient_id, pin_hash)
+                VALUES ($1,$2)
+                ON CONFLICT (patient_id) DO UPDATE SET pin_hash=$2, created_at=NOW()
+            `, [userId, pinHash]);
+            return res.json({
+                success: true, source: "legacy", patient_id, user_id: userId,
+                name: pat.rows[0]?.name || null
+            });
+        }
+
+        return res.status(404).json({ success: false, message: "Patient ID not found" });
+    } catch (err) {
+        console.error("SET PIN ERROR:", err.message);
         res.status(500).json({ success: false, message: err.message });
     }
 });
@@ -538,6 +624,327 @@ router.get("/docx/:userId", async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send(err.message);
+    }
+});
+
+
+/* =====================================================
+   MEDICAL RECORD — aggregated view for a patient (user_id)
+   Reuses existing records, newest first:
+   doctor visits, vitals, diagnosis (prescription notes),
+   prescriptions, lab reports, AI predictions.
+   Shared by GET /medical-record/:userId and
+   GET /medical-docx/:userId
+===================================================== */
+async function getMedicalRecord(pool, uid) {
+    /* Some tables are created lazily — guard them */
+    const tbl = async (name) => {
+        const chk = await pool.query(`SELECT to_regclass($1) AS t`, [name]);
+        return !!chk.rows[0].t;
+    };
+    const [hasVitalsTbl, hasAiTbl] = await Promise.all([tbl("patient_visits"), tbl("ai_predictions")]);
+    const hasNotesTbl = await tbl("clinical_notes");
+
+    const [basic, visits, rxs, labs] = await Promise.all([
+        pool.query(`
+            SELECT u.id, u.name, u.mobile,
+                   p.age, p.gender, p.blood_group, p.dob, p.address,
+                   p.city, p.state, p.pincode, p.photo,
+                   phi.health_id AS patient_id
+            FROM users u
+            LEFT JOIN patients p ON p.user_id = u.id
+            LEFT JOIN patient_health_ids phi ON phi.user_id = u.id
+            WHERE u.id = $1
+        `, [uid]),
+        pool.query(`
+            SELECT a.id, a.appointment_date, a.appointment_time, a.symptoms,
+                   a.status, a.token_no,
+                   u.name AS doctor_name
+                   ${hasVitalsTbl ? `, pv.height_cm, pv.weight_kg, pv.bmi,
+                       pv.bp_systolic, pv.bp_diastolic, pv.heart_rate, pv.temperature_f,
+                       pv.respiratory_rate, pv.spo2, pv.blood_sugar_random, pv.pain_scale,
+                       pv.consultation_started_at AS vitals_recorded_at` : ""}
+            FROM appointments a
+            LEFT JOIN users u ON u.id = a.doctor_id
+            ${hasVitalsTbl ? "LEFT JOIN patient_visits pv ON pv.appointment_id = a.id" : ""}
+            WHERE a.patient_id = $1
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+        `, [uid]),
+        pool.query(`
+            SELECT p.id, p.created_at, p.notes, p.appointment_id,
+                   u.name AS doctor_name,
+                   COALESCE(
+                       json_agg(json_build_object(
+                           'medicine', m.medicine_name,
+                           'dosage',   pm.dosage,
+                           'quantity', pm.quantity,
+                           'duration', pm.duration
+                       )) FILTER (WHERE m.id IS NOT NULL),
+                       '[]'
+                   ) AS medicines
+            FROM prescriptions p
+            LEFT JOIN users u ON u.id = p.doctor_id
+            LEFT JOIN prescription_medicines pm ON pm.prescription_id = p.id
+            LEFT JOIN medicines m ON m.id = pm.medicine_id
+            WHERE p.patient_id = $1
+            GROUP BY p.id, u.name
+            ORDER BY p.created_at DESC
+        `, [uid]),
+        pool.query(`
+            SELECT lr.id, lr.tests, lr.report_file, lr.status, lr.created_at,
+                   lr.completed_at, u.name AS doctor_name
+            FROM lab_requests lr
+            LEFT JOIN users u ON u.id = lr.doctor_id
+            WHERE lr.patient_id = $1
+            ORDER BY lr.created_at DESC
+        `, [uid])
+    ]);
+
+    if (!basic.rows.length) {
+        const err = new Error("Patient not found");
+        err.status = 404;
+        throw err;
+    }
+
+    /* AI predictions — table may not exist until first prediction is run */
+    let aiPredictions = [];
+    if (hasAiTbl) {
+        try {
+            const ai = await pool.query(`
+                SELECT id, model_type, prediction, probability, input_data, predicted_at
+                FROM ai_predictions
+                WHERE patient_id = $1
+                ORDER BY predicted_at DESC
+            `, [uid]);
+            aiPredictions = ai.rows;
+        } catch (e) { /* no predictions table yet */ }
+    }
+
+    /* Clinical notes — table may not exist until the first note is saved */
+    let clinicalNotes = [];
+    if (hasNotesTbl) {
+        try {
+            const cn = await pool.query(`
+                SELECT cn.id, cn.chief_complaint, cn.present_illness,
+                       cn.physical_examination, cn.diagnosis, cn.clinical_impression,
+                       cn.advice, to_char(cn.follow_up_date, 'YYYY-MM-DD') AS follow_up_date,
+                       cn.created_at,
+                       cn.appointment_id, u.name AS doctor_name
+                FROM clinical_notes cn
+                LEFT JOIN users u ON u.id = cn.doctor_id
+                WHERE cn.patient_id = $1
+                ORDER BY cn.created_at DESC
+            `, [uid]);
+            clinicalNotes = cn.rows;
+        } catch (e) { /* no clinical notes table yet */ }
+    }
+
+    const doctorVisits = visits.rows.map(v => ({
+        id:               v.id,
+        appointment_date: v.appointment_date,
+        appointment_time: v.appointment_time,
+        symptoms:         v.symptoms,
+        status:           v.status,
+        token_no:         v.token_no,
+        doctor_name:      v.doctor_name,
+        vitals: {
+            height_cm:       v.height_cm,
+            weight_kg:       v.weight_kg,
+            bmi:             v.bmi,
+            bp_systolic:     v.bp_systolic,
+            bp_diastolic:    v.bp_diastolic,
+            heart_rate:      v.heart_rate,
+            temperature_f:   v.temperature_f,
+            respiratory_rate: v.respiratory_rate,
+            spo2:            v.spo2,
+            blood_sugar_random: v.blood_sugar_random,
+            pain_scale:      v.pain_scale,
+            recorded_at:     v.vitals_recorded_at
+        }
+    }));
+
+    /* Vitals list — only entries that actually have vitals */
+    const vitals = doctorVisits
+        .filter(v => v.vitals && (v.vitals.bp_systolic || v.vitals.heart_rate || v.vitals.temperature_f || v.vitals.height_cm || v.vitals.weight_kg))
+        .map(v => ({ appointment_id: v.id, appointment_date: v.appointment_date, doctor_name: v.doctor_name, ...v.vitals }));
+
+    /* Diagnosis — from prescription notes (only where a note exists) */
+    const diagnosis = rxs.rows
+        .filter(r => r.notes && String(r.notes).trim())
+        .map(r => ({ created_at: r.created_at, doctor_name: r.doctor_name, notes: r.notes, appointment_id: r.appointment_id }));
+
+    const prescriptions = rxs.rows.map(r => ({
+        id:            r.id,
+        created_at:    r.created_at,
+        notes:         r.notes,
+        doctor_name:   r.doctor_name,
+        appointment_id: r.appointment_id,
+        medicines:     Array.isArray(r.medicines) ? r.medicines : []
+    }));
+
+    const labReports = labs.rows.map(r => ({
+        ...r,
+        tests: typeof r.tests === "string" ? JSON.parse(r.tests) : (r.tests || [])
+    }));
+
+    return {
+        basic:          basic.rows[0],
+        doctor_visits:  doctorVisits,
+        vitals,
+        clinical_notes: clinicalNotes,
+        diagnosis,
+        prescriptions,
+        lab_reports:    labReports,
+        ai_predictions: aiPredictions
+    };
+}
+
+
+/* =====================================================
+   MEDICAL RECORD (JSON)  — newest first
+   GET /api/patient-reg/medical-record/:userId
+===================================================== */
+router.get("/medical-record/:userId", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const data = await getMedicalRecord(pool, req.params.userId);
+        res.json({ success: true, ...data });
+    } catch (err) {
+        console.error("MEDICAL RECORD ERROR:", err.message);
+        res.status(err.status || 500).json({ success: false, message: err.message });
+    }
+});
+
+
+/* =====================================================
+   MEDICAL RECORD — WORD DOCUMENT (complete record)
+   GET /api/patient-reg/medical-docx/:userId
+===================================================== */
+router.get("/medical-docx/:userId", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+                WidthType, BorderStyle, HeadingLevel, AlignmentType } = require("docx");
+
+        const d = await getMedicalRecord(pool, req.params.userId);
+        const b  = d.basic;
+        const fmt = dt => dt ? new Date(dt).toLocaleDateString("en-IN") : "—";
+        const val = v => String(v || "—");
+        const arrVal = a => Array.isArray(a) && a.length ? a.join(", ") : "—";
+
+        const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+        const borders  = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+
+        function row(label, value) {
+            return new TableRow({ children: [
+                new TableCell({ borders, width: { size: 35, type: WidthType.PERCENTAGE },
+                    children: [new Paragraph({ children: [new TextRun({ text: label, bold: true, color: "1565C0", size: 20 })] })] }),
+                new TableCell({ borders, width: { size: 65, type: WidthType.PERCENTAGE },
+                    children: [new Paragraph({ children: [new TextRun({ text: value, size: 20 })] })] })
+            ]});
+        }
+
+        function section(title) {
+            return new Paragraph({
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 320, after: 120 },
+                children: [new TextRun({ text: title, bold: true, color: "0D3B7A", size: 26 })]
+            });
+        }
+
+        function line(text, bold) {
+            return new Paragraph({
+                spacing: { after: 80 },
+                children: [new TextRun({ text, bold: !!bold, size: 20 })]
+            });
+        }
+
+        const medLines = (m) => Array.isArray(m) && m.length
+            ? m.map(x => `${x.medicine} (${x.dosage || "—"}, qty: ${x.quantity || "—"}, ${x.duration || "—"})`).join(" | ")
+            : "—";
+
+        const children = [
+            new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 },
+                children: [new TextRun({ text: "NALAM AI Hospital", bold: true, size: 36, color: "0D3B7A" })] }),
+            new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 400 },
+                children: [new TextRun({ text: "Patient Medical Record — Confidential", size: 22, color: "888888" })] }),
+
+            section("1. Basic Information"),
+            new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+                row("Patient ID",   val(b.patient_id)),
+                row("Full Name",    val(b.name)),
+                row("Date of Birth",fmt(b.dob)),
+                row("Age",          b.age ? b.age + " yrs" : "—"),
+                row("Gender",       val(b.gender)),
+                row("Blood Group",  val(b.blood_group)),
+                row("Mobile",       val(b.mobile)),
+                row("Address",      [b.address, b.city, b.state, b.pincode].filter(Boolean).join(", ") || "—")
+            ]}),
+
+            section("2. Doctor Visits"),
+            ...( d.doctor_visits.length
+                ? d.doctor_visits.map(v => line(`${fmt(v.appointment_date)} ${v.appointment_time || ""} — Dr. ${v.doctor_name || "—"} | Queue: ${v.token_no || "—"} | ${v.symptoms || "—"} | ${v.status || "—"}`))
+                : [line("No visits recorded.", true)]
+            ),
+
+            section("3. Vitals"),
+            ...( d.vitals.length
+                ? d.vitals.map(v => line(`${fmt(v.appointment_date)} — Dr. ${v.doctor_name || "—"} | BP: ${v.bp_systolic || "—"}/${v.bp_diastolic || "—"}, HR: ${v.heart_rate || "—"}, Temp: ${v.temperature_f || "—"}°F, RR: ${v.respiratory_rate || "—"}, SpO2: ${v.spo2 || "—"}, Sugar: ${v.blood_sugar_random || "—"}, Pain: ${v.pain_scale || "—"}, Ht: ${v.height_cm || "—"}cm, Wt: ${v.weight_kg || "—"}kg, BMI: ${v.bmi || "—"}`))
+                : [line("No vitals recorded.", true)]
+            ),
+
+            section("4. Clinical Notes"),
+            ...( d.clinical_notes.length
+                ? d.clinical_notes.map(n => [
+                    line(`${fmt(n.created_at)} — Dr. ${n.doctor_name || "—"}`),
+                    line(`Chief Complaint: ${n.chief_complaint || "—"}`),
+                    line(`Present Illness: ${n.present_illness || "—"}`),
+                    line(`Physical Examination: ${n.physical_examination || "—"}`),
+                    line(`Diagnosis: ${n.diagnosis || "—"}`),
+                    line(`Clinical Impression: ${n.clinical_impression || "—"}`),
+                    line(`Advice: ${n.advice || "—"}`),
+                    line(`Follow-up Date: ${fmt(n.follow_up_date)}`)
+                ]).flat()
+                : [line("No clinical notes recorded.", true)]
+            ),
+
+            section("5. Diagnosis"),
+            ...( d.diagnosis.length
+                ? d.diagnosis.map(x => line(`${fmt(x.created_at)} — Dr. ${x.doctor_name || "—"}: ${x.notes}`))
+                : [line("No diagnosis recorded.", true)]
+            ),
+
+            section("6. Prescriptions"),
+            ...( d.prescriptions.length
+                ? d.prescriptions.map(p => line(`${fmt(p.created_at)} — Dr. ${p.doctor_name || "—"}: ${medLines(p.medicines)}`))
+                : [line("No prescriptions found.", true)]
+            ),
+
+            section("7. Lab Reports"),
+            ...( d.lab_reports.length
+                ? d.lab_reports.map(r => line(`${fmt(r.created_at)} — Dr. ${r.doctor_name || "—"} | Tests: ${arrVal(r.tests)} | ${r.status || "—"}`))
+                : [line("No lab reports found.", true)]
+            ),
+
+            section("8. AI Predictions"),
+            ...( d.ai_predictions.length
+                ? d.ai_predictions.map(ap => line(`${fmt(ap.predicted_at)} — ${ap.model_type || "—"}: ${ap.prediction} (${ap.probability != null ? Math.round(ap.probability * 100) + "%" : "—"})`))
+                : [line("No AI predictions yet.", true)]
+            ),
+
+            new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600 },
+                children: [new TextRun({ text: `Generated on ${new Date().toLocaleString("en-IN")} — NALAM AI Hospital — Confidential`, color: "AAAAAA", size: 18 })] })
+        ];
+
+        const doc = new Document({ sections: [{ children }] });
+        const buffer = await Packer.toBuffer(doc);
+
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        res.setHeader("Content-Disposition", `attachment; filename="Medical_Record_${b.patient_id || req.params.userId}.docx"`);
+        res.send(buffer);
+    } catch (err) {
+        console.error("MEDICAL DOCX ERROR:", err.message);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 

@@ -86,6 +86,71 @@
       text-align: center;
     }
 
+    .edit-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #1565c0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      margin-left: 10px;
+    }
+
+    .profile-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .edit-btn {
+      padding: 9px 22px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .edit-btn:hover { background: #1565c0; }
+
+    .save-btn {
+      background: #27ae60;
+    }
+
+    .save-btn:hover { background: #1e8449; }
+
+    .profile-info-card {
+      max-width: 560px;
+      margin: 20px auto 0;
+      background: white;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      text-align: left;
+    }
+
+    .profile-info-card h3 {
+      color: #0d47a1;
+      font-size: 15px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eef1f6;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 18px;
+    }
+
+    .info-item { font-size: 13px; color: #333; }
+    .info-item .lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.4px; }
+    .info-item .val { font-weight: 600; color: #222; margin-top: 2px; }
+    .info-item.full { grid-column: 1 / -1; }
+
     .profile-card h2 { color: #0d47a1; margin-bottom: 20px; }
 
     .profile-photo {
@@ -339,6 +404,109 @@
       text-decoration: none;
       font-size: 13px;
 }
+
+    /* CONSULTATION TIMELINE */
+    .timeline { display: flex; flex-direction: column; gap: 18px; }
+
+    .tl-visit {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid #e3eaf5;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+
+    .tl-visit-head {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+    }
+
+    .tl-visit-head .tl-title { font-size: 15px; font-weight: 700; }
+    .tl-visit-head .tl-sub { font-size: 12px; opacity: 0.92; }
+
+    .tl-status {
+      background: rgba(255,255,255,0.22);
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .tl-body { padding: 4px 18px 12px; }
+
+    .tl-event {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .tl-event:last-child { border-bottom: none; }
+
+    .tl-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+    }
+
+    .tl-content { flex: 1; min-width: 0; }
+
+    .tl-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0d47a1;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tl-time { font-size: 11px; color: #888; font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+    .tl-details { font-size: 13px; color: #333; margin-top: 4px; line-height: 1.5; }
+
+    .tl-details table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .tl-details th { background: #f0f4ff; color: #0d47a1; padding: 6px 10px; text-align: left; }
+    .tl-details td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+    .tl-details tr:last-child td { border-bottom: none; }
+
+    .tl-download {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 6px 14px;
+      background: #0d47a1;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .tl-download:hover { background: #1565c0; }
+
+    .tl-chip {
+      display: inline-block;
+      background: #eef5ff;
+      color: #0d47a1;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      margin: 2px 4px 2px 0;
+    }
   </style>
 </head>
 
@@ -350,6 +518,7 @@
   <div class="nav-item" onclick="showSection('doctors', this)">Doctors</div>
   <div class="nav-item" onclick="showSection('prescriptions', this); loadPrescriptions();">Prescriptions</div>
   <div class="nav-item" onclick="showSection('reports', this); loadReports();">Reports</div>
+  <div class="nav-item" onclick="showSection('medicalHistory', this); loadMedicalHistory();">Medical History</div>
 </div>
 
 <div class="main">
@@ -373,15 +542,40 @@
         <img id="p_photo" class="profile-photo" src="/uploads/default.png">
         <div class="profile-name" id="p_name"></div>
         <div class="profile-username" id="p_username"></div>
+        <div class="profile-row"><b>Patient ID:</b> <span id="p_health_id"></span></div>
         <div class="profile-row"><b>Email:</b> <span id="p_email"></span></div>
-        <div class="profile-row"><b>Mobile:</b> <span id="p_mobile"></span></div>
+        <div class="profile-row">
+          <b>Mobile:</b>
+          <span id="p_mobile_view"></span>
+          <input id="p_mobile_input" class="edit-input" style="display:none;" maxlength="15">
+        </div>
         <div class="profile-row"><b>Age:</b> <span id="p_age"></span></div>
         <div class="profile-row"><b>Gender:</b> <span id="p_gender"></span></div>
         <div class="profile-row"><b>Blood Group:</b> <span id="p_blood"></span></div>
-        <div class="profile-row"><b>Weight:</b> <span id="p_weight"></span></div>
-        <div class="profile-row"><b>Allergies:</b> <span id="p_allergies"></span></div>
-        <div class="profile-row"><b>Previous Hospital:</b> <span id="p_hospital"></span></div>
-        <div class="profile-row"><b>Address:</b> <span id="p_address"></span></div>
+        <div class="profile-row">
+          <b>Address:</b>
+          <span id="p_address_view"></span>
+          <textarea id="p_address_input" class="edit-input" rows="2" style="display:none;"></textarea>
+        </div>
+        <div class="profile-actions">
+          <button class="edit-btn" id="profileEditBtn" onclick="toggleProfileEdit()">Edit Profile</button>
+          <button class="edit-btn save-btn" id="profileSaveBtn" style="display:none;" onclick="saveProfile()">Save Changes</button>
+        </div>
+      </div>
+
+      <div class="profile-info-card">
+        <h3>Family History</h3>
+        <div id="p_family_history" class="info-grid"></div>
+      </div>
+
+      <div class="profile-info-card">
+        <h3>Lifestyle Details</h3>
+        <div id="p_lifestyle" class="info-grid"></div>
+      </div>
+
+      <div class="profile-info-card">
+        <h3>Medical History</h3>
+        <div id="p_medical" class="info-grid"></div>
       </div>
     </div>
 
@@ -403,6 +597,12 @@
     <div id="reports" class="section">
       <p class="sec-title">My Lab Reports</p>
       <div id="reportsList"></div>
+    </div>
+
+    <!-- MEDICAL HISTORY (CONSULTATION TIMELINE) -->
+    <div id="medicalHistory" class="section">
+      <p class="sec-title">Medical History — Consultation Timeline</p>
+      <div id="medicalHistoryList"></div>
     </div>
 
 
@@ -434,21 +634,94 @@ async function loadProfile() {
         const data = await res.json();
         const user = data.user;
         const patient = data.patient;
+        const mh = data.medical_history || {};
+        const ls = data.lifestyle || {};
         document.getElementById("welcomeText").innerText = `Welcome, ${user.username}`;
         document.getElementById("p_name").innerText = user.name || "-";
         document.getElementById("p_username").innerText = `@${user.username}` || "-";
+        document.getElementById("p_health_id").innerText = patient.health_id || "-";
         document.getElementById("p_email").innerText = user.email || "-";
-        document.getElementById("p_mobile").innerText = user.mobile || "-";
+        document.getElementById("p_mobile_view").innerText = user.mobile || "-";
+        document.getElementById("p_mobile_input").value = user.mobile || "";
         document.getElementById("p_age").innerText = patient.age || "-";
         document.getElementById("p_gender").innerText = patient.gender || "-";
         document.getElementById("p_blood").innerText = patient.blood_group || "-";
-        document.getElementById("p_weight").innerText = patient.weight || "-";
-        document.getElementById("p_allergies").innerText = patient.allergies || "-";
-        document.getElementById("p_hospital").innerText = patient.previous_hospital || "-";
-        document.getElementById("p_address").innerText = patient.address || "-";
+        document.getElementById("p_address_view").innerText = patient.address || "-";
+        document.getElementById("p_address_input").value = patient.address || "";
         document.getElementById("p_photo").src = patient.photo ? `/uploads/${patient.photo}` : "/uploads/default.png";
+
+        /* Family History */
+        document.getElementById("p_family_history").innerHTML = `
+            <div class="info-item full"><div class="lbl">Family History</div><div class="val">${mh.family_history || "-"}</div></div>`;
+
+        /* Lifestyle Details */
+        const lifestyle = [
+            ["Smoking", ls.smoking],
+            ["Alcohol", ls.alcohol],
+            ["Physical Activity", ls.physical_activity],
+            ["Sleep Hours", ls.sleep_hours],
+            ["Diet", ls.diet],
+            ["Food Habits", ls.food_habits],
+            ["Water Intake", ls.water_intake],
+            ["Stress Level", ls.stress_level],
+            ["Occupation", ls.occupation]
+        ];
+        document.getElementById("p_lifestyle").innerHTML = lifestyle
+            .map(([lbl, val]) => `<div class="info-item"><div class="lbl">${lbl}</div><div class="val">${val || "-"}</div></div>`)
+            .join("");
+
+        /* Medical History */
+        const medical = [
+            ["Existing Conditions", mh.existing_conditions],
+            ["Current Medication", mh.current_medication ? (mh.medication_details || "Yes") : "No"],
+            ["Allergies", mh.allergy_details ? `Yes — ${mh.allergy_details}` : "None"]
+        ];
+        document.getElementById("p_medical").innerHTML = medical
+            .map(([lbl, val]) => `<div class="info-item"><div class="lbl">${lbl}</div><div class="val">${val || "-"}</div></div>`)
+            .join("");
     } catch(err) {
         console.error(err);
+    }
+}
+
+let profileEditing = false;
+
+function toggleProfileEdit() {
+    profileEditing = !profileEditing;
+    document.getElementById("p_mobile_input").style.display   = profileEditing ? "block" : "none";
+    document.getElementById("p_mobile_view").style.display   = profileEditing ? "none" : "block";
+    document.getElementById("p_address_input").style.display = profileEditing ? "block" : "none";
+    document.getElementById("p_address_view").style.display  = profileEditing ? "none" : "block";
+    document.getElementById("profileEditBtn").innerText      = profileEditing ? "Cancel" : "Edit Profile";
+    document.getElementById("profileSaveBtn").style.display  = profileEditing ? "block" : "none";
+}
+
+async function saveProfile() {
+    const mobile  = document.getElementById("p_mobile_input").value.trim();
+    const address = document.getElementById("p_address_input").value.trim();
+
+    if (!mobile) {
+        alert("Mobile number cannot be empty.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/patient/profile/${userId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mobile, address })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("Profile updated successfully.");
+            toggleProfileEdit();
+            loadProfile();
+        } else {
+            alert(data.message || "Update failed.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Update failed.");
     }
 }
 
@@ -484,18 +757,19 @@ async function viewDoctor(id) {
     currentDoctor = id;
     const res = await fetch(`/doctor/schedule/${id}`);
     const s = await res.json();
+    const today = new Date().toISOString().split("T")[0];
     document.getElementById("doctorDetails").innerHTML = `
         <div class="doctor-details-card">
             <h2>${s.name}</h2>
             <p><b>Specialization:</b> ${s.specialisation || "-"}</p>
+            <p><b>Consulting Hours:</b> ${s.start_time || "-"} – ${s.end_time || "-"}</p>
+            <p><b>Available Days:</b> ${s.available_days || "-"}</p>
             <p><b>Fee:</b> ₹${s.consultation_fee || 0}</p>
             <hr style="margin:14px 0;border:none;border-top:1px solid #eee;">
-            <label>Available Day</label>
-            <select id="daySelect" onchange="loadSlots()"></select>
-            <label>Available Time</label>
-            <select id="slotSelect"></select>
             <label>Appointment Date</label>
-            <input type="date" id="appointmentDate">
+            <input type="date" id="appointmentDate" min="${today}" onchange="loadSlots()" value="${today}">
+            <label>Available Time Slot</label>
+            <select id="slotSelect"><option value="">— select date first —</option></select>
             <label>Symptoms</label>
             <div class="symptom-grid">
                 <label><input type="checkbox" value="Fever"> Fever</label>
@@ -506,38 +780,59 @@ async function viewDoctor(id) {
                 <label><input type="checkbox" value="Skin Allergy"> Skin Allergy</label>
                 <label><input type="checkbox" value="Vomiting"> Vomiting</label>
             </div>
+            <div id="book-err" style="color:#c62828;font-size:13px;min-height:18px;"></div>
             <button class="book-btn" onclick="bookAppointment()">Book Appointment</button>
         </div>`;
-    const daySelect = document.getElementById("daySelect");
-    (s.available_days || "").split(",").forEach(day => {
-        daySelect.innerHTML += `<option value="${day.trim()}">${day.trim()}</option>`;
-    });
     loadSlots();
 }
 
 async function loadSlots() {
-    const day = document.getElementById("daySelect").value;
-    const res = await fetch(`/doctor/slots/${currentDoctor}/${day}`);
+    const dateInput = document.getElementById("appointmentDate");
+    const select    = document.getElementById("slotSelect");
+    if (!dateInput || !dateInput.value) return;
+    const date = dateInput.value;
+    /* derive day name from selected date */
+    const dayName = new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
+    const res   = await fetch(`/doctor/slots/${currentDoctor}/${dayName}?date=${date}`);
     const slots = await res.json();
-    const select = document.getElementById("slotSelect");
-    select.innerHTML = slots.map(s => `<option value="${s}">${s}</option>`).join("");
+    if (!slots.length) {
+        select.innerHTML = `<option value="">No slots available on this date</option>`;
+    } else {
+        select.innerHTML = slots.map(s => `<option value="${s}">${s}</option>`).join("");
+    }
 }
 
 async function bookAppointment() {
+    const errEl = document.getElementById("book-err");
+    if (errEl) errEl.textContent = "";
+    const dateVal = document.getElementById("appointmentDate").value;
+    const timeVal = document.getElementById("slotSelect").value;
+    if (!dateVal || !timeVal) {
+        if (errEl) errEl.textContent = "Please select a date and time slot.";
+        return;
+    }
+    const dayName = new Date(dateVal + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
     const res = await fetch("/patient/book-appointment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            doctorId: currentDoctor,
-            patientId: userId,
-            appointmentDate: document.getElementById("appointmentDate").value,
-            appointmentDay: document.getElementById("daySelect").value,
-            appointmentTime: document.getElementById("slotSelect").value,
-            symptoms: [...document.querySelectorAll("#symptoms input:checked")].map(x => x.value).join(",")
+            doctorId:        currentDoctor,
+            patientId:       userId,
+            appointmentDate: dateVal,
+            appointmentTime: timeVal,
+            appointmentDay:  dayName,
+            symptoms: [...document.querySelectorAll(".symptom-grid input:checked")].map(x => x.value).join(",")
         })
     });
     const data = await res.json();
-    alert(data.message || `Appointment Booked. Token No: ${data.token}`);
+    if (!data.success) {
+        if (errEl) errEl.textContent = data.message || "Booking failed.";
+        /* Reload slots so the now-taken slot disappears */
+        loadSlots();
+        return;
+    }
+    alert(`Appointment booked! Token No: ${data.token}`);
+    loadSlots();
 }
 
 async function loadAppointments() {
@@ -581,21 +876,44 @@ async function loadPrescriptions() {
     const prescriptions = await res.json();
     if (!prescriptions.length) { box.innerHTML = "<p>No prescriptions yet.</p>"; return; }
     box.innerHTML = prescriptions.map(p => {
-        const days = parseInt(p.duration) || 0;
-        const start = new Date(p.created_at);
-        const end = new Date(p.created_at);
-        end.setDate(end.getDate() + days);
-        const fmt = d => d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+        const date = p.appointment_date
+            ? new Date(p.appointment_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+            : new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+        const meds = Array.isArray(p.medicines) ? p.medicines : [];
+        const medRows = meds.map(m =>
+            `<tr>
+                <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.medicine_name}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.dosage || '-'}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.quantity || '-'}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;">${m.duration || '-'}</td>
+            </tr>`
+        ).join('');
         return `
         <div class="p-card">
-            <h3>${p.medicine_name}</h3>
-            <p><b>Doctor:</b> ${p.doctor_name || "-"}</p>
-            <p><b>Dosage:</b> ${p.dosage || "-"}</p>
-            <p><b>Quantity:</b> ${p.quantity || "-"}</p>
-            <p><b>Start Date:</b> ${fmt(start)}</p>
-            <p><b>End Date:</b> ${fmt(end)}</p>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+                <div>
+                    <div style="font-weight:700;color:#0d47a1;font-size:15px;">${p.doctor_name}</div>
+                    <div style="font-size:12px;color:#888;">${p.doctor_specialisation || 'General'}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:13px;font-weight:600;color:#333;">${date}</div>
+                    ${p.symptoms ? `<div style="font-size:12px;color:#666;margin-top:2px;">Symptoms: ${p.symptoms}</div>` : ''}
+                </div>
+            </div>
+            <hr style="margin:10px 0;border:none;border-top:1px solid #eee;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:#f0f4ff;">
+                        <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Medicine</th>
+                        <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Dosage</th>
+                        <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Qty</th>
+                        <th style="padding:6px 10px;text-align:left;color:#0d47a1;">Duration</th>
+                    </tr>
+                </thead>
+                <tbody>${medRows}</tbody>
+            </table>
         </div>`;
-    }).join("");
+    }).join('');
 }
 
 async function loadReports() {
@@ -603,20 +921,49 @@ async function loadReports() {
     const res = await fetch(`/lab/patient-reports/${userId}`);
     const reports = await res.json();
     if (!reports.length) { box.innerHTML = "<p>No lab reports yet.</p>"; return; }
+
+    /* One card per uploaded report file. Every upload is kept —
+       historical files are never replaced. */
     box.innerHTML = reports.map(r => {
-        let tests = [];
-        try { tests = typeof r.tests === "string" ? JSON.parse(r.tests) : r.tests; } catch(e) {}
+        const tests = Array.isArray(r.tests)
+            ? r.tests
+            : (typeof r.tests === 'string' ? JSON.parse(r.tests) : []);
+        const files = Array.isArray(r.reports) ? r.reports : [];
+        const uploads = files.length ? files : (r.report_file ? [{ report_file: r.report_file }] : []);
+        const isReviewed = (r.status || '').toUpperCase() === 'REVIEWED';
+        const badgeColor = isReviewed ? '#166534' : '#1565c0';
+        const badgeBg    = isReviewed ? '#dcfce7' : '#e3f0ff';
+        const badgeLabel = isReviewed ? 'Reviewed' : 'Uploaded';
+        const fileRows = uploads.map(f => {
+            const upDate = f.upload_date
+                ? new Date(f.upload_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) +
+                  ' ' + new Date(f.upload_date).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })
+                : '-';
+            return `
+                <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;">
+                    <p><b>Test Name :</b> ${f.test_name || tests.join(', ') || 'Lab Report'}</p>
+                    <p><b>Requested Doctor :</b> ${r.doctor_name || '-'}</p>
+                    <p><b>Laboratory Technician :</b> ${f.technician_name || '-'}</p>
+                    <p><b>Upload Date :</b> ${upDate}</p>
+                    <a href="/uploads/${f.report_file}" target="_blank"
+                       style="display:inline-block;margin-top:8px;padding:8px 16px;background:#0d47a1;color:white;border-radius:8px;text-decoration:none;font-size:13px;">
+                       &#128196; Download Report
+                    </a>
+                </div>`;
+        }).join('');
+        const testSummary = tests.length ? `<p><b>Tests:</b> ${tests.join(', ')}</p>` : '';
         return `
         <div class="p-card">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-                <h3>Lab Report</h3>
-                <span class="badge-green">Reviewed</span>
+                <div>
+                    <h3 style="margin:0;">Lab Report</h3>
+                    <div style="font-size:12px;color:#888;margin-top:2px;">Dr. ${r.doctor_name || '-'}</div>
+                </div>
+                <span style="background:${badgeBg};color:${badgeColor};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">${badgeLabel}</span>
             </div>
             <hr>
-            <p><b>Doctor:</b> ${r.doctor_name || "-"}</p>
-            <p><b>Tests:</b> ${tests.join(", ")}</p>
-            <p><b>Date:</b> ${new Date(r.created_at).toLocaleDateString()}</p>
-            <a href="/uploads/${r.report_file}" target="_blank" class="dl-btn">📄 View / Download Report</a>
+            ${testSummary}
+            ${uploads.length ? fileRows : `<p style="color:#e53935;font-size:13px;margin-top:8px;">Report file not yet attached.</p>`}
         </div>`;
     }).join("");
 }
@@ -670,6 +1017,261 @@ async function loadBilling() {
             </div>
         </div>`;
     }).join("");
+}
+
+/* =====================================================
+   MEDICAL HISTORY — CONSULTATION TIMELINE
+===================================================== */
+
+function tlDate(v) {
+    if (!v) return '-';
+    /* pg returns DATE as an ISO Date object -> "2026-06-26T18:30:00.000Z"
+       or plain "2026-06-26". Normalize to the local date part. */
+    const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+        const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        return isNaN(d) ? String(v) : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    const d = new Date(v);
+    return isNaN(d) ? String(v) : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function tlTime(v) {
+    if (!v) return '';
+    const d = new Date(v);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ' · ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function tlEvent(icon, iconBg, label, time, detailsHtml) {
+    return `
+        <div class="tl-event">
+            <div class="tl-icon" style="background:${iconBg};">${icon}</div>
+            <div class="tl-content">
+                <div class="tl-label">${label} <span class="tl-time">${time || ''}</span></div>
+                <div class="tl-details">${detailsHtml || ''}</div>
+            </div>
+        </div>`;
+}
+
+function vitalsHtml(v) {
+    const rows = [
+        ['Height (cm)', v.height_cm], ['Weight (kg)', v.weight_kg], ['BMI', v.bmi],
+        ['Temperature (°F)', v.temperature_f], ['Heart Rate', v.heart_rate],
+        ['Respiratory Rate', v.respiratory_rate], ['SpO₂ (%)', v.spo2],
+        ['BP (SYS/DIA)', v.bp_systolic && v.bp_diastolic ? `${v.bp_systolic}/${v.bp_diastolic}` : (v.bp_systolic || v.bp_diastolic)],
+        ['Blood Sugar (Random)', v.blood_sugar_random], ['Pain Scale', v.pain_scale]
+    ].filter(([, val]) => val !== null && val !== undefined && val !== '');
+    if (!rows.length) return '<span style="color:#aaa;">No vitals recorded.</span>';
+    return rows.map(([lbl, val]) =>
+        `<span class="tl-chip"><b>${lbl}:</b> ${val}</span>`).join('');
+}
+
+function notesHtml(notes) {
+    if (!Array.isArray(notes) || !notes.length) return '';
+    return notes.map(n => {
+        const fields = [
+            ['Chief Complaint', n.chief_complaint], ['Present Illness', n.present_illness],
+            ['Physical Exam', n.physical_examination], ['Diagnosis', n.diagnosis],
+            ['Clinical Impression', n.clinical_impression], ['Advice', n.advice],
+            ['Follow-up Date', n.follow_up_date]
+        ].filter(([, val]) => val !== null && val !== undefined && String(val).trim() !== '');
+        const inner = fields.map(([lbl, val]) =>
+            `<div style="margin-top:3px;"><b style="color:#0d47a1;">${lbl}:</b> ${val}</div>`).join('');
+        return `
+            <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #eee;">
+                <div style="font-size:11px;color:#888;">Saved at ${tlTime(n.created_at)}</div>
+                ${inner || '<span style="color:#aaa;">Notes saved.</span>'}
+            </div>`;
+    }).join('');
+}
+
+function prescriptionHtml(p) {
+    const meds = Array.isArray(p.medicines) ? p.medicines : [];
+    const disp = Array.isArray(p.dispensing) ? p.dispensing : [];
+    let html = '';
+    if (meds.length) {
+        html += `<table><thead><tr>
+                    <th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Qty</th><th>Duration</th>
+                </tr></thead><tbody>`;
+        html += meds.map(m => `<tr>
+                    <td>${m.medicine_name}</td>
+                    <td>${m.dosage || '-'}</td>
+                    <td>${m.frequency || '-'}</td>
+                    <td>${m.quantity || '-'}</td>
+                    <td>${m.duration || '-'}</td>
+                </tr>`).join('');
+        html += `</tbody></table>`;
+        html += `<div style="font-size:12px;color:#666;margin-top:4px;">Status: <b>${p.status || '-'}</b></div>`;
+    } else {
+        html = '<span style="color:#aaa;">No medicines prescribed.</span>';
+    }
+    return html + dispensingHtml(disp);
+}
+
+function dispensingHtml(disp) {
+    if (!disp.length) return '';
+    return disp.map(d => `
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #eee;font-size:13px;">
+            <b style="color:#00695c;">Dispensed:</b> ${d.medicine_name}
+            <div style="margin-top:3px;color:#555;">
+                Qty: ${d.quantity_prescribed || 0} prescribed → ${d.quantity_dispensed || 0} dispensed ·
+                Availability: <b>${d.medicine_availability || '—'}</b><br>
+                Pharmacist: ${d.pharmacist_name || '-'} ·
+                Date: ${tlTime(d.dispensing_date)}${d.remarks ? `<br>Remarks: ${d.remarks}` : ''}
+            </div>
+        </div>`).join('');
+}
+
+function labRequestHtml(lr) {
+    const tests = Array.isArray(lr.tests) ? lr.tests : [];
+    const reports = Array.isArray(lr.reports) ? lr.reports : [];
+
+    let html = `<span class="tl-chip"><b>Status:</b> ${lr.status || '-'}</span>
+                <span class="tl-chip"><b>Priority:</b> ${lr.priority || 'Normal'}</span>`;
+    if (tests.length) html += `<div style="margin-top:6px;">Tests: ${tests.map(t => `<span class="tl-chip">${t}</span>`).join('')}</div>`;
+    if (lr.clinical_notes) html += `<div style="margin-top:4px;color:#555;"><b>Clinical Notes:</b> ${lr.clinical_notes}</div>`;
+
+    /* Every uploaded file is listed — nothing is ever replaced */
+    if (reports.length) {
+        html += `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #eee;">`;
+        reports.forEach(r => {
+            html += `
+                <div style="margin-top:8px;background:#f8fbff;border:1px solid #e3eaf5;border-radius:8px;padding:10px 12px;">
+                    <div><b style="color:#0d47a1;">Test Name:</b> ${r.test_name || tests.join(', ') || 'Lab Report'}</div>
+                    <div style="margin-top:2px;"><b>Requested Doctor:</b> ${lr.doctor_name || '-'}</div>
+                    <div><b>Laboratory Technician:</b> ${r.technician_name || '-'}</div>
+                    <div><b>Upload Date:</b> ${tlTime(r.upload_date)}</div>
+                    <a class="tl-download" href="/uploads/${r.report_file}" target="_blank">&#128196; Download Report</a>
+                </div>`;
+        });
+        html += `</div>`;
+    }
+    else if (lr.report_file) {
+        html += `
+            <div style="margin-top:8px;background:#f8fbff;border:1px solid #e3eaf5;border-radius:8px;padding:10px 12px;">
+                <div><b style="color:#0d47a1;">Test Name:</b> ${tests.join(', ') || 'Lab Report'}</div>
+                <div><b>Requested Doctor:</b> ${lr.doctor_name || '-'}</div>
+                <div><b>Upload Date:</b> ${tlTime(lr.completed_at)}</div>
+                <a class="tl-download" href="/uploads/${lr.report_file}" target="_blank">&#128196; Download Report</a>
+            </div>`;
+    }
+
+    return html;
+}
+
+function visitHtml(visit) {
+    const a = visit.appointment || {};
+    const events = [];
+
+    /* 1. Appointment */
+    events.push(tlEvent(
+        '🗓️', '#0d47a1', 'Appointment',
+        `Booked ${tlTime(a.booked_at)}`,
+        `<div>Doctor: <b>${a.doctor_name || '-'}</b>${a.doctor_specialisation ? ' (' + a.doctor_specialisation + ')' : ''}</div>
+         <div>Scheduled: <b>${tlDate(a.date)}</b> · ${a.time || '-'} · Token #${a.token_no || '-'}</div>
+         ${a.symptoms ? `<div>Symptoms: ${a.symptoms}</div>` : ''}`
+    ));
+
+    /* 2. Vitals */
+    if (visit.vitals) {
+        events.push(tlEvent(
+            '🩺', '#e65100', 'Vitals',
+            `Recorded ${tlTime(visit.vitals.consultation_started_at || visit.vitals.created_at)}`,
+            vitalsHtml(visit.vitals)
+        ));
+    }
+
+    /* 3. Clinical Notes */
+    if (Array.isArray(visit.notes) && visit.notes.length) {
+        visit.notes.forEach(n => {
+            events.push(tlEvent(
+                '📝', '#7a4a0d', 'Clinical Note',
+                tlTime(n.created_at),
+                notesHtml([n])
+            ));
+        });
+    }
+
+    /* 4. Prescription */
+    if (visit.prescription) {
+        events.push(tlEvent(
+            '💊', '#2e7d32', 'Prescription',
+            tlTime(visit.prescription.created_at),
+            prescriptionHtml(visit.prescription)
+        ));
+    }
+
+    /* 5. Laboratory Request (+ reports attached automatically) */
+    if (Array.isArray(visit.lab_requests) && visit.lab_requests.length) {
+        visit.lab_requests.forEach(lr => {
+            events.push(tlEvent(
+                '🧪', '#6a1b9a', 'Laboratory Request',
+                tlTime(lr.created_at),
+                labRequestHtml(lr)
+            ));
+        });
+    }
+
+    return `
+        <div class="tl-visit">
+            <div class="tl-visit-head">
+                <div>
+                    <div class="tl-title">${tlDate(a.date)} · ${a.time || '-'} · Dr. ${a.doctor_name || '-'}</div>
+                    <div class="tl-sub">Token #${a.token_no || '-'}${a.symptoms ? ' · ' + a.symptoms : ''}</div>
+                </div>
+                <span class="tl-status">${a.status || '-'}</span>
+            </div>
+            <div class="tl-body">${events.join('')}</div>
+        </div>`;
+}
+
+async function loadMedicalHistory() {
+
+    const box = document.getElementById("medicalHistoryList");
+
+    try {
+
+        const res  = await fetch(`/patient/medical-history/${userId}`);
+        const data = await res.json();
+
+        if (!data || !Array.isArray(data.visits) || !data.visits.length) {
+            box.innerHTML = '<p>No consultations yet.</p>';
+            return;
+        }
+
+        let html = '<div class="timeline">' + data.visits.map(visitHtml).join('') + '</div>';
+
+        /* AI Health Predictions (chronological, each with timestamp) */
+        const ai = Array.isArray(data.ai_predictions) ? data.ai_predictions : [];
+        if (ai.length) {
+            html += `
+                <div class="tl-visit" style="margin-top:18px;">
+                    <div class="tl-visit-head" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);">
+                        <div>
+                            <div class="tl-title">🤖 AI Health Predictions</div>
+                            <div class="tl-sub">Automated health risk assessments</div>
+                        </div>
+                    </div>
+                    <div class="tl-body">
+                        ${ai.map(p => tlEvent(
+                            '🤖', '#6a1b9a', (p.model_type || 'Prediction'),
+                            tlTime(p.predicted_at),
+                            `<div>Prediction: <b>${p.prediction || '-'}</b>${p.probability != null ? ' · Confidence: ' + p.probability + '%' : ''}</div>`
+                        )).join('')}
+                    </div>
+                </div>`;
+        }
+
+        box.innerHTML = html;
+
+    }
+    catch (err) {
+        console.error(err);
+        box.innerHTML = '<p style="color:#c62828;">Unable to load medical history.</p>';
+    }
+
 }
 
 window.onload = function () {
