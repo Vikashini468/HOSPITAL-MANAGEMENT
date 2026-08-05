@@ -53,6 +53,27 @@
   </div>
 </section>
 
+<!-- ── LOGIN PORTAL ── -->
+<section class="login-portal" id="login-portal">
+  <p class="section-label">Secure Access</p>
+  <h2 class="section-title">Choose Your Login Portal</h2>
+  <p class="section-sub">NALAM AI offers separate secure login portals for hospital staff and registered patients.</p>
+  <div class="login-grid">
+    <div class="login-card">
+      <div class="login-card-icon icon-blue">🏥</div>
+      <h3>Hospital Staff Login</h3>
+      <p>For Doctors, Nurses, Laboratory Staff, Pharmacists, Receptionists and Admin. Sign in with your registered email and password.</p>
+      <a href="login.html" class="btn btn-primary btn-lg">Staff Login →</a>
+    </div>
+    <div class="login-card">
+      <div class="login-card-icon icon-green">👤</div>
+      <h3>Patient Login</h3>
+      <p>For registered patients. Sign in using your registered email address or mobile number along with your password.</p>
+      <a href="patient-login" class="btn btn-green btn-lg">Patient Login →</a>
+    </div>
+  </div>
+</section>
+
 <!-- ── FEATURES ── -->
 <section class="features" id="features">
   <p class="section-label">What We Offer</p>
@@ -195,7 +216,7 @@
     window.location.href="register.html";
   })
   button2.addEventListener("click",() =>{
-    window.location.href="login.html";
+    document.getElementById("login-portal").scrollIntoView({ behavior: "smooth" });
   })
 </script>
 </html>

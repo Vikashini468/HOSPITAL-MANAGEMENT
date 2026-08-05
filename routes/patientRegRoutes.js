@@ -710,11 +710,24 @@ async function getMedicalRecord(pool, uid) {
     let aiPredictions = [];
     if (hasAiTbl) {
         try {
+            await pool.query(`
+                ALTER TABLE ai_predictions
+                    ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
+                    ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
+                    ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
+                    ADD COLUMN IF NOT EXISTS explanation    JSONB
+            `).catch(() => {});
             const ai = await pool.query(`
-                SELECT id, model_type, prediction, probability, input_data, predicted_at
-                FROM ai_predictions
-                WHERE patient_id = $1
-                ORDER BY predicted_at DESC
+                SELECT ap.id, ap.appointment_id, ap.visit_id, ap.doctor_id,
+                       ap.model_type, ap.disease, ap.prediction,
+                       ap.probability, ap.confidence, ap.explanation, ap.predicted_at,
+                       u.name AS doctor_name
+                FROM ai_predictions ap
+                LEFT JOIN users u ON u.id = ap.doctor_id
+                WHERE ap.patient_id = $1
+                ORDER BY ap.predicted_at DESC
             `, [uid]);
             aiPredictions = ai.rows;
         } catch (e) { /* no predictions table yet */ }
@@ -928,7 +941,12 @@ router.get("/medical-docx/:userId", async (req, res) => {
 
             section("8. AI Predictions"),
             ...( d.ai_predictions.length
-                ? d.ai_predictions.map(ap => line(`${fmt(ap.predicted_at)} — ${ap.model_type || "—"}: ${ap.prediction} (${ap.probability != null ? Math.round(ap.probability * 100) + "%" : "—"})`))
+                ? d.ai_predictions.map(ap => line(
+                    `${fmt(ap.predicted_at)} — ${ap.disease || ap.model_type || "—"}: ${ap.prediction} ` +
+                    `(Probability: ${ap.probability != null ? Number(ap.probability) + "%" : "—"}, ` +
+                    `Confidence: ${ap.confidence != null ? Number(ap.confidence) + "%" : "—"})` +
+                    (ap.explanation && ap.explanation.explanation ? ` — ${ap.explanation.explanation}` : "")
+                ))
                 : [line("No AI predictions yet.", true)]
             ),
 

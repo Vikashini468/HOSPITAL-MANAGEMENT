@@ -138,11 +138,11 @@
 
   <div class="card">
     <h2>Patient Login</h2>
-    <p class="subtitle">Sign in with your registered mobile number</p>
+    <p class="subtitle">Sign in with your registered email or mobile number</p>
 
     <div class="field">
-      <label>Mobile Number</label>
-      <input type="tel" id="mobile" placeholder="Enter your mobile number"
+      <label>Email or Mobile Number</label>
+      <input type="text" id="identifier" placeholder="Enter your email or mobile number"
              oninput="this.classList.remove('err'); clearErr()"
              onkeydown="if(event.key==='Enter') doLogin()">
     </div>
@@ -167,15 +167,15 @@
   function clearErr() { document.getElementById("errMsg").textContent = ""; }
 
   async function doLogin() {
-    const mobile   = document.getElementById("mobile").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const errEl    = document.getElementById("errMsg");
-    const btn      = document.getElementById("btnLogin");
+    const identifier = document.getElementById("identifier").value.trim();
+    const password   = document.getElementById("password").value.trim();
+    const errEl      = document.getElementById("errMsg");
+    const btn        = document.getElementById("btnLogin");
 
     errEl.textContent = "";
     let ok = true;
 
-    if (!mobile) { document.getElementById("mobile").classList.add("err"); errEl.textContent = "Mobile number is required."; ok = false; }
+    if (!identifier) { document.getElementById("identifier").classList.add("err"); errEl.textContent = "Email or mobile number is required."; ok = false; }
     if (!password) { document.getElementById("password").classList.add("err"); if (ok) errEl.textContent = "Password is required."; ok = false; }
     if (!ok) return;
 
@@ -186,7 +186,7 @@
       const res = await fetch("/patient-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile, password })
+        body: JSON.stringify({ identifier, password })
       });
 
       if (res.redirected) {

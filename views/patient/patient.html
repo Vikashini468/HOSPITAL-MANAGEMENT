@@ -519,6 +519,7 @@
   <div class="nav-item" onclick="showSection('prescriptions', this); loadPrescriptions();">Prescriptions</div>
   <div class="nav-item" onclick="showSection('reports', this); loadReports();">Reports</div>
   <div class="nav-item" onclick="showSection('medicalHistory', this); loadMedicalHistory();">Medical History</div>
+  <div class="nav-item" onclick="showSection('aiPredictions', this); loadAIPredictions();">AI Predictions</div>
 </div>
 
 <div class="main">
@@ -603,6 +604,12 @@
     <div id="medicalHistory" class="section">
       <p class="sec-title">Medical History — Consultation Timeline</p>
       <div id="medicalHistoryList"></div>
+    </div>
+
+    <!-- AI PREDICTIONS -->
+    <div id="aiPredictions" class="section">
+      <p class="sec-title">AI Prediction History</p>
+      <div id="aiPredictionsList"></div>
     </div>
 
 
@@ -1243,22 +1250,41 @@ async function loadMedicalHistory() {
 
         let html = '<div class="timeline">' + data.visits.map(visitHtml).join('') + '</div>';
 
-        /* AI Health Predictions (chronological, each with timestamp) */
+        /* AI Health Predictions — full detail cards */
         const ai = Array.isArray(data.ai_predictions) ? data.ai_predictions : [];
         if (ai.length) {
             html += `
                 <div class="tl-visit" style="margin-top:18px;">
                     <div class="tl-visit-head" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);">
                         <div>
-                            <div class="tl-title">🤖 AI Health Predictions</div>
-                            <div class="tl-sub">Automated health risk assessments</div>
+                            <div class="tl-title">&#129504; AI Health Predictions</div>
+                            <div class="tl-sub">Automated health risk assessments — every prediction is stored permanently</div>
                         </div>
                     </div>
                     <div class="tl-body">
                         ${ai.map(p => tlEvent(
-                            '🤖', '#6a1b9a', (p.model_type || 'Prediction'),
+                            '&#129504;', '#6a1b9a',
+                            (p.disease || p.model_type || 'Prediction') + ' Risk Assessment',
                             tlTime(p.predicted_at),
-                            `<div>Prediction: <b>${p.prediction || '-'}</b>${p.probability != null ? ' · Confidence: ' + p.probability + '%' : ''}</div>`
+                            `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:6px;">
+                                <div style="background:#f3e8ff;border-radius:8px;padding:10px;text-align:center;">
+                                    <div style="font-size:10px;color:#888;margin-bottom:3px;">PREDICTION</div>
+                                    <div style="font-size:14px;font-weight:700;color:${String(p.prediction).toUpperCase()==='HIGH RISK'?'#c62828':'#2e7d32'};">${p.prediction || '-'}</div>
+                                </div>
+                                <div style="background:#e8eaf6;border-radius:8px;padding:10px;text-align:center;">
+                                    <div style="font-size:10px;color:#888;margin-bottom:3px;">RISK PROBABILITY</div>
+                                    <div style="font-size:16px;font-weight:700;color:#0d47a1;">${p.probability != null ? p.probability + '%' : '-'}</div>
+                                </div>
+                                <div style="background:#e8eaf6;border-radius:8px;padding:10px;text-align:center;">
+                                    <div style="font-size:10px;color:#888;margin-bottom:3px;">CONFIDENCE</div>
+                                    <div style="font-size:16px;font-weight:700;color:#1565c0;">${p.confidence != null ? p.confidence + '%' : '-'}</div>
+                                </div>
+                            </div>
+                            <div style="margin-top:8px;font-size:12px;color:#555;">
+                                ${p.doctor_name ? `<span class="tl-chip"><b>Doctor:</b> ${p.doctor_name}</span>` : ''}
+                                ${p.appointment_id ? `<span class="tl-chip"><b>Visit ID:</b> ${p.appointment_id}</span>` : ''}
+                                ${p.visit_id ? `<span class="tl-chip"><b>Record ID:</b> ${p.visit_id}</span>` : ''}
+                            </div>`
                         )).join('')}
                     </div>
                 </div>`;
@@ -1272,6 +1298,51 @@ async function loadMedicalHistory() {
         box.innerHTML = '<p style="color:#c62828;">Unable to load medical history.</p>';
     }
 
+}
+
+async function loadAIPredictions() {
+    const box = document.getElementById('aiPredictionsList');
+    box.innerHTML = '<p style="color:#888;">Loading...</p>';
+    try {
+        const res  = await fetch(`/patient/predictions/${userId}`);
+        const rows = await res.json();
+        if (!rows.length) { box.innerHTML = '<p>No AI predictions yet.</p>'; return; }
+        box.innerHTML = rows.map(p => {
+            const highRisk   = String(p.prediction || '').toUpperCase() === 'HIGH RISK';
+            const riskColor  = highRisk ? '#c62828' : '#2e7d32';
+            const riskBg     = highRisk ? '#ffebee' : '#e8f5e9';
+            const date       = tlTime(p.predicted_at);
+            return `
+            <div class="p-card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <div style="font-weight:700;color:#6a1b9a;font-size:15px;">&#129504; ${p.disease || p.model_type || 'Diabetes'} Risk Assessment</div>
+                        <div style="font-size:12px;color:#888;margin-top:2px;">${date}</div>
+                    </div>
+                    <span style="background:${riskBg};color:${riskColor};padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;">${p.prediction || '-'}</span>
+                </div>
+                <hr style="margin:10px 0;border:none;border-top:1px solid #eee;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
+                    <div style="background:#f4f8ff;border-radius:8px;padding:10px;text-align:center;">
+                        <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:3px;">Risk Probability</div>
+                        <div style="font-size:18px;font-weight:700;color:#0d47a1;">${p.probability != null ? p.probability + '%' : '-'}</div>
+                    </div>
+                    <div style="background:#f4f8ff;border-radius:8px;padding:10px;text-align:center;">
+                        <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:3px;">Confidence Score</div>
+                        <div style="font-size:18px;font-weight:700;color:#1565c0;">${p.confidence != null ? p.confidence + '%' : '-'}</div>
+                    </div>
+                </div>
+                <div style="margin-top:10px;font-size:12px;color:#555;display:flex;flex-wrap:wrap;gap:6px;">
+                    ${p.doctor_name   ? `<span class="tl-chip"><b>Doctor:</b> ${p.doctor_name}</span>` : ''}
+                    ${p.appointment_id ? `<span class="tl-chip"><b>Visit ID:</b> ${p.appointment_id}</span>` : ''}
+                    ${p.visit_id       ? `<span class="tl-chip"><b>Record ID:</b> ${p.visit_id}</span>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    } catch(err) {
+        console.error(err);
+        box.innerHTML = '<p style="color:#c62828;">Unable to load predictions.</p>';
+    }
 }
 
 window.onload = function () {

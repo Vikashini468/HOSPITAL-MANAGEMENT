@@ -832,6 +832,15 @@ tbody tr:hover { background:#f5f9ff; }
                         <div class="field-err" id="err-mobile"></div>
                     </div>
 
+                    <!-- Email -->
+                    <div class="reg-field">
+                        <label class="reg-label">Email Address <span class="req">*</span></label>
+                        <input id="reg-email" type="email" class="reg-input"
+                               placeholder="patient@example.com"
+                               oninput="this.classList.remove('input-error')">
+                        <div class="field-err" id="err-email"></div>
+                    </div>
+
                     <!-- Blood Group -->
                     <div class="reg-field">
                         <label class="reg-label">Blood Group</label>
@@ -1299,6 +1308,15 @@ tbody tr:hover { background:#f5f9ff; }
                             </div>
                         </div>
 
+                        <!-- One-time login password notice -->
+                        <div id="hc-login-notice" style="width:420px;background:#e8f4fd;border:1.5px solid #90caf9;border-radius:12px;padding:16px 20px;">
+                            <div style="font-size:11px;font-weight:700;color:#0d47a1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">&#128100; Patient Login Password &mdash; Show Once Only</div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                                <div style="font-size:22px;font-weight:800;color:#0d3b7a;" id="hc-login-password"></div>
+                                <div style="font-size:11px;color:#888;line-height:1.5;">Patient signs in at <b>Patient Login</b><br>with email/mobile + this password.<br>It will not be shown again.</div>
+                            </div>
+                        </div>
+
                         <!-- Actions -->
                         <div style="display:flex;gap:14px;flex-wrap:wrap;">
                             <button class="reg-btn-next" onclick="downloadHealthCard()" style="background:#0d47a1;">⬇ Download PDF</button>
@@ -1597,13 +1615,14 @@ function calcAge() {
 }
 
 /* — Step 1 validation — */
-function validateStep1() {
+async function validateStep1() {
     let ok = true;
 
     const name    = document.getElementById("reg-name").value.trim();
     const dob     = document.getElementById("reg-dob").value;
     const age     = document.getElementById("reg-age").value;
     const mobile  = document.getElementById("reg-mobile").value.trim();
+    const email   = document.getElementById("reg-email").value.trim();
     const address = document.getElementById("reg-address").value.trim();
     const gender  = document.querySelector('input[name="gender"]:checked')?.value || "";
 
@@ -1634,6 +1653,32 @@ function validateStep1() {
         ok = false;
     } else { document.getElementById("err-mobile").textContent = ""; }
 
+    /* Email */
+    if (!email) {
+        document.getElementById("reg-email").classList.add("input-error");
+        document.getElementById("err-email").textContent = "Email Address is required.";
+        ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        document.getElementById("reg-email").classList.add("input-error");
+        document.getElementById("err-email").textContent = "Please enter a valid Email Address.";
+        ok = false;
+    } else {
+        document.getElementById("err-email").textContent = "";
+    }
+
+    /* Email uniqueness (across all users) */
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        try {
+            const chk = await fetch(BASE + "/api/patient/check-email?email=" + encodeURIComponent(email));
+            const chkJson = await chk.json();
+            if (chkJson.exists) {
+                document.getElementById("reg-email").classList.add("input-error");
+                document.getElementById("err-email").textContent = "Email Address is already registered.";
+                ok = false;
+            }
+        } catch (e) { /* network issue — let backend enforce uniqueness */ }
+    }
+
     /* Address */
     if (!address) {
         document.getElementById("reg-address").classList.add("input-error");
@@ -1649,6 +1694,7 @@ function validateStep1() {
     regData.age      = age;
     regData.gender   = gender;
     regData.mobile   = mobile;
+    regData.email    = email;
     regData.blood    = document.getElementById("reg-blood").value;
     regData.address  = address;
     regData.city     = document.getElementById("reg-city").value.trim();
@@ -1662,6 +1708,7 @@ function validateStep1() {
         ["Age",         regData.age + " years"],
         ["Gender",      regData.gender],
         ["Mobile",      regData.mobile],
+        ["Email",       regData.email],
         ["Blood Group", regData.blood || "—"],
         ["Address",     [regData.address, regData.city, regData.state, regData.pincode].filter(Boolean).join(", ")]
     ];
@@ -1855,6 +1902,7 @@ async function validateStep5() {
                 age:         regData.age,
                 gender:      regData.gender,
                 mobile:      regData.mobile,
+                email:       regData.email,
                 blood_group: regData.blood,
                 address:     regData.address,
                 city:        regData.city,
@@ -1890,6 +1938,7 @@ async function validateStep5() {
 
         regData.patient_id = regJson.patient_id;
         regData.pin        = regJson.pin;
+        regData.password   = regJson.password;
 
         /* ── Step 2: Upload face image ── */
         const fd = new FormData();
@@ -1976,6 +2025,7 @@ function regReset() {
     document.getElementById("reg-age").value     = "";
     document.getElementById("reg-age-display").textContent = "\u2014 years";
     document.getElementById("reg-mobile").value  = "";
+    document.getElementById("reg-email").value   = "";
     document.getElementById("reg-blood").value   = "";
     document.getElementById("reg-address").value = "";
     document.getElementById("reg-city").value    = "";
@@ -1993,6 +2043,8 @@ function regReset() {
     document.getElementById("hcard-wrap").style.display = "none";
     document.getElementById("hc-qr").innerHTML = "";
     document.getElementById("hc-pin").textContent = "";
+    const pwEl = document.getElementById("hc-login-password");
+    if (pwEl) pwEl.textContent = "";
     document.querySelector(`#reg-step-6 .reg-actions`).style.display = "flex";
     document.getElementById("consent-submit-btn").style.display = "inline-flex";
     onConsentChange();
@@ -2226,6 +2278,10 @@ function showHealthCard() {
     /* Show PIN — one-time display */
     const pinEl = document.getElementById("hc-pin");
     if (pinEl) pinEl.textContent = regData.pin || "——";
+
+    /* Show login password — one-time display */
+    const pwEl = document.getElementById("hc-login-password");
+    if (pwEl) pwEl.textContent = regData.password || "——";
 
     /* QR encodes ONLY the Patient ID — no medical data */
     document.getElementById("hc-qr").innerHTML = "";

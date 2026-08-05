@@ -889,6 +889,12 @@
   <a class="nav-item" id="nav-ai" href="#" onclick="showAI(); return false;">
     <span class="icon">&#129504;</span> AI Disease Prediction
   </a>
+  <a class="nav-item" id="nav-ai-history" href="#" onclick="goAIHistory(); return false;">
+    <span class="icon">&#128203;</span> AI Prediction History
+  </a>
+  <a class="nav-item" id="nav-timeline" href="#" onclick="showTimeline(); return false;">
+    <span class="icon">&#128336;</span> Patient Timeline
+  </a>
 
   <div class="sidebar-bottom">
     <a class="nav-item" href="/patient-login" style="background:rgba(255,255,255,0.06);">
@@ -1013,6 +1019,16 @@
         <div class="dash-card-arrow">&#8250;</div>
       </a>
 
+      <!-- Patient Timeline -->
+      <a class="dash-card" href="#" onclick="showTimeline(); return false;">
+        <div class="dash-card-icon" style="background:#fff8e1;">&#128336;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Patient Timeline</div>
+          <div class="dash-card-desc">Full visit history with vitals, notes, prescriptions, labs and AI predictions.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
     </div>
     </div>
 
@@ -1132,66 +1148,94 @@
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- MY APPOINTMENTS VIEW -->
-<div id="view-appointments" style="display:none;">
-  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-
-  <div class="sec-title" style="margin-top:14px;">My Appointments</div>
-
-  <div class="appt-tabs">
-    <button class="appt-tab active" id="tab-upcoming" onclick="apptTab('upcoming')">Upcoming</button>
-    <button class="appt-tab" id="tab-completed" onclick="apptTab('completed')">Completed</button>
-    <button class="appt-tab" id="tab-cancelled" onclick="apptTab('cancelled')">Cancelled</button>
-  </div>
-
-  <div id="appt-upcoming"></div>
-  <div id="appt-completed" style="display:none;"></div>
-  <div id="appt-cancelled" style="display:none;"></div>
-</div>
-
-<!-- DIGITAL HEALTH CARD VIEW -->
-<div id="view-healthcard" style="display:none;">
-  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-  <div class="sec-title" style="margin-top:14px;">Digital Health Card</div>
-  <div class="hc-dl-row">
-    <button class="hc-dl-btn" id="hcDlBtn" onclick="downloadHealthCardPdf()">Download as PDF</button>
-  </div>
-  <div class="hc-wrap">
-    <div class="hc-card" id="hcCard">
-      <div class="hc-loading" id="hcLoading">Loading health card...</div>
+    <!-- MY APPOINTMENTS VIEW -->
+    <div id="view-appointments" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">My Appointments</div>
+      <div class="appt-tabs">
+        <button class="appt-tab active" id="tab-upcoming" onclick="apptTab('upcoming')">Upcoming</button>
+        <button class="appt-tab" id="tab-completed" onclick="apptTab('completed')">Completed</button>
+        <button class="appt-tab" id="tab-cancelled" onclick="apptTab('cancelled')">Cancelled</button>
+      </div>
+      <div id="appt-upcoming"></div>
+      <div id="appt-completed" style="display:none;"></div>
+      <div id="appt-cancelled" style="display:none;"></div>
     </div>
+
+    <!-- DIGITAL HEALTH CARD VIEW -->
+    <div id="view-healthcard" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">Digital Health Card</div>
+      <div class="hc-dl-row">
+        <button class="hc-dl-btn" id="hcDlBtn" onclick="downloadHealthCardPdf()">Download as PDF</button>
+      </div>
+      <div class="hc-wrap">
+        <div class="hc-card" id="hcCard">
+          <div class="hc-loading" id="hcLoading">Loading health card...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESCRIPTIONS VIEW -->
+    <div id="view-prescriptions" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">My Prescriptions</div>
+      <div id="prescriptionList"></div>
+    </div>
+
+    <!-- LAB REPORTS VIEW -->
+    <div id="view-reports" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">My Lab Reports</div>
+      <div id="reportsList"></div>
+    </div>
+
+    <!-- MEDICAL HISTORY (CONSULTATION TIMELINE) VIEW -->
+    <div id="view-medical-history" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">Medical History &mdash; Consultation Timeline</div>
+      <div id="medicalHistoryList"></div>
+    </div>
+
+    <!-- PATIENT TIMELINE VIEW -->
+    <div id="view-timeline" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">Patient Timeline</div>
+      <div id="tl-filters" style="background:white;border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.07);border:1px solid #e3eaf5;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+        <div style="flex:1;min-width:160px;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Doctor</div>
+          <select id="tl-filter-doctor" onchange="applyTimelineFilters()" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;font-family:inherit;">
+            <option value="">All Doctors</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Department</div>
+          <select id="tl-filter-dept" onchange="applyTimelineFilters()" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;font-family:inherit;">
+            <option value="">All Departments</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Date</div>
+          <input type="date" id="tl-filter-date" onchange="applyTimelineFilters()" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;font-family:inherit;">
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Visit ID</div>
+          <input type="number" id="tl-filter-visit" placeholder="e.g. 42" onchange="applyTimelineFilters()" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;font-family:inherit;">
+        </div>
+        <button onclick="clearTimelineFilters()" style="padding:8px 16px;background:#f0f4ff;color:#0d47a1;border:1px solid #d4def0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Clear Filters</button>
+      </div>
+      <div id="timelineList"></div>
+    </div>
+
+    <!-- AI DISEASE PREDICTION VIEW -->
+    <div id="view-ai" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+      <div class="sec-title" style="margin-top:14px;">AI Disease Prediction</div>
+      <div id="aiPredictionList"></div>
+    </div>
+
   </div>
-</div>
-
-<!-- PRESCRIPTIONS VIEW -->
-<div id="view-prescriptions" style="display:none;">
-  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-  <div class="sec-title" style="margin-top:14px;">My Prescriptions</div>
-  <div id="prescriptionList"></div>
-</div>
-
-<!-- LAB REPORTS VIEW -->
-<div id="view-reports" style="display:none;">
-  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-  <div class="sec-title" style="margin-top:14px;">My Lab Reports</div>
-  <div id="reportsList"></div>
-</div>
-
-<!-- MEDICAL HISTORY (CONSULTATION TIMELINE) VIEW -->
-<div id="view-medical-history" style="display:none;">
-  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-  <div class="sec-title" style="margin-top:14px;">Medical History &mdash; Consultation Timeline</div>
-  <div id="medicalHistoryList"></div>
-</div>
-
-<!-- AI DISEASE PREDICTION VIEW -->
-<div id="view-ai" style="display:none;">
-  <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-  <div class="sec-title" style="margin-top:14px;">AI Disease Prediction</div>
-  <div id="aiPredictionList"></div>
 </div>
 
 <script>
@@ -1241,7 +1285,7 @@ loadName();
 /* ── PROFILE VIEW ── */
 function hideAllViews() {
   ["view-home","view-profile","view-book","view-appointments","view-healthcard",
-   "view-prescriptions","view-reports","view-medical-history","view-ai"]
+   "view-prescriptions","view-reports","view-medical-history","view-ai","view-timeline"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
 }
 
@@ -1253,7 +1297,7 @@ function showDashboard() {
 }
 
 function showProfile() {
-  document.getElementById("view-home").style.display    = "none";
+  hideAllViews();
   document.getElementById("view-profile").style.display = "block";
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.getElementById("nav-profile").classList.add("active");
@@ -1366,9 +1410,8 @@ let selectedDoctor = null;
 let selectedSlot  = null;
 
 function showBookAppointment() {
-  document.getElementById("view-home").style.display    = "none";
-  document.getElementById("view-profile").style.display = "none";
-  document.getElementById("view-book").style.display    = "block";
+  hideAllViews();
+  document.getElementById("view-book").style.display = "block";
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.getElementById("nav-book").classList.add("active");
   if (!doctorsData.length) loadDepartments();
@@ -1380,9 +1423,7 @@ let appointmentsData = { upcoming: [], completed: [], cancelled: [] };
 let deptById        = {};   /* doctor_id -> department, for old rows */
 
 function showAppointments() {
-  document.getElementById("view-home").style.display        = "none";
-  document.getElementById("view-profile").style.display     = "none";
-  document.getElementById("view-book").style.display        = "none";
+  hideAllViews();
   document.getElementById("view-appointments").style.display = "block";
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.getElementById("nav-appointments").classList.add("active");
@@ -1532,11 +1573,8 @@ async function cancelAppointment(id) {
 
 /* ── DIGITAL HEALTH CARD VIEW ── */
 function showHealthCard() {
-  document.getElementById("view-home").style.display         = "none";
-  document.getElementById("view-profile").style.display      = "none";
-  document.getElementById("view-book").style.display         = "none";
-  document.getElementById("view-appointments").style.display = "none";
-  document.getElementById("view-healthcard").style.display   = "block";
+  hideAllViews();
+  document.getElementById("view-healthcard").style.display = "block";
   loadHealthCard();
 }
 
@@ -2018,6 +2056,220 @@ function showMedicalHistory() {
   loadMedicalHistory();
 }
 
+/* ── PATIENT TIMELINE ── */
+let _tlAllVisits = [];   /* full unfiltered list */
+
+function showTimeline() {
+  hideAllViews();
+  document.getElementById("view-timeline").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-timeline").classList.add("active");
+  loadTimeline();
+}
+
+async function loadTimeline() {
+  const box = document.getElementById("timelineList");
+  box.innerHTML = '<p class="no-slots">Loading timeline...</p>';
+  if (!userId) { box.innerHTML = "<p>Patient not identified.</p>"; return; }
+
+  try {
+    const res  = await fetch(`/patient/timeline/${userId}`);
+    const data = await res.json();
+    _tlAllVisits = Array.isArray(data.visits) ? data.visits : [];
+
+    /* Populate filter dropdowns from the full data */
+    const doctors = {}, depts = {};
+    _tlAllVisits.forEach(v => {
+      const a = v.appointment || {};
+      if (a.doctor_id && a.doctor_name) doctors[a.doctor_id] = a.doctor_name;
+      if (a.department) depts[a.department] = true;
+    });
+
+    const docSel  = document.getElementById("tl-filter-doctor");
+    const deptSel = document.getElementById("tl-filter-dept");
+    const prevDoc  = docSel.value;
+    const prevDept = deptSel.value;
+
+    docSel.innerHTML  = '<option value="">All Doctors</option>' +
+      Object.entries(doctors).map(([id, name]) => `<option value="${id}">Dr. ${name}</option>`).join('');
+    deptSel.innerHTML = '<option value="">All Departments</option>' +
+      Object.keys(depts).sort().map(d => `<option value="${d}">${d}</option>`).join('');
+
+    docSel.value  = prevDoc;
+    deptSel.value = prevDept;
+
+    renderTimeline();
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load timeline.</p>';
+  }
+}
+
+function applyTimelineFilters() { renderTimeline(); }
+
+function clearTimelineFilters() {
+  document.getElementById("tl-filter-doctor").value = "";
+  document.getElementById("tl-filter-dept").value   = "";
+  document.getElementById("tl-filter-date").value   = "";
+  document.getElementById("tl-filter-visit").value  = "";
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const box     = document.getElementById("timelineList");
+  const docId   = document.getElementById("tl-filter-doctor").value;
+  const dept    = document.getElementById("tl-filter-dept").value.toLowerCase();
+  const date    = document.getElementById("tl-filter-date").value;   /* YYYY-MM-DD */
+  const visitId = document.getElementById("tl-filter-visit").value;
+
+  let filtered = _tlAllVisits.filter(v => {
+    const a = v.appointment || {};
+    if (docId   && String(a.doctor_id) !== docId) return false;
+    if (dept    && (a.department || "").toLowerCase() !== dept) return false;
+    if (date    && String(a.date || "").slice(0, 10) !== date) return false;
+    if (visitId && String(a.id) !== visitId) return false;
+    return true;
+  });
+
+  if (!filtered.length) {
+    box.innerHTML = '<p class="no-slots">No visits match the selected filters.</p>';
+    return;
+  }
+
+  box.innerHTML = `<div class="timeline">${filtered.map(tlVisitFull).join('')}</div>`;
+}
+
+function tlVisitFull(visit) {
+  const a      = visit.appointment || {};
+  const events = [];
+
+  /* 1. Appointment */
+  events.push(tlEvent(
+    '&#128197;', '#0d47a1', 'Appointment',
+    `Booked ${tlTime(a.booked_at)}`,
+    `<div>Doctor: <b>Dr. ${a.doctor_name || '-'}</b>${a.doctor_specialisation ? ' &middot; ' + a.doctor_specialisation : ''}</div>
+     <div>Department: <b>${a.department || '-'}</b></div>
+     <div>Scheduled: <b>${tlDate(a.date)}</b> &middot; ${a.time || '-'} &middot; Token #${a.token_no || '-'}</div>
+     ${a.symptoms ? `<div style="margin-top:4px;">Symptoms: <i>${a.symptoms}</i></div>` : ''}`
+  ));
+
+  /* 2. Vitals */
+  if (visit.vitals) {
+    events.push(tlEvent(
+      '&#129658;', '#e65100', 'Vitals',
+      tlTime(visit.vitals.consultation_started_at || visit.vitals.created_at),
+      vitalsHtml(visit.vitals)
+    ));
+  }
+
+  /* 3. Clinical Notes */
+  if (Array.isArray(visit.notes) && visit.notes.length) {
+    visit.notes.forEach(n => {
+      events.push(tlEvent('&#128221;', '#7a4a0d', 'Clinical Note', tlTime(n.created_at), notesHtml([n])));
+    });
+  }
+
+  /* 4. Prescription + Dispensing */
+  if (visit.prescription) {
+    events.push(tlEvent(
+      '&#128138;', '#2e7d32', 'Prescription',
+      tlTime(visit.prescription.created_at),
+      prescriptionHtml(visit.prescription)
+    ));
+    const disp = Array.isArray(visit.prescription.dispensing) ? visit.prescription.dispensing : [];
+    if (disp.length) {
+      events.push(tlEvent(
+        '&#128138;', '#00695c', 'Medicine Dispensing',
+        tlTime(disp[0].dispensing_date),
+        dispensingHtml(disp)
+      ));
+    }
+  }
+
+  /* 5. Lab Requests + Reports */
+  if (Array.isArray(visit.lab_requests) && visit.lab_requests.length) {
+    visit.lab_requests.forEach(lr => {
+      events.push(tlEvent('&#129514;', '#6a1b9a', 'Laboratory Request', tlTime(lr.created_at), labRequestHtml(lr)));
+      const rpts = Array.isArray(lr.reports) ? lr.reports : [];
+      if (rpts.length) {
+        events.push(tlEvent(
+          '&#128196;', '#1565c0', 'Laboratory Report',
+          tlTime(rpts[rpts.length - 1].upload_date),
+          rpts.map(r => `
+            <div style="margin-top:6px;background:#f8fbff;border:1px solid #e3eaf5;border-radius:8px;padding:10px 12px;">
+              <div><b style="color:#0d47a1;">Test:</b> ${r.test_name || (Array.isArray(lr.tests) ? lr.tests.join(', ') : '-')}</div>
+              <div><b>Technician:</b> ${r.technician_name || '-'}</div>
+              <div><b>Uploaded:</b> ${tlTime(r.upload_date)}</div>
+              <a class="tl-download" href="/uploads/${r.report_file}" target="_blank">&#128196; Download</a>
+            </div>`).join('')
+        ));
+      } else if (lr.report_file) {
+        events.push(tlEvent(
+          '&#128196;', '#1565c0', 'Laboratory Report',
+          tlTime(lr.completed_at),
+          `<div style="background:#f8fbff;border:1px solid #e3eaf5;border-radius:8px;padding:10px 12px;">
+             <div><b style="color:#0d47a1;">Tests:</b> ${Array.isArray(lr.tests) ? lr.tests.join(', ') : '-'}</div>
+             <div><b>Uploaded:</b> ${tlTime(lr.completed_at)}</div>
+             <a class="tl-download" href="/uploads/${lr.report_file}" target="_blank">&#128196; Download</a>
+           </div>`
+        ));
+      }
+    });
+  }
+
+  /* 6. AI Predictions */
+  if (Array.isArray(visit.ai_predictions) && visit.ai_predictions.length) {
+    visit.ai_predictions.forEach(p => {
+      const isHigh = String(p.prediction || '').toUpperCase() === 'HIGH RISK';
+      const rc = isHigh ? '#c62828' : '#2e7d32';
+      events.push(tlEvent(
+        '&#129504;', '#4a148c',
+        `AI Prediction &mdash; ${p.disease || p.model_type || 'Disease'}`,
+        tlTime(p.predicted_at),
+        `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:6px;">
+           <div style="background:#f3e8ff;border-radius:8px;padding:8px;text-align:center;">
+             <div style="font-size:10px;color:#888;margin-bottom:2px;">PREDICTION</div>
+             <div style="font-size:13px;font-weight:700;color:${rc};">${p.prediction || '-'}</div>
+           </div>
+           <div style="background:#e8eaf6;border-radius:8px;padding:8px;text-align:center;">
+             <div style="font-size:10px;color:#888;margin-bottom:2px;">RISK PROB.</div>
+             <div style="font-size:15px;font-weight:700;color:#0d47a1;">${p.probability != null ? p.probability + '%' : '—'}</div>
+           </div>
+           <div style="background:#e8eaf6;border-radius:8px;padding:8px;text-align:center;">
+             <div style="font-size:10px;color:#888;margin-bottom:2px;">CONFIDENCE</div>
+             <div style="font-size:15px;font-weight:700;color:#1565c0;">${p.confidence != null ? p.confidence + '%' : '—'}</div>
+           </div>
+         </div>
+         <div style="margin-top:8px;font-size:12px;color:#555;display:flex;flex-wrap:wrap;gap:4px;">
+            ${p.doctor_name    ? `<span class="tl-chip"><b>Doctor:</b> Dr. ${p.doctor_name}</span>` : ''}
+            ${p.appointment_id ? `<span class="tl-chip"><b>Visit ID:</b> ${p.appointment_id}</span>` : ''}
+            ${p.visit_id       ? `<span class="tl-chip"><b>Record ID:</b> ${p.visit_id}</span>` : ''}
+          </div>
+          ${aiExplanationCard(p)}`
+      ));
+    });
+  }
+
+  const statusColors = {
+    COMPLETED:'#2e7d32',REVIEWED:'#2e7d32',LAB_COMPLETED:'#00695c',
+    WAITING:'#1565c0',CONSULTING:'#6a1b9a',INPROGRESS:'#6a1b9a',
+    LAB_READY:'#e65100',CANCELLED:'#c62828'
+  };
+  const stColor = statusColors[(a.status || '').toUpperCase()] || '#555';
+
+  return `
+    <div class="tl-visit">
+      <div class="tl-visit-head">
+        <div>
+          <div class="tl-title">${tlDate(a.date)} &middot; ${a.time || '-'} &middot; Dr. ${a.doctor_name || '-'}</div>
+          <div class="tl-sub">${a.department || ''} &middot; Token #${a.token_no || '-'}${a.symptoms ? ' &middot; ' + a.symptoms : ''}</div>
+        </div>
+        <span class="tl-status" style="background:${stColor};">${a.status || '-'}</span>
+      </div>
+      <div class="tl-body">${events.join('')}</div>
+    </div>`;
+}
+
 /* ── AI DISEASE PREDICTION ── */
 function showAI() {
   hideAllViews();
@@ -2025,6 +2277,66 @@ function showAI() {
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.getElementById("nav-ai").classList.add("active");
   loadPredictions();
+}
+
+function goAIHistory() {
+  window.location.href = userId ? `/patient/ai-history?id=${userId}` : `/patient/ai-history`;
+}
+
+/* Shared explainable-AI card used in both the AI Predictions section and Medical History */
+function aiExplanationCard(p) {
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const x = (p && p.explanation) || null;
+  if (!x) return "";
+  const xTop = Array.isArray(x.top_features) ? x.top_features : [];
+  const xImp = Array.isArray(x.feature_importance) ? x.feature_importance : [];
+  const xText = x.explanation || "";
+  if (!xTop.length && !xImp.length && !xText) return "";
+  const maxAbs = xImp.reduce((m, it) => Math.max(m, Math.abs(Number(it.importance) || 0)), 0) || 1;
+  const chip = (n) => `<span style="display:inline-block;background:#e8eef8;color:#0d47a1;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin:0 4px 6px 0;">${esc(n)}</span>`;
+  const bar = (it) => {
+    const val   = Number(it.importance) || 0;
+    const pos   = val >= 0;
+    const pct   = Math.max(2, Math.round(Math.abs(val) / maxAbs * 100));
+    const color = pos ? '#c62828' : '#2e7d32';
+    return `
+      <div style="margin-bottom:7px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#444;margin-bottom:3px;">
+          <span>${esc(it.feature || '—')}</span>
+          <span style="font-weight:700;color:${color};">${pos ? '+' : ''}${val.toFixed(2)}</span>
+        </div>
+        <div style="background:#e8eef8;border-radius:6px;height:7px;">
+          <div style="width:${pct}%;height:100%;border-radius:6px;background:${color};"></div>
+        </div>
+      </div>`;
+  };
+  const factorList = (list, tone) => list.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${list.map(it => {
+        const val   = Number(it.importance) || 0;
+        const isRed = tone === 'red';
+        return `<span style="background:${isRed ? '#fdecea' : '#dcfce7'};color:${isRed ? '#c62828' : '#166534'};font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">${esc(it.feature || '—')} (${val > 0 ? '+' : ''}${val.toFixed(2)})</span>`;
+      }).join('')}</div>`
+    : '<span style="font-size:11px;color:#888;">None</span>';
+  const section = (t, body) => `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:#7a4a0d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">${t}</div>
+      ${body}
+    </div>`;
+  return `
+    ${xText ? `
+    <div style="margin-top:12px;border:1px solid #d0e4ff;border-radius:8px;background:#f0f7ff;padding:10px 12px;">
+      <div style="font-size:11px;font-weight:700;color:#0d47a1;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">&#129504; Explanation Summary</div>
+      <div style="font-size:12px;color:#333;line-height:1.6;">${esc(xText)}</div>
+    </div>` : ''}
+    <details style="margin-top:10px;border:1px solid #d0e4ff;border-radius:8px;background:#fbfdff;">
+      <summary style="cursor:pointer;padding:9px 12px;font-size:12px;font-weight:700;color:#0d47a1;">🧠 AI Explanation Details <span style="color:#888;font-weight:400;">(click to expand)</span></summary>
+      <div style="padding:12px;border-top:1px solid #e8f0fb;">
+        ${section('Top Risk Factors', xTop.length ? xTop.map(chip).join('') : '<span style="font-size:11px;color:#888;">None</span>')}
+        ${section('Feature Importance', xImp.length ? xImp.map(bar).join('') : '<span style="font-size:11px;color:#888;">None</span>')}
+        ${section('Positive Factors', factorList(xImp.filter(it => Number(it.importance) > 0), 'red'))}
+        ${section('Negative Factors', factorList(xImp.filter(it => Number(it.importance) < 0), 'green'))}
+      </div>
+    </details>`;
 }
 
 async function loadPredictions() {
@@ -2067,26 +2379,50 @@ async function loadPredictions() {
       </div>`;
 
     box.innerHTML = summary + preds.map(p => {
-      const risk = String(p.prediction || "").toUpperCase();
+      const risk   = String(p.prediction || "").toUpperCase();
       const isHigh = risk === "HIGH RISK";
-      const badgeBg  = isHigh ? '#fdecea' : '#dcfce7';
-      const badgeFg  = isHigh ? '#c62828' : '#166534';
+      const badgeBg = isHigh ? '#fdecea' : '#dcfce7';
+      const badgeFg = isHigh ? '#c62828' : '#166534';
+      const probBar = p.probability != null
+        ? `<div style="margin-top:10px;">
+             <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
+               <span>Risk Probability</span><span>${p.probability}%</span>
+             </div>
+             <div style="background:#e8eef8;border-radius:6px;height:8px;">
+               <div style="width:${Math.min(p.probability,100)}%;height:100%;border-radius:6px;background:${isHigh?'#c62828':'#2e7d32'};"></div>
+             </div>
+           </div>` : '';
+
       return `
       <div class="p-card">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <div>
-            <h3 style="margin:0;">&#129504; ${esc(p.disease_name || 'Disease Prediction')}</h3>
+            <h3 style="margin:0;">&#129504; ${esc(p.disease || p.model_type || 'Disease Prediction')}</h3>
             <div style="font-size:12px;color:#888;margin-top:2px;">${tlTime(p.predicted_at)}</div>
           </div>
-          <span class="badge-id" style="background:${badgeBg};color:${badgeFg};">${esc(p.prediction || '—')}</span>
+          <span class="badge-id" style="background:${badgeBg};color:${badgeFg};font-size:13px;padding:5px 14px;">${esc(p.prediction || '—')}</span>
         </div>
         <hr>
-        <div class="profile-row2"><span class="lbl">Disease Name</span><span class="val">${esc(p.disease_name || '—')}</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:8px;">
+          <div style="background:#f4f8ff;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Risk Probability</div>
+            <div style="font-size:20px;font-weight:800;color:#0d47a1;">${fmtPct(p.probability)}</div>
+          </div>
+          <div style="background:#f4f8ff;border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Confidence Score</div>
+            <div style="font-size:20px;font-weight:800;color:#1565c0;">${fmtPct(p.confidence)}</div>
+          </div>
+        </div>
+        ${probBar}
+        <div class="profile-row2"><span class="lbl">Disease</span><span class="val">${esc(p.disease || p.model_type || '—')}</span></div>
         <div class="profile-row2"><span class="lbl">Prediction</span><span class="val">${esc(p.prediction || '—')}</span></div>
-        <div class="profile-row2"><span class="lbl">Risk Probability</span><span class="val">${fmtPct(p.probability)}</span></div>
-        <div class="profile-row2"><span class="lbl">Confidence Score</span><span class="val">${fmtPct(p.confidence)}</span></div>
         <div class="profile-row2"><span class="lbl">Prediction Date</span><span class="val">${tlTime(p.predicted_at) || '—'}</span></div>
-        <div class="profile-row2"><span class="lbl">Doctor Name</span><span class="val">${p.doctor_name ? 'Dr. ' + esc(p.doctor_name) : '—'}</span></div>
+        <div class="profile-row2"><span class="lbl">Doctor</span><span class="val">${p.doctor_name ? 'Dr. ' + esc(p.doctor_name) : '—'}</span></div>
+        <div class="profile-row2"><span class="lbl">Patient ID</span><span class="val">${esc(userId || '—')}</span></div>
+        <div class="profile-row2"><span class="lbl">Visit ID</span><span class="val">${p.appointment_id || '—'}</span></div>
+        <div class="profile-row2"><span class="lbl">Record ID</span><span class="val">${p.visit_id || '—'}</span></div>
+        <div class="profile-row2"><span class="lbl">Doctor ID</span><span class="val">${p.doctor_id || '—'}</span></div>
+        ${aiExplanationCard(p)}
       </div>`;
     }).join('');
   } catch (err) {
@@ -2314,23 +2650,48 @@ async function loadMedicalHistory() {
 
     let html = '<div class="timeline">' + data.visits.map(visitHtml).join('') + '</div>';
 
-    /* AI Health Predictions (chronological, each with timestamp) */
+    /* AI Health Predictions — full detail cards in Medical History */
     const ai = Array.isArray(data.ai_predictions) ? data.ai_predictions : [];
     if (ai.length) {
       html += `
         <div class="tl-visit" style="margin-top:18px;">
           <div class="tl-visit-head" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);">
             <div>
-              <div class="tl-title">🤖 AI Health Predictions</div>
-              <div class="tl-sub">Automated health risk assessments</div>
+              <div class="tl-title">&#129504; AI Health Predictions</div>
+              <div class="tl-sub">Permanently stored — every prediction is kept</div>
             </div>
           </div>
           <div class="tl-body">
-            ${ai.map(p => tlEvent(
-              '🤖', '#6a1b9a', (p.model_type || 'Prediction'),
-              tlTime(p.predicted_at),
-              `<div>Prediction: <b>${p.prediction || '-'}</b>${p.probability != null ? ' · Confidence: ' + p.probability + '%' : ''}</div>`
-            )).join('')}
+            ${ai.map(p => {
+              const isHigh = String(p.prediction || '').toUpperCase() === 'HIGH RISK';
+              const rc = isHigh ? '#c62828' : '#2e7d32';
+              const rb = isHigh ? '#fdecea' : '#dcfce7';
+              return tlEvent(
+                '&#129504;', '#6a1b9a',
+                (p.disease || p.model_type || 'Prediction') + ' Risk Assessment',
+                tlTime(p.predicted_at),
+                `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:6px;">
+                   <div style="background:#f3e8ff;border-radius:8px;padding:8px;text-align:center;">
+                     <div style="font-size:10px;color:#888;margin-bottom:2px;">PREDICTION</div>
+                     <div style="font-size:13px;font-weight:700;color:${rc};">${p.prediction || '-'}</div>
+                   </div>
+                   <div style="background:#e8eaf6;border-radius:8px;padding:8px;text-align:center;">
+                     <div style="font-size:10px;color:#888;margin-bottom:2px;">RISK PROB.</div>
+                     <div style="font-size:15px;font-weight:700;color:#0d47a1;">${p.probability != null ? p.probability + '%' : '—'}</div>
+                   </div>
+                   <div style="background:#e8eaf6;border-radius:8px;padding:8px;text-align:center;">
+                     <div style="font-size:10px;color:#888;margin-bottom:2px;">CONFIDENCE</div>
+                     <div style="font-size:15px;font-weight:700;color:#1565c0;">${p.confidence != null ? p.confidence + '%' : '—'}</div>
+                   </div>
+                 </div>
+                 <div style="margin-top:8px;font-size:12px;color:#555;display:flex;flex-wrap:wrap;gap:4px;">
+                   ${p.doctor_name   ? `<span class="tl-chip"><b>Doctor:</b> Dr. ${p.doctor_name}</span>` : ''}
+                   ${p.appointment_id ? `<span class="tl-chip"><b>Visit ID:</b> ${p.appointment_id}</span>` : ''}
+                   ${p.visit_id       ? `<span class="tl-chip"><b>Record ID:</b> ${p.visit_id}</span>` : ''}
+                 </div>
+                 ${aiExplanationCard(p)}`
+              );
+            }).join('')}
           </div>
         </div>`;
     }
@@ -2360,6 +2721,8 @@ if (params.get("section") === "profileSection" || params.get("section") === "pro
   showMedicalHistory();
 } else if (params.get("section") === "ai" || params.get("section") === "predictions") {
   showAI();
+} else if (params.get("section") === "timeline") {
+  showTimeline();
 }
 </script>
 

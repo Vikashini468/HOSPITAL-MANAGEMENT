@@ -1105,19 +1105,19 @@ async function startConsultation(appointmentId) {
                 </div>
                 <!-- ── END CLINICAL NOTES ── -->
 
-                <!-- ── AI DIABETES PREDICTION ── -->
+                <!-- ── AI DISEASE RISK PREDICTION ── -->
                 <div style="margin-top:20px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:16px;">
 
-                    <div style="font-size:13px;font-weight:700;color:#1b5e20;margin-bottom:12px;">🤖 AI Diabetes Prediction</div>
+                    <div style="font-size:13px;font-weight:700;color:#1b5e20;margin-bottom:12px;">🤖 AI Disease Risk Prediction</div>
 
-                    <button class="primary-btn" style="background:#2e7d32;padding:8px 18px;font-size:13px;" onclick="runAIPrediction()">
-                        Run Prediction
+                    <button class="primary-btn" style="background:#2e7d32;padding:8px 18px;font-size:13px;" onclick="predictDiseaseRisk()">
+                        Predict Disease Risk
                     </button>
 
                     <div id="ai-prediction-result" style="margin-top:12px;"></div>
 
                 </div>
-                <!-- ── END AI PREDICTION ── -->
+                <!-- ── END AI DISEASE RISK PREDICTION ── -->
 
                 <div style="margin-top:25px;display:flex;flex-direction:column;gap:12px;">
 
@@ -1527,12 +1527,13 @@ async function completeAppointment(appointmentId){
 }
 
 // =====================================================
-// RUN AI DIABETES PREDICTION (Consultation page)
-// Sends the prepared patient JSON to the Python API and
-// displays Prediction / Risk Probability / Confidence.
+// RUN UNIFIED AI DISEASE RISK PREDICTION (Consultation page)
+// Sends the prepared patient JSON to all three Python AI
+// endpoints in parallel, waits for every result, and
+// displays a single "Disease Risk Summary" card.
 // =====================================================
 
-async function runAIPrediction() {
+async function predictDiseaseRisk() {
 
     const box = document.getElementById('ai-prediction-result');
     if (!box) return;
@@ -1542,52 +1543,122 @@ async function runAIPrediction() {
         return;
     }
 
-    box.innerHTML = '<span style="color:#1b5e20;font-size:13px;">⏳ Running AI prediction…</span>';
+    box.innerHTML = '<span style="color:#1b5e20;font-size:13px;">⏳ Running AI disease risk prediction…</span>';
 
     try {
 
-        const res = await fetch(`/appointment/predict/${currentAppointmentId}`, {
+        const res = await fetch(`/appointment/predict-disease-risk/${currentAppointmentId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
 
         const data = await res.json();
 
-        if (!data.success) {
+        if (!data.success || !Array.isArray(data.results)) {
             box.innerHTML = `<span style="color:#c62828;font-size:13px;">⚠️ ${data.message || 'Prediction failed'}</span>`;
             return;
         }
 
-        const highRisk = String(data.prediction).toUpperCase() === 'HIGH RISK';
-        const riskColor = highRisk ? '#c62828' : '#2e7d32';
-        const riskBg    = highRisk ? '#ffebee' : '#e8f5e9';
+        const fmt = (v, suffix) => (v == null || isNaN(Number(v))) ? '—' : Number(v) + (suffix || '');
+        const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        /* Expandable Explainable-AI card, fed only by the Python API fields */
+        const explanationBlock = (r) => {
+            const top = Array.isArray(r.top_features)   ? r.top_features   : [];
+            const imp = Array.isArray(r.feature_importance) ? r.feature_importance : [];
+            const exp = r.explanation || '';
+            if (!top.length && !imp.length && !exp) return '';
+
+            const maxAbs = imp.reduce((m, it) => Math.max(m, Math.abs(Number(it.importance) || 0)), 0) || 1;
+
+            const chip = (name) => `<span style="display:inline-block;background:#e8eef8;color:#0d47a1;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin:0 4px 6px 0;">${esc(name)}</span>`;
+
+            const bar = (it) => {
+                const val   = Number(it.importance) || 0;
+                const pos   = val >= 0;
+                const pct   = Math.max(2, Math.round(Math.abs(val) / maxAbs * 100));
+                const color = pos ? '#c62828' : '#2e7d32';
+                return `
+                    <div style="margin-bottom:7px;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:#444;margin-bottom:3px;">
+                            <span>${esc(it.feature || '—')}</span>
+                            <span style="font-weight:700;color:${color};">${pos ? '+' : ''}${val.toFixed(2)}</span>
+                        </div>
+                        <div style="background:#e8eef8;border-radius:6px;height:7px;">
+                            <div style="width:${pct}%;height:100%;border-radius:6px;background:${color};"></div>
+                        </div>
+                    </div>`;
+            };
+
+            const factorList = (list, tone) => list.length
+                ? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${list.map(it => {
+                      const val = Number(it.importance) || 0;
+                      const isRed = tone === 'red';
+                      return `<span style="background:${isRed ? '#fdecea' : '#dcfce7'};color:${isRed ? '#c62828' : '#166534'};font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;">${esc(it.feature || '—')} (${val > 0 ? '+' : ''}${val.toFixed(2)})</span>`;
+                  }).join('')}</div>`
+                : '<span style="font-size:11px;color:#888;">None</span>';
+
+            const section = (title, body) => `
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:11px;font-weight:700;color:#7a4a0d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">${title}</div>
+                    ${body}
+                </div>`;
+
+            return `
+                <details style="margin-top:12px;border:1px solid #d0e4ff;border-radius:8px;background:#fbfdff;">
+                    <summary style="cursor:pointer;padding:9px 12px;font-size:12px;font-weight:700;color:#0d47a1;">🧠 AI Explanation <span style="color:#888;font-weight:400;">(click to expand)</span></summary>
+                    <div style="padding:12px;border-top:1px solid #e8f0fb;">
+                        ${section('Top Risk Factors', top.length ? top.map(chip).join('') : '<span style="font-size:11px;color:#888;">None</span>')}
+                        ${section('Feature Importance', imp.length ? imp.map(bar).join('') : '<span style="font-size:11px;color:#888;">None</span>')}
+                        ${section('Positive Factors', factorList(imp.filter(it => Number(it.importance) > 0), 'red'))}
+                        ${section('Negative Factors', factorList(imp.filter(it => Number(it.importance) < 0), 'green'))}
+                        ${section('Clinical Explanation', `<div style="font-size:12px;color:#333;line-height:1.6;">${esc(exp)}</div>`)}
+                    </div>
+                </details>`;
+        };
+
+        const diseaseRow = (r) => {
+            const risk = String(r.prediction || '').toUpperCase();
+            const high = risk === 'HIGH RISK' || risk === 'POSITIVE';
+            const color = high ? '#c62828' : '#2e7d32';
+            const bg    = high ? '#ffebee' : '#e8f5e9';
+            return `
+                <div style="border-top:1px solid #e8f0fb;padding:12px 0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-size:13px;font-weight:700;color:#0d47a1;">${r.disease || 'Disease'}</span>
+                        <span style="background:${bg};color:${color};font-weight:700;font-size:12px;padding:4px 14px;border-radius:20px;">${r.prediction || '—'}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+                        <div style="background:white;border-radius:8px;padding:10px;text-align:center;">
+                            <div style="font-size:11px;color:#888;margin-bottom:4px;">Risk Probability</div>
+                            <div style="font-size:15px;font-weight:700;color:#0d47a1;">${fmt(r.probability, '%')}</div>
+                        </div>
+                        <div style="background:white;border-radius:8px;padding:10px;text-align:center;">
+                            <div style="font-size:11px;color:#888;margin-bottom:4px;">Confidence Score</div>
+                            <div style="font-size:15px;font-weight:700;color:#1565c0;">${fmt(r.confidence, '%')}</div>
+                        </div>
+                    </div>
+                    ${explanationBlock(r)}
+                </div>`;
+        };
+
+        const ts = data.predicted_at ? new Date(data.predicted_at) : new Date();
+        const tsLabel = ts.toLocaleDateString() + ' ' + ts.toLocaleTimeString();
 
         box.innerHTML = `
             <div style="background:#f4f8ff;border:1px solid #d0e4ff;border-radius:10px;padding:14px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <span style="font-size:13px;font-weight:700;color:#0d47a1;">Diabetes Risk Assessment</span>
-                    <span style="background:${riskBg};color:${riskColor};font-weight:700;font-size:13px;padding:4px 14px;border-radius:20px;">${data.prediction}</span>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-                    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
-                        <div style="font-size:11px;color:#888;margin-bottom:4px;">Prediction</div>
-                        <div style="font-size:14px;font-weight:700;color:${riskColor};">${data.prediction}</div>
-                    </div>
-                    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
-                        <div style="font-size:11px;color:#888;margin-bottom:4px;">Risk Probability</div>
-                        <div style="font-size:16px;font-weight:700;color:#0d47a1;">${data.probability}%</div>
-                    </div>
-                    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
-                        <div style="font-size:11px;color:#888;margin-bottom:4px;">Confidence Score</div>
-                        <div style="font-size:16px;font-weight:700;color:#1565c0;">${data.confidence}%</div>
-                    </div>
+                <div style="font-size:14px;font-weight:700;color:#0d47a1;text-align:center;margin-bottom:4px;">Disease Risk Summary</div>
+                <div style="font-size:11px;color:#888;text-align:center;margin-bottom:6px;">Results across all AI models</div>
+                ${data.results.map(diseaseRow).join('')}
+                <div style="border-top:1px solid #e8f0fb;padding-top:10px;font-size:11px;color:#888;text-align:center;">
+                    Prediction Timestamp: ${tsLabel}
                 </div>
             </div>
         `;
 
     } catch (err) {
         console.error(err);
-        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Network error while running prediction.</span>';
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Network error while running disease risk prediction.</span>';
     }
 
 }

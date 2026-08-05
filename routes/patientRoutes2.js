@@ -130,9 +130,30 @@ function parseArray(value) {
 }
 
 /* =====================================================
+   GET /api/patient/check-email
+   Check whether an email is already registered (any role).
+===================================================== */
+router.get("/check-email", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const { email } = req.query;
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.json({ exists: false });
+        }
+        const result = await pool.query(
+            `SELECT id FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`, [email]
+        );
+        res.json({ exists: result.rows.length > 0 });
+    } catch (err) {
+        console.error("CHECK-EMAIL ERROR:", err.message);
+        res.status(500).json({ exists: false });
+    }
+});
+
+/* =====================================================
    POST /api/patient/register
    Body (JSON):
-     Step 1 — name, dob, age, gender, mobile, blood_group,
+     Step 1 — name, dob, age, gender, mobile, email, blood_group,
                address, city, state, pincode
      Step 2 — smoking, alcohol, activity, diet, sleepHours,
                sleepQuality, stress, occupation
@@ -147,7 +168,7 @@ router.post("/register", async (req, res) => {
 
     const {
         /* Step 1 */
-        name, dob, age, gender, mobile,
+        name, dob, age, gender, mobile, email,
         blood_group, address, city, state, pincode,
         /* Step 2 */
         smoking, alcohol, activity, diet,
@@ -161,11 +182,13 @@ router.post("/register", async (req, res) => {
         medications, medicationsOther
     } = req.body;
 
+    const emailLower = (email || "").trim().toLowerCase();
+
     /* ── Required field check ── */
-    if (!name || !mobile || !gender || !dob) {
+    if (!name || !mobile || !email || !gender || !dob) {
         return res.status(400).json({
             success: false,
-            message: "name, dob, gender and mobile are required"
+            message: "name, dob, gender, mobile and email are required"
         });
     }
 
@@ -173,6 +196,13 @@ router.post("/register", async (req, res) => {
         return res.status(400).json({
             success: false,
             message: "mobile must be a 10-digit number"
+        });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
+        return res.status(400).json({
+            success: false,
+            message: "Please enter a valid Email Address."
         });
     }
 
@@ -185,6 +215,30 @@ router.post("/register", async (req, res) => {
             `SELECT id FROM pat_patients WHERE mobile = $1`, [mobile]
         );
         if (dup.rows.length) {
+            await client.query("ROLLBACK");
+            return res.status(409).json({
+                success: false,
+                message: "A patient with this mobile number is already registered"
+            });
+        }
+
+        /* ── Email uniqueness across all users ── */
+        const emailDup = await client.query(
+            `SELECT id FROM users WHERE LOWER(email) = $1`, [emailLower]
+        );
+        if (emailDup.rows.length) {
+            await client.query("ROLLBACK");
+            return res.status(409).json({
+                success: false,
+                message: "Email Address is already registered."
+            });
+        }
+
+        /* ── Mobile uniqueness across all users ── */
+        const mobUserDup = await client.query(
+            `SELECT id FROM users WHERE mobile = $1`, [mobile]
+        );
+        if (mobUserDup.rows.length) {
             await client.query("ROLLBACK");
             return res.status(409).json({
                 success: false,
@@ -277,6 +331,31 @@ router.post("/register", async (req, res) => {
             ON CONFLICT (patient_id) DO UPDATE SET pin_hash = $2, created_at = NOW()
         `, [patientId, pinHash]);
 
+        /* ── Authentication record in the existing users table ──
+           The patient can later log in using their Email OR Mobile.
+           Password is auto-generated from the patient name:
+           lowercase, spaces removed (e.g. "Arun Kumar" → "arunkumar"). */
+        const loginPassword = name.trim().toLowerCase().replace(/\s+/g, "");
+        const authPass = await bcrypt.hash(loginPassword, SALT_ROUNDS);
+        await client.query(`
+            INSERT INTO users
+                (name, username, email, mobile, password, role, gender, dob, age, address,
+                 verified, approved, profile_status)
+            VALUES
+                ($1, $2, $3, $4, $5, 'patient', $6, $7, $8, $9,
+                 true, true, 'COMPLETE')
+        `, [
+            name,
+            emailLower,
+            emailLower,
+            mobile,
+            authPass,
+            gender,
+            dob         || null,
+            age         ? parseInt(age) : null,
+            address     || null
+        ]);
+
         await client.query("COMMIT");
 
         return res.status(201).json({
@@ -284,7 +363,9 @@ router.post("/register", async (req, res) => {
             message:    "Patient registered successfully",
             patient_id: patientId,
             pin:        plainPin,   /* shown once on health card, never stored plain */
+            password:   loginPassword, /* auto-generated login password, shown once */
             name,
+            email:      emailLower,
             mobile
         });
 

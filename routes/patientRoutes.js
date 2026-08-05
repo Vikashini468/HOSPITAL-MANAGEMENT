@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const aiService = require("../utils/aiService");
 
 /* =====================================================
    PATIENT PROFILE
@@ -675,18 +676,7 @@ router.post("/patient/predict-diabetes/:id", async (req, res) => {
         };
 
         /* Call Python Flask model service */
-        const flaskRes = await fetch("http://localhost:5050/predict", {
-            method:  "POST",
-            headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify(payload)
-        });
-
-        if (!flaskRes.ok) {
-            const err = await flaskRes.json();
-            return res.status(502).json({ error: "Model service error", detail: err });
-        }
-
-        const result = await flaskRes.json();
+        const result = await aiService.predictDiabetes(payload);
 
         /* Confidence = how sure the model is of the returned class.
            Derived from the same probability output — no model retraining. */
@@ -694,7 +684,7 @@ router.post("/patient/predict-diabetes/:id", async (req, res) => {
         const confidence = Math.round(Math.max(probPct, 100 - probPct) * 100) / 100;
         const doctorId  = req.body.doctor_id || null;
 
-        /* Create table if not exists, then store prediction */
+        /* Create table if not exists, then store prediction permanently */
         await pool.query(`
             CREATE TABLE IF NOT EXISTS ai_predictions (
                 id           SERIAL PRIMARY KEY,
@@ -704,19 +694,35 @@ router.post("/patient/predict-diabetes/:id", async (req, res) => {
                 probability  NUMERIC(5,2),
                 confidence   NUMERIC(5,2),
                 doctor_id    INTEGER REFERENCES users(id),
+                disease      VARCHAR(100),
                 input_data   JSONB,
+                explanation  JSONB,
                 predicted_at TIMESTAMP DEFAULT NOW()
             )
         `);
         await pool.query(`
-            ALTER TABLE ai_predictions ADD COLUMN IF NOT EXISTS confidence NUMERIC(5,2),
-                                        ADD COLUMN IF NOT EXISTS doctor_id  INTEGER REFERENCES users(id)
+            ALTER TABLE ai_predictions ADD COLUMN IF NOT EXISTS confidence  NUMERIC(5,2),
+                                        ADD COLUMN IF NOT EXISTS doctor_id   INTEGER REFERENCES users(id),
+                                        ADD COLUMN IF NOT EXISTS disease     VARCHAR(100),
+                                        ADD COLUMN IF NOT EXISTS explanation JSONB
         `).catch(() => {});
 
         await pool.query(`
-            INSERT INTO ai_predictions (patient_id, model_type, prediction, probability, confidence, doctor_id, input_data)
-            VALUES ($1, 'diabetes', $2, $3, $4, $5, $6)
-        `, [patientId, result.prediction, result.probability, confidence, doctorId, JSON.stringify(payload)]);
+            INSERT INTO ai_predictions (patient_id, model_type, disease, prediction, probability, confidence, doctor_id, input_data, explanation)
+            VALUES ($1, 'diabetes', 'Diabetes', $2, $3, $4, $5, $6, $7)
+        `, [
+            patientId,
+            result.prediction,
+            result.probability,
+            confidence,
+            doctorId,
+            JSON.stringify(payload),
+            JSON.stringify({
+                top_features:       result.top_features || [],
+                feature_importance: result.feature_importance || [],
+                explanation:        result.explanation || ""
+            })
+        ]);
 
         res.json({
             patient_id:  parseInt(patientId),
@@ -743,34 +749,48 @@ router.get("/patient/predictions/:id", async (req, res) => {
         /* Lazy table + columns so the endpoint is safe on first load */
         await pool.query(`
             CREATE TABLE IF NOT EXISTS ai_predictions (
-                id           SERIAL PRIMARY KEY,
-                patient_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                model_type   VARCHAR(50) NOT NULL DEFAULT 'diabetes',
-                prediction   VARCHAR(20) NOT NULL,
-                probability  NUMERIC(5,2),
-                confidence   NUMERIC(5,2),
-                doctor_id    INTEGER REFERENCES users(id),
-                input_data   JSONB,
-                predicted_at TIMESTAMP DEFAULT NOW()
+                id             SERIAL PRIMARY KEY,
+                patient_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                model_type     VARCHAR(50) NOT NULL DEFAULT 'diabetes',
+                prediction     VARCHAR(20) NOT NULL,
+                probability    NUMERIC(5,2),
+                confidence     NUMERIC(5,2),
+                doctor_id      INTEGER REFERENCES users(id),
+                input_data     JSONB,
+                predicted_at   TIMESTAMP DEFAULT NOW()
             )
         `).catch(() => {});
         await pool.query(`
-            ALTER TABLE ai_predictions ADD COLUMN IF NOT EXISTS confidence NUMERIC(5,2),
-                                        ADD COLUMN IF NOT EXISTS doctor_id  INTEGER REFERENCES users(id)
+            ALTER TABLE ai_predictions
+                ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
+                ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
+                ADD COLUMN IF NOT EXISTS explanation    JSONB
         `).catch(() => {});
 
         const result = await pool.query(`
-            SELECT ap.id,
-                   ap.model_type AS disease_name,
-                   ap.prediction,
-                   ap.probability,
-                   ap.confidence,
-                   ap.predicted_at,
-                   u.name AS doctor_name
-            FROM ai_predictions ap
-            LEFT JOIN users u ON u.id = ap.doctor_id
-            WHERE ap.patient_id = $1
-            ORDER BY ap.predicted_at DESC
+            SELECT * FROM (
+                SELECT DISTINCT ON (COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''))
+                    ap.id,
+                    ap.appointment_id,
+                    ap.visit_id,
+                    ap.doctor_id,
+                    ap.model_type,
+                    ap.disease,
+                    ap.prediction,
+                    ap.probability,
+                    ap.confidence,
+                    ap.predicted_at,
+                    ap.explanation,
+                    u.name AS doctor_name
+                FROM ai_predictions ap
+                LEFT JOIN users u ON u.id = ap.doctor_id
+                WHERE ap.patient_id = $1
+                ORDER BY COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''), ap.predicted_at DESC
+            ) dedup
+            ORDER BY dedup.predicted_at DESC
         `, [req.params.id]);
         res.json(result.rows);
     } catch (err) {
@@ -1152,11 +1172,36 @@ router.get("/patient/medical-history/:id", async (req, res) => {
         let aiPredictions = [];
         const hasAi = await tableExists(pool, 'ai_predictions');
         if (hasAi) {
+            await pool.query(`
+                ALTER TABLE ai_predictions
+                    ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
+                    ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
+                    ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
+                    ADD COLUMN IF NOT EXISTS explanation    JSONB
+            `).catch(() => {});
             const aiRes = await pool.query(`
-                SELECT id, model_type, prediction, probability, input_data, predicted_at
-                FROM ai_predictions
-                WHERE patient_id = $1
-                ORDER BY predicted_at ASC
+                SELECT * FROM (
+                    SELECT DISTINCT ON (COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''))
+                        ap.id,
+                        ap.appointment_id,
+                        ap.visit_id,
+                        ap.doctor_id,
+                        ap.model_type,
+                        ap.disease,
+                        ap.prediction,
+                        ap.probability,
+                        ap.confidence,
+                        ap.explanation,
+                        ap.predicted_at,
+                        u.name AS doctor_name
+                    FROM ai_predictions ap
+                    LEFT JOIN users u ON u.id = ap.doctor_id
+                    WHERE ap.patient_id = $1
+                    ORDER BY COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''), ap.predicted_at DESC
+                ) dedup
+                ORDER BY dedup.predicted_at DESC
             `, [patientId]);
             aiPredictions = aiRes.rows;
         }
@@ -1199,6 +1244,207 @@ router.get("/patient/medical-history/:id", async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 
+});
+
+/* =====================================================
+   PATIENT TIMELINE
+   GET /patient/timeline/:id
+   Returns every visit (newest first) with all events:
+   appointment, vitals, clinical notes, prescription,
+   lab requests + reports, medicine dispensing, AI prediction.
+   Supports query filters: doctor_id, department, date, visit_id
+===================================================== */
+router.get("/patient/timeline/:id", async (req, res) => {
+
+    const pool      = req.app.locals.pool;
+    const patientId = req.params.id;
+    const { doctor_id, department, date, visit_id } = req.query;
+
+    try {
+
+        /* ---- Appointments ---- */
+        let apptWhere = `a.patient_id = $1 AND UPPER(a.status) NOT IN ('CANCELLED','CANCELED')`;
+        const apptParams = [patientId];
+        let pi = 2;
+        if (doctor_id)   { apptWhere += ` AND a.doctor_id = $${pi++}`;         apptParams.push(doctor_id); }
+        if (department)  { apptWhere += ` AND LOWER(a.department) = LOWER($${pi++})`; apptParams.push(department); }
+        if (date)        { apptWhere += ` AND a.appointment_date = $${pi++}`;  apptParams.push(date); }
+        if (visit_id)    { apptWhere += ` AND a.id = $${pi++}`;                apptParams.push(visit_id); }
+
+        const apptRes = await pool.query(`
+            SELECT
+                a.id, a.appointment_date, a.appointment_time, a.token_no,
+                a.status, a.symptoms, a.created_at AS booked_at, a.department,
+                u.id AS doctor_id, u.name AS doctor_name,
+                d.specialisation AS doctor_specialisation
+            FROM appointments a
+            JOIN users u       ON u.id = a.doctor_id
+            LEFT JOIN doctors d ON d.user_id = a.doctor_id
+            WHERE ${apptWhere}
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC, a.id DESC
+        `, apptParams);
+
+        if (!apptRes.rows.length) return res.json({ visits: [] });
+
+        const apptIds = apptRes.rows.map(r => r.id);
+        const inList  = apptIds.map((_, i) => `$${i + 1}`).join(',');
+
+        /* ---- Vitals ---- */
+        let vitalsByAppt = {};
+        const hasVitals = await tableExists(pool, 'patient_visits');
+        if (hasVitals) {
+            const r = await pool.query(
+                `SELECT * FROM patient_visits WHERE appointment_id IN (${inList}) ORDER BY created_at ASC`,
+                apptIds
+            );
+            r.rows.forEach(row => { vitalsByAppt[row.appointment_id] = row; });
+        }
+
+        /* ---- Clinical Notes ---- */
+        let notesByAppt = {};
+        const hasNotes = await tableExists(pool, 'clinical_notes');
+        if (hasNotes) {
+            const r = await pool.query(
+                `SELECT * FROM clinical_notes WHERE appointment_id IN (${inList}) ORDER BY created_at ASC`,
+                apptIds
+            );
+            r.rows.forEach(row => {
+                (notesByAppt[row.appointment_id] = notesByAppt[row.appointment_id] || []).push(row);
+            });
+        }
+
+        /* ---- Prescriptions + medicines + dispensing ---- */
+        let rxByAppt = {};
+        const hasDispensing    = await tableExists(pool, 'dispensing_records');
+        const hasPrescriptions = await tableExists(pool, 'prescriptions');
+        if (hasPrescriptions) {
+            const medicinesAgg = hasDispensing
+                ? `(SELECT COALESCE(json_agg(sub ORDER BY sub.id),'[]'::json) FROM (
+                       SELECT pm.id, m.medicine_name, pm.dosage, pm.frequency, pm.quantity, pm.duration,
+                              pm.food_timing, pm.morning, pm.afternoon, pm.night, pm.special_instructions,
+                              COALESCE(dr.quantity_dispensed,0) AS dispensed_qty,
+                              COALESCE(dr.medicine_availability,'') AS availability
+                       FROM prescription_medicines pm
+                       JOIN medicines m ON m.id = pm.medicine_id
+                       LEFT JOIN dispensing_records dr ON dr.prescription_medicine_id = pm.id
+                       WHERE pm.prescription_id = p.id) sub) AS medicines`
+                : `(SELECT COALESCE(json_agg(sub ORDER BY sub.id),'[]'::json) FROM (
+                       SELECT pm.id, m.medicine_name, pm.dosage, pm.frequency, pm.quantity, pm.duration,
+                              pm.food_timing, pm.morning, pm.afternoon, pm.night, pm.special_instructions,
+                              0 AS dispensed_qty, '' AS availability
+                       FROM prescription_medicines pm
+                       JOIN medicines m ON m.id = pm.medicine_id
+                       WHERE pm.prescription_id = p.id) sub) AS medicines`;
+
+            const dispensingAgg = hasDispensing
+                ? `(SELECT COALESCE(json_agg(sub2 ORDER BY sub2.dispensing_date,sub2.id),'[]'::json) FROM (
+                       SELECT dr.id, m2.medicine_name, dr.quantity_prescribed, dr.quantity_dispensed,
+                              dr.medicine_availability, dr.remarks, dr.dispensing_date, ph.name AS pharmacist_name
+                       FROM dispensing_records dr
+                       JOIN medicines m2 ON m2.id = dr.medicine_id
+                       JOIN users ph     ON ph.id = dr.pharmacist_id
+                       WHERE dr.prescription_id = p.id) sub2) AS dispensing`
+                : `'[]'::json AS dispensing`;
+
+            const r = await pool.query(
+                `SELECT p.id, p.appointment_id, p.visit_id, p.created_at, p.status,
+                        ${medicinesAgg}, ${dispensingAgg}
+                 FROM prescriptions p
+                 WHERE p.appointment_id IN (${inList})
+                 ORDER BY p.created_at ASC`,
+                apptIds
+            );
+            r.rows.forEach(row => { rxByAppt[row.appointment_id] = row; });
+        }
+
+        /* ---- Lab requests + reports ---- */
+        let labByAppt = {};
+        const hasLab = await tableExists(pool, 'lab_requests');
+        if (hasLab) {
+            const reportsAgg = await tableExists(pool, 'lab_request_reports')
+                ? `(SELECT COALESCE(json_agg(sub ORDER BY sub.id),'[]'::json) FROM (
+                       SELECT rr.id, rr.test_name, rr.report_file, rr.upload_date, tu.name AS technician_name
+                       FROM lab_request_reports rr
+                       LEFT JOIN users tu ON tu.id = rr.lab_technician_id
+                       WHERE rr.lab_request_id = lr.id) sub) AS reports`
+                : `'[]'::json AS reports`;
+
+            const r = await pool.query(
+                `SELECT lr.id, lr.appointment_id, lr.visit_id, lr.tests, lr.priority,
+                        lr.clinical_notes, lr.status, lr.created_at, lr.completed_at,
+                        lr.report_file, du.name AS doctor_name, ${reportsAgg}
+                 FROM lab_requests lr
+                 LEFT JOIN users du ON du.id = lr.doctor_id
+                 WHERE lr.appointment_id IN (${inList})
+                 ORDER BY lr.created_at ASC`,
+                apptIds
+            );
+            r.rows.forEach(row => {
+                const parsed = { ...row, tests: Array.isArray(row.tests) ? row.tests : (typeof row.tests === 'string' ? JSON.parse(row.tests) : []) };
+                (labByAppt[row.appointment_id] = labByAppt[row.appointment_id] || []).push(parsed);
+            });
+        }
+
+        /* ---- AI Predictions (keyed by appointment_id) ---- */
+        let aiByAppt = {};
+        const hasAi = await tableExists(pool, 'ai_predictions');
+        if (hasAi) {
+            await pool.query(`
+                ALTER TABLE ai_predictions
+                    ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
+                    ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
+                    ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
+                    ADD COLUMN IF NOT EXISTS explanation    JSONB
+            `).catch(() => {});
+            const r = await pool.query(
+                `SELECT * FROM (
+                    SELECT DISTINCT ON (ap.appointment_id, COALESCE(ap.disease, ap.model_type, ''))
+                        ap.id, ap.appointment_id, ap.visit_id, ap.doctor_id, ap.model_type,
+                        ap.disease, ap.prediction, ap.probability, ap.confidence, ap.explanation, ap.predicted_at,
+                        u.name AS doctor_name
+                    FROM ai_predictions ap
+                    LEFT JOIN users u ON u.id = ap.doctor_id
+                    WHERE ap.appointment_id IN (${inList})
+                    ORDER BY ap.appointment_id, COALESCE(ap.disease, ap.model_type, ''), ap.predicted_at DESC
+                ) dedup
+                ORDER BY dedup.predicted_at DESC`,
+                apptIds
+            );
+            r.rows.forEach(row => {
+                (aiByAppt[row.appointment_id] = aiByAppt[row.appointment_id] || []).push(row);
+            });
+        }
+
+        /* ---- Assemble visits (newest first — already sorted by query) ---- */
+        const visits = apptRes.rows.map(a => ({
+            appointment: {
+                id:                   a.id,
+                date:                 a.appointment_date,
+                time:                 a.appointment_time,
+                token_no:             a.token_no,
+                status:               a.status,
+                symptoms:             a.symptoms,
+                booked_at:            a.booked_at,
+                department:           a.department,
+                doctor_id:            a.doctor_id,
+                doctor_name:          a.doctor_name,
+                doctor_specialisation: a.doctor_specialisation
+            },
+            vitals:       vitalsByAppt[a.id] || null,
+            notes:        notesByAppt[a.id]  || [],
+            prescription: rxByAppt[a.id]     || null,
+            lab_requests: labByAppt[a.id]    || [],
+            ai_predictions: aiByAppt[a.id]   || []
+        }));
+
+        res.json({ visits });
+
+    } catch (err) {
+        console.error("TIMELINE ERROR:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
 });
 
 module.exports = router;

@@ -141,6 +141,7 @@
   <a class="nav-item" id="nav-lab"          href="#" onclick="goSection('lab'); return false;"><span class="icon">&#128300;</span> Lab Reports</a>
   <a class="nav-item" id="nav-rx"           href="#" onclick="goSection('prescriptions'); return false;"><span class="icon">&#128138;</span> Prescriptions</a>
   <a class="nav-item" id="nav-ai"           href="#" onclick="goSection('ai'); return false;"><span class="icon">&#129504;</span> AI Predictions</a>
+  <a class="nav-item" id="nav-ai-history"   href="#" onclick="goAIHistory(); return false;"><span class="icon">&#128203;</span> AI Prediction History</a>
   <div class="sidebar-bottom">
     <a class="nav-item" href="/patient-login"><span class="icon">&#128275;</span> Logout</a>
   </div>
@@ -250,6 +251,7 @@ const userId   = params.get("id");
 
 function goBack()        { window.location.href = userId ? `/patient/dashboard?id=${userId}` : `/patient/dashboard`; }
 function goSection(sec)  { window.location.href = userId ? `/patient/dashboard?id=${userId}&section=${sec}` : `/patient/dashboard`; }
+function goAIHistory()   { window.location.href = userId ? `/patient/ai-history?id=${userId}` : `/patient/ai-history`; }
 
 function val(v)  { return v || "—"; }
 function tags(arr, cls) {
