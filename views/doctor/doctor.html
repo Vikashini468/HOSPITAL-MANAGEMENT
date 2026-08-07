@@ -284,9 +284,10 @@
 <div class="sidebar">
     <h2>Doctor Panel</h2>
 
-    <div class="nav-item active" onclick="showSection('patients', this)">Patients</div>
-    <div class="nav-item" onclick="showSection('schedule', this)">Schedule</div>
-    <div class="nav-item" onclick="showSection('savedSchedule', this)">Saved Schedule</div>
+<div class="nav-item active" onclick="showSection('patients', this)">Patients</div>
+<div class="nav-item" onclick="showSection('schedule', this)">Schedule</div>
+<div class="nav-item" onclick="showSection('savedSchedule', this)">Saved Schedule</div>
+<div class="nav-item" onclick="showSection('labReports', this); loadLabReports();">Lab Reports</div>
 </div>
 
 <div class="main">
@@ -479,7 +480,7 @@
                     <button onclick="openPrescription()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">📋 Open Prescription Window</button>
 
                     <div style="margin-top:20px;">
-                        <button onclick="confirmLabReport()" style="padding:10px 24px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">✅ Confirm & Complete</button>
+                        <button id="labConfirmBtn" onclick="confirmLabReport()" style="padding:10px 24px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">✅ Confirm & Complete</button>
                     </div>
                 </div>
             </div>
@@ -874,7 +875,7 @@ async function loadAppointments() {
 
         /* Waiting Patients */
         waitingList.innerHTML = waiting.length
-            ? waiting.map(a => cardHtml(a)).join('')
+            ? waiting.map(a => cardHtml(a, { showLabReview: norm(a.status) === 'LAB_READY' })).join('')
             : '<p style="color:#888">No patients waiting.</p>';
         document.getElementById('waiting-section').style.display = 'block';
         document.getElementById('waiting-count').textContent = waiting.length;
@@ -1645,6 +1646,9 @@ async function predictDiseaseRisk() {
         const ts = data.predicted_at ? new Date(data.predicted_at) : new Date();
         const tsLabel = ts.toLocaleDateString() + ' ' + ts.toLocaleTimeString();
 
+        /* Keep the last report for re-opening the modal from the summary card */
+        window.__lastAiReport = data;
+
         box.innerHTML = `
             <div style="background:#f4f8ff;border:1px solid #d0e4ff;border-radius:10px;padding:14px;">
                 <div style="font-size:14px;font-weight:700;color:#0d47a1;text-align:center;margin-bottom:4px;">Disease Risk Summary</div>
@@ -1653,14 +1657,316 @@ async function predictDiseaseRisk() {
                 <div style="border-top:1px solid #e8f0fb;padding-top:10px;font-size:11px;color:#888;text-align:center;">
                     Prediction Timestamp: ${tsLabel}
                 </div>
+                <div style="border-top:1px solid #e8f0fb;padding-top:10px;display:flex;flex-direction:column;gap:8px;align-items:center;">
+                    <span style="display:inline-block;background:#fff3e0;color:#e65100;font-weight:700;font-size:12px;padding:4px 14px;border-radius:20px;">
+                        ⏳ Verification: Pending — not saved to the patient's medical history
+                    </span>
+                    <button class="primary-btn" style="background:#134f8f;padding:8px 18px;font-size:13px;" onclick="openAiReportModal(window.__lastAiReport)">
+                        Open AI Prediction Report
+                    </button>
+                </div>
             </div>
         `;
+
+        /* Professional report in a modal (download / print / verify) */
+        openAiReportModal(data);
 
     } catch (err) {
         console.error(err);
         box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Network error while running disease risk prediction.</span>';
     }
 
+}
+
+// =====================================================
+// AI PREDICTION REPORT MODAL (doctor verification step)
+// The report is PENDING (temporary) until the doctor
+// chooses "Verify & Save" or "Not Verified".
+// =====================================================
+
+let __aiReportModal = null;
+
+function aiReportModalHtml(data) {
+    const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const fmt = (v, suffix) => (v == null || isNaN(Number(v))) ? '—' : Number(v) + (suffix || '');
+
+    const hosp = data.hospital || {};
+    const ts = data.predicted_at ? new Date(data.predicted_at) : new Date();
+
+    const statusBadge = `
+        <span style="display:inline-block;background:#fff3e0;color:#e65100;font-weight:700;font-size:12px;padding:5px 16px;border-radius:20px;border:1px solid #ffcc80;">
+            Verification: Pending
+        </span>`;
+
+    const diseaseRows = (data.results || []).map(r => {
+        const risk = String(r.prediction || '').toUpperCase();
+        const isHigh = risk === 'HIGH RISK' || risk === 'POSITIVE';
+        const riskLevel = isHigh ? 'High' : (risk === 'MEDIUM' || risk === 'MODERATE' ? 'Medium' : 'Low');
+        const rc = isHigh ? '#c62828' : (riskLevel === 'Medium' ? '#e65100' : '#2e7d32');
+        const rb = isHigh ? '#fdecea' : (riskLevel === 'Medium' ? '#fff3e0' : '#dcfce7');
+        const modelNames = {
+            diabetes: 'Diabetes Risk Model',
+            hypertension: 'Hypertension Risk Model',
+            cardiovascular: 'Cardiovascular Risk Model'
+        };
+        return `
+            <tr>
+                <td style="padding:9px 10px;border-bottom:1px solid #e3eaf5;font-weight:700;color:#0d47a1;">${esc(r.disease || '—')}</td>
+                <td style="padding:9px 10px;border-bottom:1px solid #e3eaf5;">
+                    <span style="background:${rb};color:${rc};font-weight:700;font-size:12px;padding:3px 12px;border-radius:20px;">${esc(r.prediction || '—')}</span>
+                </td>
+                <td style="padding:9px 10px;border-bottom:1px solid #e3eaf5;text-align:center;font-weight:700;color:#0d47a1;">${fmt(r.probability, '%')}</td>
+                <td style="padding:9px 10px;border-bottom:1px solid #e3eaf5;text-align:center;font-weight:700;color:#1565c0;">${fmt(r.confidence, '%')}</td>
+                <td style="padding:9px 10px;border-bottom:1px solid #e3eaf5;text-align:center;color:${rc};font-weight:700;">${riskLevel}</td>
+                <td style="padding:9px 10px;border-bottom:1px solid #e3eaf5;color:#555;">${esc(modelNames[r.model_type] || r.model_type || 'AI Model')}</td>
+            </tr>`;
+    }).join('');
+
+    const infoRow = (label, value) => `
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed #e3eaf5;">
+            <span style="font-size:12px;font-weight:700;color:#0d47a1;">${label}</span>
+            <span style="font-size:12px;color:#333;text-align:right;">${esc(value)}</span>
+        </div>`;
+
+    return `
+        <div id="aiReportOverlay" onclick="if(event.target===this)closeAiReportModal()" style="
+            position:fixed;inset:0;background:rgba(10,25,47,.6);z-index:10000;
+            display:flex;align-items:center;justify-content:center;padding:24px;">
+            <div id="ai-report-sheet" style="
+                background:#fff;border-radius:14px;max-width:860px;width:100%;
+                max-height:92vh;overflow-y:auto;box-shadow:0 18px 60px rgba(0,0,0,.35);">
+
+                <style>
+                    @media print {
+                        body * { visibility: hidden; }
+                        #ai-report-sheet, #ai-report-sheet * { visibility: visible; }
+                        #ai-report-sheet { position:absolute; left:0; top:0; width:100%; max-height:none; overflow:visible; box-shadow:none; border-radius:0; }
+                        #ai-report-actions { display:none !important; }
+                    }
+                </style>
+
+                <!-- Hospital header -->
+                <div style="background:linear-gradient(135deg,#134f8f,#1a6fc4);color:#fff;padding:22px 26px;border-radius:14px 14px 0 0;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="width:54px;height:54px;border-radius:10px;background:#fff;color:#134f8f;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;">
+                            ${esc((hosp.name || 'H').charAt(0).toUpperCase())}
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-size:19px;font-weight:800;">${esc(hosp.name || 'Hospital')}</div>
+                            <div style="font-size:12px;opacity:.9;">${esc(hosp.tagline || '')}</div>
+                            <div style="font-size:11px;opacity:.8;margin-top:2px;">${esc(hosp.address || '')}</div>
+                            <div style="font-size:11px;opacity:.85;margin-top:2px;">${esc(hosp.phone || '')} &nbsp;|&nbsp; ${esc(hosp.email || '')} &nbsp;|&nbsp; ${esc(hosp.website || '')}</div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                </div>
+
+                <div style="padding:22px 26px;">
+                    <!-- Title -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+                        <div>
+                            <div style="font-size:17px;font-weight:800;color:#0d47a1;">AI Disease Risk Prediction Report</div>
+                            <div style="font-size:12px;color:#666;margin-top:2px;">Report No: ${esc(data.report_no || '—')} &nbsp;•&nbsp; Generated: ${ts.toLocaleString()}</div>
+                        </div>
+                    </div>
+
+                    <!-- Patient / visit / doctor -->
+                    <div style="background:#f4f8ff;border:1px solid #d0e4ff;border-radius:10px;padding:14px 18px;margin-bottom:18px;">
+                        ${infoRow('Patient ID', data.patient_health_id || data.patient_id || '—')}
+                        ${infoRow('Patient Name', data.patient_name || '—')}
+                        ${infoRow('Visit ID', data.visit_id || '—')}
+                        ${infoRow('Doctor', data.doctor_name ? 'Dr. ' + data.doctor_name : '—')}
+                        ${infoRow('Prediction Date / Time', ts.toLocaleString())}
+                    </div>
+
+                    <!-- Results table -->
+                    <div style="font-size:14px;font-weight:800;color:#0d47a1;margin-bottom:8px;">Prediction Results</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;">
+                        <thead>
+                            <tr style="background:#134f8f;color:#fff;">
+                                <th style="padding:9px 10px;text-align:left;">Disease</th>
+                                <th style="padding:9px 10px;text-align:left;">Prediction</th>
+                                <th style="padding:9px 10px;">Risk Probability</th>
+                                <th style="padding:9px 10px;">Confidence</th>
+                                <th style="padding:9px 10px;">Risk Level</th>
+                                <th style="padding:9px 10px;text-align:left;">Model</th>
+                            </tr>
+                        </thead>
+                        <tbody>${diseaseRows}</tbody>
+                    </table>
+
+                    <!-- Doctor notes (empty until verified) -->
+                    <div style="margin-top:18px;">
+                        <div style="font-size:14px;font-weight:800;color:#0d47a1;margin-bottom:6px;">Doctor Notes</div>
+                        <textarea id="ai-doctor-notes" rows="3" placeholder="Optional notes for the report (saved when you verify)…"
+                            style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;"></textarea>
+                    </div>
+
+                    <div id="ai-report-verdict" style="margin-top:14px;"></div>
+
+                    <!-- Actions -->
+                    <div id="ai-report-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid #e8f0fb;">
+                        <button class="primary-btn" style="background:#134f8f;" onclick="downloadAiReportPdf()">
+                            ⬇ Download as PDF
+                        </button>
+                        <button class="primary-btn" style="background:#1565c0;" onclick="window.print()">
+                            🖨 Print Report
+                        </button>
+                        <button class="primary-btn" style="background:#2e7d32;margin-left:auto;" onclick="verifyAiPrediction()">
+                            ✔ Verify &amp; Save
+                        </button>
+                        <button class="primary-btn" style="background:#c62828;" onclick="notVerifyAiPrediction()">
+                            ✖ Not Verified
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function openAiReportModal(data) {
+    if (!data) return;
+    closeAiReportModal();
+    const modal = document.createElement('div');
+    modal.innerHTML = aiReportModalHtml(data);
+    __aiReportModal = modal;
+    document.body.appendChild(modal);
+}
+
+function closeAiReportModal() {
+    if (__aiReportModal) {
+        __aiReportModal.remove();
+        __aiReportModal = null;
+    }
+}
+
+async function verifyAiPrediction() {
+    const data = window.__lastAiReport;
+    if (!data || !data.report_no || !currentAppointmentId) return;
+
+    const notesEl = document.getElementById('ai-doctor-notes');
+    const notes = notesEl ? notesEl.value : '';
+
+    const btn = document.querySelector('#ai-report-actions button:nth-last-child(2)');
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch(`/appointment/verify-prediction/${currentAppointmentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ report_no: data.report_no, doctor_notes: notes })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || 'Verification failed');
+
+        data.report_file = result.report_file || data.report_file;
+        data.verified_at = result.verified_at;
+
+        const verdict = document.getElementById('ai-report-verdict');
+        if (verdict) verdict.innerHTML = `
+            <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:12px 16px;">
+                <div style="font-weight:800;color:#2e7d32;">✔ Verified &amp; Saved Permanently</div>
+                <div style="font-size:12px;color:#444;margin-top:4px;">
+                    This prediction report is now part of the patient's permanent medical history.
+                    ${result.report_file ? `<a href="${result.report_file}" target="_blank" style="color:#1565c0;font-weight:700;">View verified PDF report →</a>` : ''}
+                </div>
+            </div>`;
+
+        const actions = document.getElementById('ai-report-actions');
+        if (actions) actions.style.display = 'none';
+
+        const badge = document.querySelector('#ai-report-sheet [style*="fff3e0"]');
+        if (badge) badge.outerHTML = `<span style="display:inline-block;background:#e8f5e9;color:#2e7d32;font-weight:700;font-size:12px;padding:5px 16px;border-radius:20px;border:1px solid #a5d6a7;">✓ Verification: Verified &amp; Saved</span>`;
+
+        /* Refresh the summary card under the button */
+        const box = document.getElementById('ai-prediction-result');
+        if (box) {
+            box.innerHTML += `
+                <div style="margin-top:10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 12px;font-size:12px;color:#2e7d32;font-weight:700;">
+                    ✔ Report ${result.report_no} verified &amp; saved permanently.
+                    ${result.report_file ? `<a href="${result.report_file}" target="_blank" style="color:#1565c0;">Download verified PDF</a>` : ''}
+                </div>`;
+        }
+    } catch (err) {
+        console.error(err);
+        const verdict = document.getElementById('ai-report-verdict');
+        if (verdict) verdict.innerHTML = `<div style="color:#c62828;font-size:13px;font-weight:700;">⚠️ ${String(err.message || 'Verification failed').replace(/</g, '&lt;')}</div>`;
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function notVerifyAiPrediction() {
+    const data = window.__lastAiReport;
+    if (!data || !data.report_no || !currentAppointmentId) return;
+
+    try {
+        const res = await fetch(`/appointment/not-verify-prediction/${currentAppointmentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ report_no: data.report_no })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || 'Failed to mark as not verified');
+
+        const verdict = document.getElementById('ai-report-verdict');
+        if (verdict) verdict.innerHTML = `
+            <div style="background:#ffebee;border:1px solid #ef9a9a;border-radius:10px;padding:12px 16px;">
+                <div style="font-weight:800;color:#c62828;">✖ Not Verified — Temporary Record Only</div>
+                <div style="font-size:12px;color:#444;margin-top:4px;">
+                    This prediction was NOT saved to the patient's medical history. You can run the
+                    prediction again with the same data, or collect more clinical data first.
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+                    <button class="primary-btn" style="background:#134f8f;" onclick="runPredictionAgain()">↻ Run Prediction Again</button>
+                    <button class="primary-btn" style="background:#7a4a0d;" onclick="collectMoreClinicalData()">📋 Collect More Clinical Data</button>
+                </div>
+            </div>`;
+
+        const actions = document.getElementById('ai-report-actions');
+        if (actions) actions.style.display = 'none';
+
+        const badge = document.querySelector('#ai-report-sheet [style*="fff3e0"]');
+        if (badge) badge.outerHTML = `<span style="display:inline-block;background:#ffebee;color:#c62828;font-weight:700;font-size:12px;padding:5px 16px;border-radius:20px;border:1px solid #ef9a9a;">✖ Verification: Not Verified</span>`;
+
+        const box = document.getElementById('ai-prediction-result');
+        if (box) {
+            box.innerHTML += `
+                <div style="margin-top:10px;background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;padding:10px 12px;font-size:12px;color:#c62828;font-weight:700;">
+                    ✖ Report ${result.report_no} marked as not verified — kept as a temporary record only.
+                </div>`;
+        }
+    } catch (err) {
+        console.error(err);
+        const verdict = document.getElementById('ai-report-verdict');
+        if (verdict) verdict.innerHTML = `<div style="color:#c62828;font-size:13px;font-weight:700;">⚠️ ${String(err.message || 'Failed to mark as not verified').replace(/</g, '&lt;')}</div>`;
+    }
+}
+
+function runPredictionAgain() {
+    closeAiReportModal();
+    predictDiseaseRisk();
+}
+
+function downloadAiReportPdf() {
+    const data = window.__lastAiReport;
+    if (!data || !data.report_file) {
+        alert('Report PDF is not available.');
+        return;
+    }
+    window.open(data.report_file, '_blank');
+}
+
+function collectMoreClinicalData() {
+    closeAiReportModal();
+    const firstInput = document.getElementById('v-height');
+    if (firstInput) {
+        firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInput.focus();
+    }
+    const box = document.getElementById('ai-prediction-result');
+    if (box) {
+        box.innerHTML = '<span style="color:#7a4a0d;font-size:13px;font-weight:700;">📋 Update the patient vitals / clinical data, click “Save Vitals”, then press “Predict Disease Risk” again.</span>';
+    }
 }
 
 // =====================================================
@@ -1709,6 +2015,203 @@ async function confirmLabConsultation(){
         console.error(err);
 
     }
+
+}
+
+// =====================================================
+// LAB REPORTS SECTION
+// =====================================================
+
+let labRequestsCache = [];
+let currentLabRequest = null;
+
+async function loadLabReports() {
+
+    try {
+
+        const res = await fetch("/lab/requests");
+
+        const requests = await res.json();
+
+        if (!Array.isArray(requests)) return;
+
+        labRequestsCache = requests;
+
+        const mine = requests.filter(r => String(r.doctor_id) === String(doctorId));
+
+        const waiting = mine.filter(r => {
+            const s = String(r.status || "").toUpperCase();
+            return s === 'PENDING' || s === 'IN_PROGRESS';
+        });
+
+        const ready = mine.filter(r => {
+            const s = String(r.status || "").toUpperCase();
+            return s === 'COMPLETED' || s === 'REVIEWED';
+        });
+
+        const waitingBox   = document.getElementById("waitingLab");
+        const completedBox = document.getElementById("completedLab");
+
+        if (waitingBox) {
+            waitingBox.innerHTML = waiting.length
+                ? waiting.map(labCard).join('')
+                : '<p style="color:#888;">No lab reports waiting for results.</p>';
+        }
+
+        if (completedBox) {
+            completedBox.innerHTML = ready.length
+                ? ready.map(labCard).join('')
+                : '<p style="color:#888;">No lab reports ready yet.</p>';
+        }
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+function labCard(lab) {
+
+    const s          = String(lab.status || "").toUpperCase();
+    const isReviewed = s === 'REVIEWED';
+
+    const badgeBg    = isReviewed ? '#dcfce7' : '#e3f0ff';
+    const badgeColor = isReviewed ? '#166534' : '#e65100';
+    const badgeLabel = isReviewed ? 'Verified' : 'Ready';
+
+    const reports = Array.isArray(lab.reports) ? lab.reports : [];
+    const files   = reports.length ? reports : (lab.report_file ? [{ report_file: lab.report_file }] : []);
+
+    const fileLinks = files.map(f => `
+        <a
+            href="/uploads/${f.report_file}"
+            target="_blank"
+            style="display:inline-block;margin:4px 6px 4px 0;padding:8px 14px;background:#0d47a1;color:white;border-radius:8px;text-decoration:none;font-size:13px;">
+            📄 ${f.test_name || 'Lab Report'}
+        </a>`).join('');
+
+    const tests = Array.isArray(lab.tests) ? lab.tests
+        : (typeof lab.tests === 'string' ? (() => { try { return JSON.parse(lab.tests); } catch { return []; } })() : []);
+
+    const verifyBtn = isReviewed
+        ? ''
+        : `<button
+            class="primary-btn"
+            style="background:#1b5e20;margin-top:10px;"
+            onclick="event.stopPropagation(); verifyLabReport(${lab.id}, ${lab.appointment_id});">
+            ✅ Verify & Complete
+        </button>`;
+
+    return `
+        <div class="d-card" style="cursor:pointer;" onclick="openLabDetail(${lab.id})">
+            <h3>${lab.patient_name || 'Patient'}</h3>
+            <p><b>Patient ID :</b> ${lab.patient_display_id || '-'}</p>
+            <p><b>Tests :</b> ${tests.length ? tests.join(', ') : '-'}</p>
+            <p><b>Requested :</b> ${fmtDate(lab.created_at)}</p>
+            ${lab.completed_at ? `<p><b>Completed :</b> ${fmtDate(lab.completed_at)}</p>` : ''}
+            <div style="margin-top:6px;">
+                <span style="display:inline-block;background:${badgeBg};color:${badgeColor};padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">${badgeLabel}</span>
+            </div>
+            <div style="margin-top:10px;">${fileLinks || '<p style="color:#e65100;font-size:13px;">Report file not attached yet.</p>'}</div>
+            ${verifyBtn}
+        </div>`;
+
+}
+
+function openLabDetail(labId) {
+
+    const lab = labRequestsCache.find(r => String(r.id) === String(labId));
+
+    if (!lab) return;
+
+    currentLabRequest = lab;
+
+    const panel = document.getElementById("labDetailPanel");
+
+    document.getElementById("labDetailName").textContent = lab.patient_name || "Patient";
+
+    const tests = Array.isArray(lab.tests) ? lab.tests
+        : (typeof lab.tests === 'string' ? (() => { try { return JSON.parse(lab.tests); } catch { return []; } })() : []);
+
+    document.getElementById("labDetailTests").textContent = "Tests: " + (tests.length ? tests.join(', ') : '-');
+
+    const reports = Array.isArray(lab.reports) ? lab.reports : [];
+    const files   = reports.length ? reports : (lab.report_file ? [{ report_file: lab.report_file }] : []);
+
+    const pdfLink = document.getElementById("labDetailPdf");
+
+    if (files.length) {
+        pdfLink.href = "/uploads/" + files[0].report_file;
+        pdfLink.style.display = "inline-block";
+    } else {
+        pdfLink.style.display = "none";
+    }
+
+    const isReviewed = String(lab.status || "").toUpperCase() === 'REVIEWED';
+
+    const confirmBtn = document.getElementById("labConfirmBtn");
+
+    if (confirmBtn) confirmBtn.style.display = isReviewed ? "none" : "inline-block";
+
+    panel.style.display = "block";
+
+}
+
+function closeLabDetail() {
+
+    const panel = document.getElementById("labDetailPanel");
+
+    if (panel) panel.style.display = "none";
+
+    currentLabRequest = null;
+
+}
+
+async function verifyLabReport(labRequestId, appointmentId) {
+
+    try {
+
+        const res = await fetch(`/appointment/confirm-lab/${appointmentId}`, { method: "POST" });
+
+        const result = await res.json();
+
+        if (result.success) {
+
+            alert("Lab report verified. Consultation completed and saved to the patient's record.");
+
+            closeLabDetail();
+
+            loadLabReports();
+
+            loadAppointments();
+
+        } else {
+
+            alert(result.message || "Unable to complete verification.");
+
+        }
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+        alert("Unable to verify lab report.");
+
+    }
+
+}
+
+function confirmLabReport() {
+
+    if (!currentLabRequest) return;
+
+    verifyLabReport(currentLabRequest.id, currentLabRequest.appointment_id);
 
 }
 
@@ -1920,6 +2423,8 @@ window.onload = function(){
 
     loadStock();
 
+    loadLabReports();
+
     loadNotifications();
 
     /* Deep link: ?openReport=<appointmentId> (from a lab notification) */
@@ -1938,6 +2443,13 @@ window.onload = function(){
 setInterval(function(){
 
     loadAppointments();
+
+},30000);
+
+/* refresh lab reports every 30s too */
+setInterval(function(){
+
+    loadLabReports();
 
 },30000);
 

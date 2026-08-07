@@ -264,6 +264,131 @@
 
     .back-btn:hover { background: #f0f5ff; }
 
+    /* ── AI DISEASE PREDICTION RESULTS ── */
+    .ai-act-btn { margin-bottom: 0 !important; background: #0d47a1; color: #fff; border-color: #0d47a1; }
+    .ai-act-btn:hover { background: #1565c0; color: #fff; }
+
+    .ai-consult {
+      background: white;
+      border: 1px solid #e3eaf5;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .ai-consult-head {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+    }
+    .ai-consult-head .ai-title { font-size: 15px; font-weight: 800; }
+    .ai-consult-head .ai-sub { font-size: 12px; opacity: 0.92; margin-top: 2px; }
+    .ai-consult-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .ai-consult-body { padding: 16px 18px; }
+
+    .ai-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px 14px;
+      margin-bottom: 16px;
+    }
+    .ai-meta .ai-m-item { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .ai-meta .ai-m-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+    .ai-meta .ai-m-value { font-size: 13px; font-weight: 700; color: #222; text-align: right; }
+
+    .ai-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .ai-card {
+      background: #fbfdff;
+      border: 1px solid #d0e4ff;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ai-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .ai-card-disease { font-size: 14px; font-weight: 800; color: #0d47a1; }
+    .ai-card-time { font-size: 11px; color: #888; margin-top: 2px; }
+
+    .ai-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .ai-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .ai-metric {
+      background: white;
+      border: 1px solid #eef1f6;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .ai-metric .m-l { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .4px; }
+    .ai-metric .m-v { font-size: 16px; font-weight: 800; color: #0d47a1; }
+
+    .ai-progress .pr-row { display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 3px; }
+    .ai-progress .pr-track { background: #e8eef8; border-radius: 6px; height: 7px; }
+    .ai-progress .pr-fill { height: 100%; border-radius: 6px; }
+
+    .ai-rows { display: flex; flex-direction: column; }
+    .ai-rows .ar { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; padding: 3px 0; }
+    .ai-rows .ar .ar-l { color: #888; white-space: nowrap; }
+    .ai-rows .ar .ar-v { color: #222; font-weight: 600; text-align: right; }
+
+    .ai-card .profile-row2 { padding: 3px 0; font-size: 12px; gap: 8px; }
+    .ai-card .profile-row2 .lbl { min-width: 90px; font-size: 11px; }
+    .ai-card .profile-row2 .val { font-size: 11px; }
+
+    .ai-summary {
+      background: #f4f8ff;
+      border: 1px solid #d0e4ff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+    .ai-summary-title { font-size: 12px; font-weight: 800; color: #0d47a1; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    .ai-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+    }
+    .ai-sum-item { background: white; border-radius: 8px; padding: 8px 10px; }
+    .ai-sum-item .s-l { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .4px; }
+    .ai-sum-item .s-v { font-size: 15px; font-weight: 800; margin-top: 2px; }
+    .ai-assess { margin-top: 10px; font-size: 12px; color: #333; line-height: 1.55; background: white; border-radius: 8px; padding: 8px 10px; }
+
+    @media (max-width: 1100px) { .ai-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px)  { .ai-grid { grid-template-columns: 1fr; } }
+
+    @media print {
+      body { background: #fff; }
+      .sidebar, .topbar, .back-btn, .ai-act-btn, #aiPredictionList .ai-no-print { display: none !important; }
+      .main { overflow: visible; }
+      .content { max-width: none; padding: 0; }
+      #view-ai { display: block !important; }
+      .ai-card { break-inside: avoid; }
+      .ai-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    }
+
     .profile-header-card {
       background: white;
       border-radius: 16px;
@@ -1231,7 +1356,18 @@
     <!-- AI DISEASE PREDICTION VIEW -->
     <div id="view-ai" style="display:none;">
       <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-      <div class="sec-title" style="margin-top:14px;">AI Disease Prediction</div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:14px;margin-bottom:16px;">
+        <div>
+          <div class="sec-title" style="margin:0;">AI Disease Prediction</div>
+          <div style="font-size:13px;color:#888;">Verified AI risk results grouped by consultation.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="back-btn ai-act-btn" onclick="downloadAllReports()">&#128229; Download All Reports</button>
+          <button class="back-btn ai-act-btn" onclick="printAIReports()">&#128424; Print Reports</button>
+        </div>
+      </div>
+
       <div id="aiPredictionList"></div>
     </div>
 
@@ -1408,6 +1544,7 @@ let doctorsData   = [];
 let selectedDept  = null;
 let selectedDoctor = null;
 let selectedSlot  = null;
+let doctorNextDate = {};   /* doctor_id -> next date with free slots (next 7 days) */
 
 function showBookAppointment() {
   hideAllViews();
@@ -1734,18 +1871,33 @@ function renderDoctors() {
 
   const today = new Date();
   const todayISO  = today.toISOString().split("T")[0];
-  const todayName = today.toLocaleDateString("en-US", { weekday: "long" });
+
+  /* next 7 days (including today) */
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    days.push({
+      iso:  d.toISOString().split("T")[0],
+      name: d.toLocaleDateString("en-US", { weekday: "long" })
+    });
+  }
 
   Promise.all(list.map(async d => {
     try {
-      const [schRes, slotRes] = await Promise.all([
-        fetch(`/doctor/schedule/${d.id}`),
-        fetch(`/doctor/slots/${d.id}/${todayName}?date=${todayISO}`)
-      ]);
-      const sch   = await schRes.json();
-      const slots = await slotRes.json();
-      if (!Array.isArray(slots) || slots.length === 0) return null;
-      return { ...d, schedule: sch, freeSlots: slots };
+      const sch = await (await fetch(`/doctor/schedule/${d.id}`)).json();
+      const avail = (sch.available_days || "").split(",").map(x => x.trim()).filter(Boolean);
+      if (!avail.length || !sch.start_time || !sch.end_time) return null;
+      /* find the first day in the window the doctor actually has free slots */
+      for (const day of days) {
+        if (!avail.includes(day.name)) continue;
+        const slots = await (await fetch(`/doctor/slots/${d.id}/${day.name}?date=${day.iso}`)).json();
+        if (Array.isArray(slots) && slots.length) {
+          doctorNextDate[d.id] = day.iso;
+          return { ...d, schedule: sch, freeSlots: slots, nextDate: day.iso, nextDayName: day.name };
+        }
+      }
+      return null;
     } catch (e) { return null; }
   })).then(results => {
     if (requestId !== deptRequestId) return;  /* stale response — user changed department */
@@ -1755,9 +1907,10 @@ function renderDoctors() {
           <button class="dept-card" onclick="selectDoctor(${d.id})">
             <div class="dept-name">Dr. ${d.name}</div>
             <div class="dept-count">${d.specialization || "General"}</div>
-            <div class="dept-timing">Today: ${d.schedule.start_time || "-"} - ${d.schedule.end_time || "-"}</div>
+            <div class="dept-timing">${d.schedule.start_time} - ${d.schedule.end_time}</div>
+            <div class="dept-timing" style="color:#2e7d32;">Next available: ${new Date(d.nextDate + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} (${d.nextDayName})</div>
           </button>`).join("")
-      : '<p class="no-slots">No doctors available today in this department.</p>';
+      : '<p class="no-slots">No doctors available in the next 7 days in this department.</p>';
   });
 }
 
@@ -1780,7 +1933,8 @@ async function loadDoctorSchedule() {
     const today = new Date();
     const dateInput = document.getElementById("slotDate");
     dateInput.min = today.toISOString().split("T")[0];
-    dateInput.value = dateInput.min;
+    const preferred = selectedDoctor && doctorNextDate[selectedDoctor.id];
+    dateInput.value = preferred && preferred >= dateInput.min ? preferred : dateInput.min;
     loadSlots();
   } catch (e) { console.error(e); }
 }
@@ -2244,6 +2398,8 @@ function tlVisitFull(visit) {
             ${p.doctor_name    ? `<span class="tl-chip"><b>Doctor:</b> Dr. ${p.doctor_name}</span>` : ''}
             ${p.appointment_id ? `<span class="tl-chip"><b>Visit ID:</b> ${p.appointment_id}</span>` : ''}
             ${p.visit_id       ? `<span class="tl-chip"><b>Record ID:</b> ${p.visit_id}</span>` : ''}
+            ${String(p.verification_status || '').toUpperCase() === 'VERIFIED' ? `<span class="tl-chip" style="color:#2e7d32;font-weight:700;">✓ Verified</span>` : ''}
+            ${p.report_file ? `<span class="tl-chip"><a href="${p.report_file}" target="_blank" style="color:#1565c0;font-weight:700;">📄 View Report</a></span>` : ''}
           </div>
           ${aiExplanationCard(p)}`
       ));
@@ -2281,6 +2437,19 @@ function showAI() {
 
 function goAIHistory() {
   window.location.href = userId ? `/patient/ai-history?id=${userId}` : `/patient/ai-history`;
+}
+
+/* Shared "Verified" badge + report download link for verified AI predictions */
+function aiReportLink(p) {
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const rows = [];
+  if (String(p.verification_status || "").toUpperCase() === "VERIFIED" || p.report_no) {
+    rows.push(`<div class="profile-row2"><span class="lbl">Verified</span><span class="val" style="color:#2e7d32;font-weight:700;">✓ Yes</span></div>`);
+  }
+  if (p.report_file) {
+    rows.push(`<div class="profile-row2"><span class="lbl">Report</span><span class="val"><a href="${esc(p.report_file)}" target="_blank" style="color:#1565c0;font-weight:700;">📄 View Verified Report</a></span></div>`);
+  }
+  return rows.join("");
 }
 
 /* Shared explainable-AI card used in both the AI Predictions section and Medical History */
@@ -2339,6 +2508,10 @@ function aiExplanationCard(p) {
     </details>`;
 }
 
+let __aiAllPredictions = [];
+let __aiPatientName = "";
+let __aiPatientHealthId = "";
+
 async function loadPredictions() {
   const box = document.getElementById("aiPredictionList");
   box.innerHTML = '<p class="no-slots">Loading AI predictions...</p>';
@@ -2347,7 +2520,17 @@ async function loadPredictions() {
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   try {
-    const res  = await fetch(`/patient/predictions/${userId}`);
+    const [profileRes, res] = await Promise.all([
+      fetch(`/api/patient/profile/${userId}`),
+      fetch(`/patient/predictions/${userId}`)
+    ]);
+
+    try {
+      const prof = await profileRes.json();
+      __aiPatientName     = (prof.user && prof.user.name)     || "";
+      __aiPatientHealthId = (prof.patient && prof.patient.health_id) || "";
+    } catch (e) { /* profile is optional */ }
+
     const preds = await res.json();
 
     if (!Array.isArray(preds) || !preds.length) {
@@ -2355,80 +2538,162 @@ async function loadPredictions() {
       return;
     }
 
+    __aiAllPredictions = preds;
+
     const fmtPct = v => (v == null || isNaN(v)) ? '—' : Number(v) + '%';
-    const highRisk = preds.filter(p => String(p.prediction || "").toUpperCase() === "HIGH RISK").length;
+    const isPositive = p => {
+      const r = String(p.prediction || "").toUpperCase();
+      return r.includes("HIGH") || r.includes("POSITIVE");
+    };
 
-    const summary = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px;">
-        <div class="p-card" style="margin:0;">
-          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">Total Predictions</div>
-          <div style="font-size:24px;font-weight:800;color:#0d47a1;margin-top:4px;">${preds.length}</div>
-        </div>
-        <div class="p-card" style="margin:0;">
-          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">High Risk</div>
-          <div style="font-size:24px;font-weight:800;color:#c62828;margin-top:4px;">${highRisk}</div>
-        </div>
-        <div class="p-card" style="margin:0;">
-          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">Low Risk</div>
-          <div style="font-size:24px;font-weight:800;color:#166534;margin-top:4px;">${preds.length - highRisk}</div>
-        </div>
-        <div class="p-card" style="margin:0;">
-          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;">Latest Prediction</div>
-          <div style="font-size:14px;font-weight:700;color:#0d47a1;margin-top:4px;">${tlDate(preds[0].predicted_at)}</div>
-        </div>
-      </div>`;
+    /* Group predictions by consultation (appointment_id) */
+    const groups = new Map();
+    preds.forEach(p => {
+      const key = p.appointment_id != null ? String(p.appointment_id) : ("ts-" + (p.predicted_at || p.id || Math.random()));
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(p);
+    });
 
-    box.innerHTML = summary + preds.map(p => {
-      const risk   = String(p.prediction || "").toUpperCase();
-      const isHigh = risk === "HIGH RISK";
-      const badgeBg = isHigh ? '#fdecea' : '#dcfce7';
-      const badgeFg = isHigh ? '#c62828' : '#166534';
-      const probBar = p.probability != null
-        ? `<div style="margin-top:10px;">
-             <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
-               <span>Risk Probability</span><span>${p.probability}%</span>
-             </div>
-             <div style="background:#e8eef8;border-radius:6px;height:8px;">
-               <div style="width:${Math.min(p.probability,100)}%;height:100%;border-radius:6px;background:${isHigh?'#c62828':'#2e7d32'};"></div>
-             </div>
-           </div>` : '';
+    const groupList = [...groups.values()].sort((a, b) => {
+      const ta = new Date(a[0].predicted_at || 0);
+      const tb = new Date(b[0].predicted_at || 0);
+      return tb - ta;
+    });
 
-      return `
-      <div class="p-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <div>
-            <h3 style="margin:0;">&#129504; ${esc(p.disease || p.model_type || 'Disease Prediction')}</h3>
-            <div style="font-size:12px;color:#888;margin-top:2px;">${tlTime(p.predicted_at)}</div>
-          </div>
-          <span class="badge-id" style="background:${badgeBg};color:${badgeFg};font-size:13px;padding:5px 14px;">${esc(p.prediction || '—')}</span>
-        </div>
-        <hr>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:8px;">
-          <div style="background:#f4f8ff;border-radius:8px;padding:10px;text-align:center;">
-            <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Risk Probability</div>
-            <div style="font-size:20px;font-weight:800;color:#0d47a1;">${fmtPct(p.probability)}</div>
-          </div>
-          <div style="background:#f4f8ff;border-radius:8px;padding:10px;text-align:center;">
-            <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Confidence Score</div>
-            <div style="font-size:20px;font-weight:800;color:#1565c0;">${fmtPct(p.confidence)}</div>
-          </div>
-        </div>
-        ${probBar}
-        <div class="profile-row2"><span class="lbl">Disease</span><span class="val">${esc(p.disease || p.model_type || '—')}</span></div>
-        <div class="profile-row2"><span class="lbl">Prediction</span><span class="val">${esc(p.prediction || '—')}</span></div>
-        <div class="profile-row2"><span class="lbl">Prediction Date</span><span class="val">${tlTime(p.predicted_at) || '—'}</span></div>
-        <div class="profile-row2"><span class="lbl">Doctor</span><span class="val">${p.doctor_name ? 'Dr. ' + esc(p.doctor_name) : '—'}</span></div>
-        <div class="profile-row2"><span class="lbl">Patient ID</span><span class="val">${esc(userId || '—')}</span></div>
-        <div class="profile-row2"><span class="lbl">Visit ID</span><span class="val">${p.appointment_id || '—'}</span></div>
-        <div class="profile-row2"><span class="lbl">Record ID</span><span class="val">${p.visit_id || '—'}</span></div>
-        <div class="profile-row2"><span class="lbl">Doctor ID</span><span class="val">${p.doctor_id || '—'}</span></div>
-        ${aiExplanationCard(p)}
-      </div>`;
-    }).join('');
+    box.innerHTML = groupList.map(g => consultationHtml(g, { esc, fmtPct, isPositive })).join('');
   } catch (err) {
     console.error(err);
     box.innerHTML = '<p style="color:#c62828;">Unable to load AI predictions.</p>';
   }
+}
+
+function consultationHtml(group, { esc, fmtPct, isPositive }) {
+  const latest = group[0];
+  const docName  = latest.doctor_name ? 'Dr. ' + esc(latest.doctor_name) : '—';
+  const visitId  = latest.appointment_id != null ? esc(String(latest.appointment_id)) : '—';
+  const recordId = latest.visit_id != null ? esc(String(latest.visit_id)) : '—';
+  const tTime    = latest.predicted_at ? (tlTime(latest.predicted_at).split('·')[1] || '').trim() : '';
+  const when     = latest.predicted_at ? (tlDate(latest.predicted_at) + (tTime ? ' · ' + tTime : '')) : '—';
+
+  const positives = group.filter(isPositive).length;
+  const negatives = group.length - positives;
+  const verified  = group.some(p => String(p.verification_status || "").toUpperCase() === "VERIFIED" || p.report_no);
+  const assessment = positives > 0
+    ? `⚠️ Positive risk signal detected in ${positives} condition${positives > 1 ? 's' : ''}. We recommend a clinical follow-up with your doctor.`
+    : `✅ All ${group.length} condition${group.length > 1 ? 's' : ''} show no elevated risk. Continue routine monitoring.`;
+
+  const metaItem = (l, v) => `<div class="ai-m-item"><span class="ai-m-label">${l}</span><span class="ai-m-value">${v}</span></div>`;
+  const sumItem  = (l, v, color) => `<div class="ai-sum-item"><div class="s-l">${l}</div><div class="s-v" style="color:${color};">${v}</div></div>`;
+
+  return `
+    <div class="ai-consult" id="ai-consult-${visitId}">
+      <div class="ai-consult-head">
+        <div>
+          <div class="ai-title">🤖 AI Disease Risk Analysis</div>
+          <div class="ai-sub">${esc(__aiPatientName || 'Patient')} &nbsp;•&nbsp; Visit ${visitId}</div>
+        </div>
+        <div class="ai-consult-badges">
+          <span class="ai-badge" style="background:rgba(255,255,255,.22);color:#fff;">📅 ${when}</span>
+          ${verified
+            ? '<span class="ai-badge" style="background:#dcfce7;color:#166534;">✓ Verified</span>'
+            : '<span class="ai-badge" style="background:#fff3e0;color:#e65100;">⏳ Pending Verification</span>'}
+        </div>
+      </div>
+
+      <div class="ai-consult-body">
+        <div class="ai-meta">
+          ${metaItem('Patient Name', esc(__aiPatientName || '—'))}
+          ${metaItem('Patient ID', esc(__aiPatientHealthId || userId || '—'))}
+          ${metaItem('Visit ID', visitId)}
+          ${metaItem('Record ID', recordId)}
+          ${metaItem('Consultation Date', esc(tlDate(latest.predicted_at)))}
+          ${metaItem('Doctor', docName)}
+        </div>
+
+        <div class="ai-grid">
+          ${group.map(p => aiCard(p, { esc, fmtPct, isPositive })).join('')}
+        </div>
+
+        <div class="ai-summary">
+          <div class="ai-summary-title">📋 Overall Consultation Summary</div>
+          <div class="ai-summary-grid">
+            ${sumItem('Diseases Analyzed', group.length, '#0d47a1')}
+            ${sumItem('Positive', positives, '#c62828')}
+            ${sumItem('Negative', negatives, '#166534')}
+            ${sumItem('Verification', verified ? 'Verified' : 'Pending', verified ? '#166534' : '#e65100')}
+          </div>
+          <div class="ai-assess"><b>Overall AI Assessment :</b> ${assessment}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function aiCard(p, { esc, fmtPct, isPositive }) {
+  const high = isPositive(p);
+  const risk = String(p.prediction || '—');
+  const badgeBg = high ? '#fdecea' : '#dcfce7';
+  const badgeFg = high ? '#c62828' : '#166534';
+  const barColor = high ? '#c62828' : '#2e7d32';
+  const prob = Number(p.probability);
+  const verified = String(p.verification_status || "").toUpperCase() === "VERIFIED" || p.report_no;
+  const probBar = !isNaN(prob)
+    ? `<div class="ai-progress">
+         <div class="pr-row"><span>Risk Probability</span><span style="font-weight:700;color:${barColor};">${prob}%</span></div>
+         <div class="pr-track"><div class="pr-fill" style="width:${Math.min(prob, 100)}%;background:${barColor};"></div></div>
+       </div>`
+    : '';
+
+  return `
+    <div class="ai-card">
+      <div class="ai-card-head">
+        <div>
+          <div class="ai-card-disease">🧬 ${esc(p.disease || p.model_type || 'Disease Prediction')}</div>
+          <div class="ai-card-time">🕒 ${tlTime(p.predicted_at) || '—'}</div>
+        </div>
+        <span class="ai-badge" style="background:${badgeBg};color:${badgeFg};">${esc(risk)}</span>
+      </div>
+
+      <div class="ai-metrics">
+        <div class="ai-metric"><div class="m-l">Risk Probability</div><div class="m-v">${fmtPct(p.probability)}</div></div>
+        <div class="ai-metric"><div class="m-l">Confidence</div><div class="m-v" style="color:#1565c0;">${fmtPct(p.confidence)}</div></div>
+      </div>
+
+      ${probBar}
+
+      <div class="ai-rows">
+        <div class="ar"><span class="ar-l">Doctor</span><span class="ar-v">${p.doctor_name ? 'Dr. ' + esc(p.doctor_name) : '—'}</span></div>
+        <div class="ar"><span class="ar-l">Patient ID</span><span class="ar-v">${esc(__aiPatientHealthId || userId || '—')}</span></div>
+        <div class="ar"><span class="ar-l">Visit ID</span><span class="ar-v">${p.appointment_id != null ? esc(String(p.appointment_id)) : '—'}</span></div>
+        <div class="ar"><span class="ar-l">Verification</span><span class="ar-v" style="${verified ? 'color:#2e7d32;' : 'color:#e65100;'}">${verified ? '✓ Verified' : '⏳ Pending'}</span></div>
+      </div>
+
+      ${aiReportLink(p)}
+      ${aiExplanationCard(p)}
+    </div>`;
+}
+
+async function downloadAllReports() {
+  if (!__aiAllPredictions.length) return;
+  const files = [...new Set(__aiAllPredictions.filter(p => p.report_file).map(p => p.report_file))];
+  if (!files.length) { alert("No verified report files available to download."); return; }
+  for (const url of files) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = decodeURIComponent(url.split("/").pop() || ("report_" + Date.now() + ".pdf"));
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    } catch (e) { console.error("Download failed:", url, e); }
+  }
+}
+
+function printAIReports() {
+  document.querySelectorAll("#view-ai details").forEach(d => d.open = true);
+  window.print();
 }
 
 function tlDate(v) {
@@ -2688,6 +2953,8 @@ async function loadMedicalHistory() {
                    ${p.doctor_name   ? `<span class="tl-chip"><b>Doctor:</b> Dr. ${p.doctor_name}</span>` : ''}
                    ${p.appointment_id ? `<span class="tl-chip"><b>Visit ID:</b> ${p.appointment_id}</span>` : ''}
                    ${p.visit_id       ? `<span class="tl-chip"><b>Record ID:</b> ${p.visit_id}</span>` : ''}
+                   ${String(p.verification_status || '').toUpperCase() === 'VERIFIED' ? `<span class="tl-chip" style="color:#2e7d32;font-weight:700;">✓ Verified</span>` : ''}
+                   ${p.report_file ? `<span class="tl-chip"><a href="${p.report_file}" target="_blank" style="color:#1565c0;font-weight:700;">📄 View Report</a></span>` : ''}
                  </div>
                  ${aiExplanationCard(p)}`
               );

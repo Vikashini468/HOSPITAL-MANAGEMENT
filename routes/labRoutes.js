@@ -575,7 +575,7 @@ router.get("/patient-reports/:patientId", async (req, res) => {
 
             WHERE
                 lr.patient_id=$1
-                AND UPPER(lr.status) IN ('COMPLETED','REVIEWED')
+                AND UPPER(lr.status) = 'REVIEWED'
 
             ORDER BY lr.created_at DESC
             `,

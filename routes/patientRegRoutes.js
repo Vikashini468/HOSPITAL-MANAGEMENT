@@ -449,7 +449,9 @@ router.get("/record/:userId", async (req, res) => {
                 SELECT lr.id, lr.tests, lr.status, lr.report_file, lr.created_at,
                        u.name AS doctor_name
                 FROM lab_requests lr JOIN users u ON u.id=lr.doctor_id
-                WHERE lr.patient_id=$1 ORDER BY lr.created_at DESC LIMIT 20
+                WHERE lr.patient_id=$1
+                  AND UPPER(lr.status) = 'REVIEWED'
+                ORDER BY lr.created_at DESC LIMIT 20
             `, [req.params.userId])
         ]);
 
@@ -696,6 +698,7 @@ async function getMedicalRecord(pool, uid) {
             FROM lab_requests lr
             LEFT JOIN users u ON u.id = lr.doctor_id
             WHERE lr.patient_id = $1
+              AND UPPER(lr.status) = 'REVIEWED'
             ORDER BY lr.created_at DESC
         `, [uid])
     ]);
@@ -706,27 +709,43 @@ async function getMedicalRecord(pool, uid) {
         throw err;
     }
 
-    /* AI predictions — table may not exist until first prediction is run */
+    /* AI predictions — table may not exist until first prediction is run.
+       Only VERIFIED predictions appear in the patient's medical record;
+       legacy rows (pre-verification) are treated as VERIFIED. */
     let aiPredictions = [];
     if (hasAiTbl) {
         try {
             await pool.query(`
                 ALTER TABLE ai_predictions
-                    ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
-                    ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
-                    ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
-                    ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
-                    ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
-                    ADD COLUMN IF NOT EXISTS explanation    JSONB
+                    ADD COLUMN IF NOT EXISTS appointment_id     INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS visit_id           INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+                    ADD COLUMN IF NOT EXISTS doctor_id          INTEGER REFERENCES users(id),
+                    ADD COLUMN IF NOT EXISTS disease            VARCHAR(100),
+                    ADD COLUMN IF NOT EXISTS confidence         NUMERIC(5,2),
+                    ADD COLUMN IF NOT EXISTS explanation        JSONB,
+                    ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'PENDING',
+                    ADD COLUMN IF NOT EXISTS doctor_notes        TEXT,
+                    ADD COLUMN IF NOT EXISTS verified_at         TIMESTAMP,
+                    ADD COLUMN IF NOT EXISTS report_no           VARCHAR(40),
+                    ADD COLUMN IF NOT EXISTS report_file         VARCHAR(500)
+            `).catch(() => {});
+            await pool.query(`
+                UPDATE ai_predictions
+                   SET verification_status = 'VERIFIED'
+                 WHERE report_no IS NULL
+                   AND verified_at IS NULL
+                   AND COALESCE(verification_status, 'PENDING') = 'PENDING'
             `).catch(() => {});
             const ai = await pool.query(`
                 SELECT ap.id, ap.appointment_id, ap.visit_id, ap.doctor_id,
                        ap.model_type, ap.disease, ap.prediction,
                        ap.probability, ap.confidence, ap.explanation, ap.predicted_at,
+                       ap.verification_status, ap.report_no, ap.report_file, ap.verified_at,
                        u.name AS doctor_name
                 FROM ai_predictions ap
                 LEFT JOIN users u ON u.id = ap.doctor_id
                 WHERE ap.patient_id = $1
+                  AND COALESCE(ap.verification_status, 'VERIFIED') = 'VERIFIED'
                 ORDER BY ap.predicted_at DESC
             `, [uid]);
             aiPredictions = ai.rows;
@@ -939,15 +958,16 @@ router.get("/medical-docx/:userId", async (req, res) => {
                 : [line("No lab reports found.", true)]
             ),
 
-            section("8. AI Predictions"),
+            section("8. AI Predictions (Verified)"),
             ...( d.ai_predictions.length
                 ? d.ai_predictions.map(ap => line(
                     `${fmt(ap.predicted_at)} — ${ap.disease || ap.model_type || "—"}: ${ap.prediction} ` +
                     `(Probability: ${ap.probability != null ? Number(ap.probability) + "%" : "—"}, ` +
-                    `Confidence: ${ap.confidence != null ? Number(ap.confidence) + "%" : "—"})` +
+                    `Confidence: ${ap.confidence != null ? Number(ap.confidence) + "%" : "—"} | Verified)` +
+                    (ap.report_no ? ` [Report: ${ap.report_no}]` : "") +
                     (ap.explanation && ap.explanation.explanation ? ` — ${ap.explanation.explanation}` : "")
                 ))
-                : [line("No AI predictions yet.", true)]
+                : [line("No verified AI predictions yet.", true)]
             ),
 
             new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600 },

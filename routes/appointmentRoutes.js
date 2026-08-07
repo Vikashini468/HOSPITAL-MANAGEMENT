@@ -1,6 +1,45 @@
 const express = require("express");
 const router = express.Router();
 const aiService = require("../utils/aiService");
+const path = require("path");
+const fs = require("fs");
+const hospital = require("../config/hospital");
+const { generateAiPredictionReport } = require("../utils/aiReportPdf");
+
+/* Report PDFs live under uploads/prediction_reports (served at /uploads/...) */
+const REPORT_DIR = path.join(__dirname, "..", "uploads", "prediction_reports");
+
+function reportFileUrl(fileName) {
+    return `/uploads/prediction_reports/${fileName}`;
+}
+
+/* =====================================================
+   AI PREDICTION VERIFICATION COLUMNS
+   Adds the doctor-verification columns to ai_predictions
+   (idempotent) and back-fills any rows created before this
+   feature as VERIFIED so existing history stays visible.
+   ===================================================== */
+async function ensurePredictionVerification(pool) {
+    await pool.query(`
+        ALTER TABLE ai_predictions
+            ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'PENDING',
+            ADD COLUMN IF NOT EXISTS doctor_notes         TEXT,
+            ADD COLUMN IF NOT EXISTS verified_at          TIMESTAMP,
+            ADD COLUMN IF NOT EXISTS report_no            VARCHAR(40),
+            ADD COLUMN IF NOT EXISTS report_file          VARCHAR(500)
+    `).catch(() => {});
+    /* Backward compatibility: rows created before verification was
+       introduced have no report_no — treat them as already verified.
+       (ADD COLUMN ... DEFAULT 'PENDING' fills legacy rows with PENDING,
+       so we can no longer rely on NULL to detect them.) */
+    await pool.query(`
+        UPDATE ai_predictions
+           SET verification_status = 'VERIFIED'
+         WHERE report_no IS NULL
+           AND verified_at IS NULL
+           AND COALESCE(verification_status, 'PENDING') = 'PENDING'
+    `).catch(() => {});
+}
 
 /* =====================================================
    PATIENT VISITS TABLE (lazily created)
@@ -516,16 +555,8 @@ async function runConsultationPrediction(pool, appointmentId) {
             predicted_at   TIMESTAMP DEFAULT NOW()
         )
     `);
-    /* Add any columns that may be missing from older table versions */
-    await pool.query(`
-        ALTER TABLE ai_predictions
-            ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
-            ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
-            ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
-            ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
-            ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
-            ADD COLUMN IF NOT EXISTS explanation    JSONB
-    `).catch(() => {});
+    /* Verification columns (added idempotently, existing rows → VERIFIED) */
+    await ensurePredictionVerification(pool);
 
     /* Resolve the visit_id for this appointment */
     const visitRes = await pool.query(
@@ -534,12 +565,16 @@ async function runConsultationPrediction(pool, appointmentId) {
     ).catch(() => ({ rows: [] }));
     const visitId = visitRes.rows[0]?.id || null;
 
-    /* INSERT — never UPDATE, so every prediction run is kept permanently */
+    /* INSERT — never UPDATE, so every prediction run is kept permanently.
+       This legacy endpoint stores directly, so it is saved as VERIFIED to
+       keep the existing behaviour (predictions visible to the patient). */
     await pool.query(`
         INSERT INTO ai_predictions
             (patient_id, appointment_id, visit_id, doctor_id,
-             model_type, disease, prediction, probability, confidence, input_data, explanation)
-        VALUES ($1, $2, $3, $4, 'diabetes', 'Diabetes', $5, $6, $7, $8, $9)
+             model_type, disease, prediction, probability, confidence, input_data, explanation,
+             verification_status, report_no, report_file, doctor_notes, verified_at)
+        VALUES ($1, $2, $3, $4, 'diabetes', 'Diabetes', $5, $6, $7, $8, $9,
+                'VERIFIED', NULL, NULL, NULL, NOW())
     `, [
         dataset.patient_id,
         Number(appointmentId),
@@ -624,16 +659,8 @@ async function runDiseaseRiskPrediction(pool, appointmentId) {
             predicted_at   TIMESTAMP DEFAULT NOW()
         )
     `);
-    /* Add any columns that may be missing from older table versions */
-    await pool.query(`
-        ALTER TABLE ai_predictions
-            ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
-            ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
-            ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
-            ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
-            ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
-            ADD COLUMN IF NOT EXISTS explanation    JSONB
-    `).catch(() => {});
+    /* Verification columns (added idempotently, existing rows → VERIFIED) */
+    await ensurePredictionVerification(pool);
 
     /* Resolve the visit_id for this appointment */
     const visitRes = await pool.query(
@@ -642,7 +669,34 @@ async function runDiseaseRiskPrediction(pool, appointmentId) {
     ).catch(() => ({ rows: [] }));
     const visitId = visitRes.rows[0]?.id || null;
 
-    /* Store every prediction run permanently (never UPDATE) */
+    /* Resolve the doctor name for the report */
+    const docRes = await pool.query(
+        `SELECT name FROM users WHERE id = $1`, [doctorId]
+    ).catch(() => ({ rows: [] }));
+    const doctorName = docRes.rows[0]?.name || null;
+
+    /* One report number groups every disease row of this single run */
+    const reportNo = `AI-${Number(appointmentId)}-${new Date().toISOString()
+        .replace(/[-:.TZ]/g, "").slice(0, 14)}`;
+    const predictedAt = new Date().toISOString();
+
+    /* Normalized results for the response + PDF */
+    const normResults = models.map(m => ({
+        model_type:  m.model_type,
+        disease:     m.disease,
+        prediction:  m.result.prediction,
+        probability: (() => {
+            const p = Number(m.result.probability);
+            return isNaN(p) ? null : Math.round((p <= 1 ? p * 100 : p) * 100) / 100;
+        })(),
+        confidence:  m.result.confidence != null ? Number(m.result.confidence) : null,
+        top_features:       m.result.top_features || [],
+        feature_importance: m.result.feature_importance || [],
+        explanation:        m.result.explanation || ""
+    }));
+
+    /* Store every prediction run as PENDING (temporary) — the doctor must
+       verify before it ever reaches the patient's medical history. */
     for (const m of models) {
         const rawProb = Number(m.result.probability);
         const probability = isNaN(rawProb) ? null
@@ -652,8 +706,9 @@ async function runDiseaseRiskPrediction(pool, appointmentId) {
         await pool.query(`
             INSERT INTO ai_predictions
                 (patient_id, appointment_id, visit_id, doctor_id,
-                 model_type, disease, prediction, probability, confidence, input_data, explanation)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                 model_type, disease, prediction, probability, confidence, input_data, explanation,
+                 verification_status, report_no, report_file, doctor_notes, verified_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING', $12, NULL, NULL, NULL)
         `, [
             dataset.patient_id,
             Number(appointmentId),
@@ -669,31 +724,173 @@ async function runDiseaseRiskPrediction(pool, appointmentId) {
                 top_features:       m.result.top_features || [],
                 feature_importance: m.result.feature_importance || [],
                 explanation:        m.result.explanation || ""
-            })
+            }),
+            reportNo
         ]);
     }
 
+    /* Temporary (PENDING) PDF report for the doctor's review/download */
+    let reportFile = null;
+    try {
+        await generateAiPredictionReport({
+            report_no:           reportNo,
+            patient_id:          dataset.patient_id,
+            patient_health_id:   dataset.patient_health_id || null,
+            patient_name:        dataset.patient_name,
+            visit_id:            visitId,
+            doctor_name:         doctorName,
+            predicted_at:        predictedAt,
+            results:             normResults,
+            verification_status: "PENDING",
+            doctor_notes:        "",
+            verified_at:         null,
+            outputPath:          path.join(REPORT_DIR, `${reportNo}_PENDING.pdf`)
+        });
+        reportFile = reportFileUrl(`${reportNo}_PENDING.pdf`);
+    } catch (err) {
+        console.error("AI REPORT PDF (PENDING) ERROR:", err.message);
+    }
+
     return {
-        success:        true,
-        appointment_id: Number(appointmentId),
-        visit_id:       visitId,
-        patient_id:     dataset.patient_id,
-        patient_name:   dataset.patient_name,
-        doctor_id:      doctorId,
-        predicted_at:   new Date().toISOString(),
-        results:        models.map(m => ({
-            model_type:  m.model_type,
-            disease:     m.disease,
-            prediction:  m.result.prediction,
-            probability: (() => {
-                const p = Number(m.result.probability);
-                return isNaN(p) ? null : Math.round((p <= 1 ? p * 100 : p) * 100) / 100;
-            })(),
-            confidence:  m.result.confidence != null ? Number(m.result.confidence) : null,
-            top_features:       m.result.top_features || [],
-            feature_importance: m.result.feature_importance || [],
-            explanation:        m.result.explanation || ""
-        }))
+        success:             true,
+        appointment_id:      Number(appointmentId),
+        visit_id:            visitId,
+        patient_id:          dataset.patient_id,
+        patient_health_id:   dataset.patient_health_id || null,
+        patient_name:        dataset.patient_name,
+        doctor_id:           doctorId,
+        doctor_name:         doctorName,
+        predicted_at:        predictedAt,
+        report_no:           reportNo,
+        report_file:         reportFile,
+        verification_status: "PENDING",
+        hospital: {
+            name:    hospital.name,
+            tagline: hospital.tagline,
+            address: hospital.address,
+            phone:   hospital.phone,
+            email:   hospital.email,
+            website: hospital.website
+        },
+        results: normResults
+    };
+}
+
+/* =====================================================
+   VERIFY & SAVE A PENDING AI PREDICTION REPORT
+   POST /appointment/verify-prediction/:appointmentId
+   Body: { report_no, doctor_notes }
+   Marks every PENDING row of the report as VERIFIED,
+   stamps the verification time, regenerates the PDF (now
+   VERIFIED + doctor notes) as the permanent copy and
+   attaches it to the patient's medical history.
+   ===================================================== */
+async function verifyPrediction(pool, appointmentId, body) {
+    const reportNo = (body && body.report_no) || null;
+    if (!reportNo)
+        throw new Error("Missing report_no");
+
+    /* Load the PENDING report rows */
+    const rowsRes = await pool.query(`
+        SELECT ap.id, ap.patient_id, ap.visit_id, ap.doctor_id, ap.model_type,
+               ap.disease, ap.prediction, ap.probability, ap.confidence,
+               ap.predicted_at, ap.input_data, ap.explanation,
+               u.name AS doctor_name, p.name AS patient_name,
+               phi.health_id AS patient_health_id
+        FROM ai_predictions ap
+        LEFT JOIN users u ON u.id = ap.doctor_id
+        LEFT JOIN users p ON p.id = ap.patient_id
+        LEFT JOIN patient_health_ids phi ON phi.user_id = ap.patient_id
+        WHERE ap.appointment_id = $1 AND ap.report_no = $2
+          AND UPPER(ap.verification_status) = 'PENDING'
+        ORDER BY ap.id ASC
+    `, [appointmentId, reportNo]);
+
+    if (!rowsRes.rows.length)
+        throw new Error("Pending report not found for this appointment");
+
+    const rows = rowsRes.rows;
+    const first = rows[0];
+    const doctorNotes = String((body && body.doctor_notes) || "").trim();
+    const verifiedAt = new Date().toISOString();
+
+    const results = rows.map(r => ({
+        model_type:  r.model_type,
+        disease:     r.disease,
+        prediction:  r.prediction,
+        probability: r.probability != null ? Number(r.probability) : null,
+        confidence:  r.confidence != null ? Number(r.confidence) : null
+    }));
+
+    /* Permanent VERIFIED PDF copy */
+    const fileName = `${reportNo}.pdf`;
+    await generateAiPredictionReport({
+        report_no:           reportNo,
+        patient_id:          first.patient_id,
+        patient_health_id:   first.patient_health_id || null,
+        patient_name:        first.patient_name,
+        visit_id:            first.visit_id,
+        doctor_name:         first.doctor_name,
+        predicted_at:        first.predicted_at,
+        results:             results,
+        verification_status: "VERIFIED",
+        doctor_notes:        doctorNotes,
+        verified_at:         verifiedAt,
+        outputPath:          path.join(REPORT_DIR, fileName)
+    });
+
+    await pool.query(`
+        UPDATE ai_predictions
+           SET verification_status = 'VERIFIED',
+               doctor_notes       = $3,
+               verified_at        = NOW(),
+               report_file        = $4
+         WHERE appointment_id = $1 AND report_no = $2
+           AND UPPER(verification_status) = 'PENDING'
+    `, [appointmentId, reportNo, doctorNotes, reportFileUrl(fileName)]);
+
+    return {
+        success:             true,
+        message:             "Prediction verified and saved permanently.",
+        appointment_id:      Number(appointmentId),
+        report_no:           reportNo,
+        report_file:         reportFileUrl(fileName),
+        verification_status: "VERIFIED",
+        doctor_notes:        doctorNotes,
+        verified_at:         verifiedAt
+    };
+}
+
+/* =====================================================
+   NOT VERIFIED — A PENDING AI PREDICTION REPORT
+   POST /appointment/not-verify-prediction/:appointmentId
+   Body: { report_no }
+   Marks every PENDING row of the report as NOT_VERIFIED.
+   The predictions are kept only as a temporary consultation
+   record — they never reach the patient's medical history.
+   ===================================================== */
+async function notVerifyPrediction(pool, appointmentId, body) {
+    const reportNo = (body && body.report_no) || null;
+    if (!reportNo)
+        throw new Error("Missing report_no");
+
+    const upd = await pool.query(`
+        UPDATE ai_predictions
+           SET verification_status = 'NOT_VERIFIED',
+               verified_at        = NOW()
+         WHERE appointment_id = $1 AND report_no = $2
+           AND UPPER(verification_status) = 'PENDING'
+    `, [appointmentId, reportNo]);
+
+    if (!upd.rowCount)
+        throw new Error("Pending report not found for this appointment");
+
+    return {
+        success:             true,
+        message:             "Prediction marked as not verified (temporary record only).",
+        appointment_id:      Number(appointmentId),
+        report_no:           reportNo,
+        verification_status: "NOT_VERIFIED"
     };
 }
 
@@ -1161,6 +1358,38 @@ router.post("/predict-disease-risk/:appointmentId", async (req, res) => {
     } catch (err) {
         console.error("DISEASE RISK PREDICTION ERROR:", err.message);
         res.status(502).json({ success: false, message: err.message });
+    }
+});
+
+/* =====================================================
+   VERIFY & SAVE A PENDING AI PREDICTION REPORT
+   POST /appointment/verify-prediction/:appointmentId
+   Body: { report_no, doctor_notes }
+   ===================================================== */
+router.post("/verify-prediction/:appointmentId", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const result = await verifyPrediction(pool, req.params.appointmentId, req.body || {});
+        res.json(result);
+    } catch (err) {
+        console.error("VERIFY PREDICTION ERROR:", err.message);
+        res.status(400).json({ success: false, message: err.message });
+    }
+});
+
+/* =====================================================
+   NOT VERIFIED — KEEP A PENDING REPORT TEMPORARY ONLY
+   POST /appointment/not-verify-prediction/:appointmentId
+   Body: { report_no }
+   ===================================================== */
+router.post("/not-verify-prediction/:appointmentId", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const result = await notVerifyPrediction(pool, req.params.appointmentId, req.body || {});
+        res.json(result);
+    } catch (err) {
+        console.error("NOT-VERIFY PREDICTION ERROR:", err.message);
+        res.status(400).json({ success: false, message: err.message });
     }
 });
 

@@ -3,8 +3,61 @@ const router = express.Router();
 const aiService = require("../utils/aiService");
 
 /* =====================================================
+   AI PREDICTIONS — shared lazy table + verification columns
+   Existing (pre-verification) rows are treated as VERIFIED
+   so previously visible predictions stay visible.
+   Only VERIFIED predictions are returned to patients.
+   ===================================================== */
+async function ensureAiPredictionColumns(pool) {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS ai_predictions (
+            id             SERIAL PRIMARY KEY,
+            patient_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+            visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+            doctor_id      INTEGER REFERENCES users(id),
+            model_type     VARCHAR(50) NOT NULL DEFAULT 'diabetes',
+            disease        VARCHAR(100),
+            prediction     VARCHAR(20) NOT NULL,
+            probability    NUMERIC(5,2),
+            confidence     NUMERIC(5,2),
+            input_data     JSONB,
+            explanation    JSONB,
+            predicted_at   TIMESTAMP DEFAULT NOW()
+        )
+    `).catch(() => {});
+    await pool.query(`
+        ALTER TABLE ai_predictions
+            ADD COLUMN IF NOT EXISTS appointment_id     INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+            ADD COLUMN IF NOT EXISTS visit_id           INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
+            ADD COLUMN IF NOT EXISTS doctor_id          INTEGER REFERENCES users(id),
+            ADD COLUMN IF NOT EXISTS disease            VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS confidence         NUMERIC(5,2),
+            ADD COLUMN IF NOT EXISTS explanation        JSONB,
+            ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'PENDING',
+            ADD COLUMN IF NOT EXISTS doctor_notes        TEXT,
+            ADD COLUMN IF NOT EXISTS verified_at         TIMESTAMP,
+            ADD COLUMN IF NOT EXISTS report_no           VARCHAR(40),
+            ADD COLUMN IF NOT EXISTS report_file         VARCHAR(500)
+    `).catch(() => {});
+    /* Legacy rows (pre-verification) have no report_no and were filled with
+       PENDING by the column default — promote them to VERIFIED so the
+       previously visible predictions stay visible. */
+    await pool.query(`
+        UPDATE ai_predictions
+           SET verification_status = 'VERIFIED'
+         WHERE report_no IS NULL
+           AND verified_at IS NULL
+           AND COALESCE(verification_status, 'PENDING') = 'PENDING'
+    `).catch(() => {});
+}
+
+/* Patient-facing AI rows must be VERIFIED (legacy NULL treated as VERIFIED) */
+const VERIFIED_WHERE = `COALESCE(ap.verification_status, 'VERIFIED') = 'VERIFIED'`;
+
+/* =====================================================
    PATIENT PROFILE
-===================================================== */
+ ===================================================== */
 
 router.get("/api/patient/profile/:id", async (req, res) => {
 
@@ -685,31 +738,12 @@ router.post("/patient/predict-diabetes/:id", async (req, res) => {
         const doctorId  = req.body.doctor_id || null;
 
         /* Create table if not exists, then store prediction permanently */
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS ai_predictions (
-                id           SERIAL PRIMARY KEY,
-                patient_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                model_type   VARCHAR(50) NOT NULL DEFAULT 'diabetes',
-                prediction   VARCHAR(20) NOT NULL,
-                probability  NUMERIC(5,2),
-                confidence   NUMERIC(5,2),
-                doctor_id    INTEGER REFERENCES users(id),
-                disease      VARCHAR(100),
-                input_data   JSONB,
-                explanation  JSONB,
-                predicted_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        await pool.query(`
-            ALTER TABLE ai_predictions ADD COLUMN IF NOT EXISTS confidence  NUMERIC(5,2),
-                                        ADD COLUMN IF NOT EXISTS doctor_id   INTEGER REFERENCES users(id),
-                                        ADD COLUMN IF NOT EXISTS disease     VARCHAR(100),
-                                        ADD COLUMN IF NOT EXISTS explanation JSONB
-        `).catch(() => {});
+        await ensureAiPredictionColumns(pool);
 
         await pool.query(`
-            INSERT INTO ai_predictions (patient_id, model_type, disease, prediction, probability, confidence, doctor_id, input_data, explanation)
-            VALUES ($1, 'diabetes', 'Diabetes', $2, $3, $4, $5, $6, $7)
+            INSERT INTO ai_predictions (patient_id, model_type, disease, prediction, probability, confidence, doctor_id, input_data, explanation,
+                                        verification_status, report_no, report_file, doctor_notes, verified_at)
+            VALUES ($1, 'diabetes', 'Diabetes', $2, $3, $4, $5, $6, $7, 'VERIFIED', NULL, NULL, NULL, NOW())
         `, [
             patientId,
             result.prediction,
@@ -747,28 +781,7 @@ router.get("/patient/predictions/:id", async (req, res) => {
     const pool = req.app.locals.pool;
     try {
         /* Lazy table + columns so the endpoint is safe on first load */
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS ai_predictions (
-                id             SERIAL PRIMARY KEY,
-                patient_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                model_type     VARCHAR(50) NOT NULL DEFAULT 'diabetes',
-                prediction     VARCHAR(20) NOT NULL,
-                probability    NUMERIC(5,2),
-                confidence     NUMERIC(5,2),
-                doctor_id      INTEGER REFERENCES users(id),
-                input_data     JSONB,
-                predicted_at   TIMESTAMP DEFAULT NOW()
-            )
-        `).catch(() => {});
-        await pool.query(`
-            ALTER TABLE ai_predictions
-                ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
-                ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
-                ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
-                ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
-                ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
-                ADD COLUMN IF NOT EXISTS explanation    JSONB
-        `).catch(() => {});
+        await ensureAiPredictionColumns(pool);
 
         const result = await pool.query(`
             SELECT * FROM (
@@ -784,10 +797,15 @@ router.get("/patient/predictions/:id", async (req, res) => {
                     ap.confidence,
                     ap.predicted_at,
                     ap.explanation,
+                    ap.verification_status,
+                    ap.report_no,
+                    ap.report_file,
+                    ap.verified_at,
                     u.name AS doctor_name
                 FROM ai_predictions ap
                 LEFT JOIN users u ON u.id = ap.doctor_id
                 WHERE ap.patient_id = $1
+                  AND ${VERIFIED_WHERE}
                 ORDER BY COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''), ap.predicted_at DESC
             ) dedup
             ORDER BY dedup.predicted_at DESC
@@ -893,7 +911,7 @@ router.get("/patient/ai-summary/:id", async (req, res) => {
             FROM lab_requests lr
             LEFT JOIN users u ON u.id = lr.doctor_id
             WHERE lr.patient_id = $1
-            AND UPPER(lr.status) IN ('COMPLETED', 'REVIEWED')
+            AND UPPER(lr.status) = 'REVIEWED'
             ORDER BY lr.completed_at DESC
         `, [patientId]);
 
@@ -1158,6 +1176,7 @@ router.get("/patient/medical-history/:id", async (req, res) => {
                 JOIN appointments a ON a.id = lr.appointment_id
                 LEFT JOIN users du  ON du.id = lr.doctor_id
                 WHERE a.patient_id = $1
+                  AND UPPER(lr.status) = 'REVIEWED'
                 ORDER BY lr.created_at ASC
             `, [patientId]);
 
@@ -1168,19 +1187,11 @@ router.get("/patient/medical-history/:id", async (req, res) => {
             }, {});
         }
 
-        /* ---- 6. AI Predictions ---- */
+        /* ---- 6. AI Predictions (verified only) ---- */
         let aiPredictions = [];
         const hasAi = await tableExists(pool, 'ai_predictions');
         if (hasAi) {
-            await pool.query(`
-                ALTER TABLE ai_predictions
-                    ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
-                    ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
-                    ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
-                    ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
-                    ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
-                    ADD COLUMN IF NOT EXISTS explanation    JSONB
-            `).catch(() => {});
+            await ensureAiPredictionColumns(pool);
             const aiRes = await pool.query(`
                 SELECT * FROM (
                     SELECT DISTINCT ON (COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''))
@@ -1195,10 +1206,15 @@ router.get("/patient/medical-history/:id", async (req, res) => {
                         ap.confidence,
                         ap.explanation,
                         ap.predicted_at,
+                        ap.verification_status,
+                        ap.report_no,
+                        ap.report_file,
+                        ap.verified_at,
                         u.name AS doctor_name
                     FROM ai_predictions ap
                     LEFT JOIN users u ON u.id = ap.doctor_id
                     WHERE ap.patient_id = $1
+                      AND ${VERIFIED_WHERE}
                     ORDER BY COALESCE(ap.appointment_id, 0), COALESCE(ap.disease, ap.model_type, ''), ap.predicted_at DESC
                 ) dedup
                 ORDER BY dedup.predicted_at DESC
@@ -1385,28 +1401,22 @@ router.get("/patient/timeline/:id", async (req, res) => {
             });
         }
 
-        /* ---- AI Predictions (keyed by appointment_id) ---- */
+        /* ---- AI Predictions (keyed by appointment_id, verified only) ---- */
         let aiByAppt = {};
         const hasAi = await tableExists(pool, 'ai_predictions');
         if (hasAi) {
-            await pool.query(`
-                ALTER TABLE ai_predictions
-                    ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
-                    ADD COLUMN IF NOT EXISTS visit_id       INTEGER REFERENCES patient_visits(id) ON DELETE SET NULL,
-                    ADD COLUMN IF NOT EXISTS doctor_id      INTEGER REFERENCES users(id),
-                    ADD COLUMN IF NOT EXISTS disease        VARCHAR(100),
-                    ADD COLUMN IF NOT EXISTS confidence     NUMERIC(5,2),
-                    ADD COLUMN IF NOT EXISTS explanation    JSONB
-            `).catch(() => {});
+            await ensureAiPredictionColumns(pool);
             const r = await pool.query(
                 `SELECT * FROM (
                     SELECT DISTINCT ON (ap.appointment_id, COALESCE(ap.disease, ap.model_type, ''))
                         ap.id, ap.appointment_id, ap.visit_id, ap.doctor_id, ap.model_type,
                         ap.disease, ap.prediction, ap.probability, ap.confidence, ap.explanation, ap.predicted_at,
+                        ap.verification_status, ap.report_no, ap.report_file, ap.verified_at,
                         u.name AS doctor_name
                     FROM ai_predictions ap
                     LEFT JOIN users u ON u.id = ap.doctor_id
                     WHERE ap.appointment_id IN (${inList})
+                      AND ${VERIFIED_WHERE}
                     ORDER BY ap.appointment_id, COALESCE(ap.disease, ap.model_type, ''), ap.predicted_at DESC
                 ) dedup
                 ORDER BY dedup.predicted_at DESC`,

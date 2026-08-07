@@ -455,6 +455,8 @@ function cardHtml(p) {
         ${p.doctor_name ? `<span><b>Doctor:</b> Dr. ${esc(p.doctor_name)}</span>` : ''}
         ${p.appointment_id ? `<span><b>Visit ID:</b> ${esc(p.appointment_id)}</span>` : ''}
         ${p.visit_id ? `<span><b>Record ID:</b> ${esc(p.visit_id)}</span>` : ''}
+        ${String(p.verification_status || '').toUpperCase() === 'VERIFIED' ? `<span><b>Status:</b> <span style="color:#2e7d32;font-weight:700;">✓ Verified</span></span>` : ''}
+        ${p.report_file ? `<span><b>Report:</b> <a href="${esc(p.report_file)}" target="_blank" style="color:#1565c0;font-weight:700;">📄 View Report</a></span>` : ''}
       </div>
     </div>`;
 }
