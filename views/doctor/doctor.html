@@ -386,11 +386,6 @@
                 </div>
 
                 <div class="form-row">
-                    <label>Consultation Fee (₹)</label>
-                    <input type="number" id="consultationFee">
-                </div>
-
-                <div class="form-row">
                     <label>Languages</label>
                     <input type="text" id="languages" placeholder="English, Tamil">
                 </div>
@@ -546,8 +541,6 @@ async function saveSchedule() {
 
             maxTokens: document.getElementById("maxTokens").value,
 
-            consultationFee: document.getElementById("consultationFee").value,
-
             languages: document.getElementById("languages").value,
 
             bio: document.getElementById("bio").value
@@ -647,14 +640,6 @@ async function loadSchedule() {
 
             <div class="info-row">
 
-                <b>Consultation Fee :</b>
-
-                ₹${data.consultation_fee || "-"}
-
-            </div>
-
-            <div class="info-row">
-
                 <b>Languages :</b>
 
                 ${data.languages || "-"}
@@ -727,9 +712,6 @@ async function editSchedule() {
         document.getElementById("maxTokens").value =
             data.max_tokens || "";
 
-        document.getElementById("consultationFee").value =
-            data.consultation_fee || "";
-
         document.getElementById("languages").value =
             data.languages || "";
 
@@ -769,6 +751,18 @@ async function editSchedule() {
     }
 
 }
+// =====================================================
+// FORMAT SYMPTOMS AS CHIPS
+// =====================================================
+
+function fmtSymptoms(s) {
+    const list = (s || "").split(",").map(x => x.trim()).filter(Boolean);
+    if (!list.length) return '<span style="color:#888;">-</span>';
+    return list.map(x =>
+        `<span style="display:inline-block;background:#eef4ff;color:#0d47a1;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin:0 4px 4px 0;">&#8226; ${x}</span>`
+    ).join("");
+}
+
 // =====================================================
 // LOAD TODAY'S APPOINTMENTS
 // =====================================================
@@ -868,7 +862,8 @@ async function loadAppointments() {
                 `<p><b>Status :</b> ${bl}</p>` +
                 `<p><b>Age :</b> ${appointment.age || '-'} | <b>Gender :</b> ${appointment.gender || '-'}</p>` +
                 `<p><b>Blood Group :</b> ${appointment.blood_group || '-'}</p>` +
-                `<p><b>Symptoms :</b> ${appointment.symptoms || '-'}</p>` +
+                `<div style="margin:6px 0;"><b>Symptoms :</b></div>` +
+                `<div>${fmtSymptoms(appointment.symptoms)}</div>` +
                 `<div style="margin-top:12px;">${actionBtn}</div>` +
                 `</div>`;
         };
@@ -945,7 +940,8 @@ async function startConsultation(appointmentId) {
                 <p><b>Age :</b> ${data.age}</p>
                 <p><b>Gender :</b> ${data.gender}</p>
                 <p><b>Blood Group :</b> ${data.blood_group}</p>
-                <p><b>Symptoms :</b> ${data.symptoms}</p>
+                <div style="margin:6px 0;"><b>Symptoms :</b></div>
+                <div>${fmtSymptoms(data.symptoms)}</div>
 
                 <!-- ── VITALS FORM ── -->
                 <div style="margin-top:20px;background:#f4f8ff;border:1px solid #d0e4ff;border-radius:10px;padding:16px;">
@@ -1372,7 +1368,9 @@ async function reviewLabReport(appointmentId){
 
             <p><b>Blood Group :</b> ${data.blood_group}</p>
 
-            <p><b>Symptoms :</b> ${data.symptoms}</p>
+            <div style="margin:6px 0;"><b>Symptoms :</b></div>
+
+            <div>${fmtSymptoms(data.symptoms)}</div>
 
             ${tests.length ? `<p><b>Requested Tests :</b> ${tests.join(', ')}</p>` : ''}
 

@@ -574,7 +574,6 @@ router.get("/patient/billing/:id", async (req, res) => {
                 a.id AS appointment_id,
                 a.appointment_date,
                 du.name AS doctor_name,
-                COALESCE(ds.consultation_fee, 0) AS consultation_fee,
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -587,13 +586,12 @@ router.get("/patient/billing/:id", async (req, res) => {
                 ) AS medicines
             FROM appointments a
             JOIN users du ON du.id = a.doctor_id
-            LEFT JOIN doctor_schedule ds ON ds.doctor_id = a.doctor_id
             LEFT JOIN prescriptions p ON p.appointment_id = a.id
             LEFT JOIN prescription_medicines pm ON pm.prescription_id = p.id
             LEFT JOIN medicines m ON m.id = pm.medicine_id
             WHERE a.patient_id = $1
             AND UPPER(a.status) IN ('COMPLETED','REVIEWED','LAB_COMPLETED')
-            GROUP BY a.id, a.appointment_date, du.name, ds.consultation_fee
+            GROUP BY a.id, a.appointment_date, du.name
             ORDER BY a.appointment_date DESC
         `, [req.params.id]);
         res.json(result.rows);

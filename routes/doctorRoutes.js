@@ -14,7 +14,6 @@ router.post("/doctor/save-schedule", async (req, res) => {
             startTime,
             endTime,
             maxTokens,
-            consultationFee,
             languages,
             bio
         } = req.body;
@@ -41,17 +40,15 @@ router.post("/doctor/save-schedule", async (req, res) => {
                     start_time=$2,
                     end_time=$3,
                     max_tokens=$4,
-                    consultation_fee=$5,
-                    languages=$6,
-                    bio=$7
-                WHERE doctor_id=$8
+                    languages=$5,
+                    bio=$6
+                WHERE doctor_id=$7
                 `,
                 [
                     availableDays,
                     startTime,
                     endTime,
                     maxTokens,
-                    consultationFee,
                     languages,
                     bio,
                     doctorId
@@ -68,11 +65,10 @@ router.post("/doctor/save-schedule", async (req, res) => {
                     start_time,
                     end_time,
                     max_tokens,
-                    consultation_fee,
                     languages,
                     bio
                 )
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                VALUES ($1,$2,$3,$4,$5,$6,$7)
                 `,
                 [
                     doctorId,
@@ -80,7 +76,6 @@ router.post("/doctor/save-schedule", async (req, res) => {
                     startTime,
                     endTime,
                     maxTokens,
-                    consultationFee,
                     languages,
                     bio
                 ]
@@ -113,7 +108,6 @@ router.get("/doctor/schedule/:id", async (req, res) => {
                 ds.start_time,
                 ds.end_time,
                 ds.max_tokens,
-                ds.consultation_fee,
                 ds.languages,
                 ds.bio
             FROM users u
@@ -313,11 +307,9 @@ router.get("/doctors", async (req, res) => {
                 users.name,
                 users.gender,
                 doctors.specialisation AS specialization,
-                doctors.photo,
-                COALESCE(ds.consultation_fee, 0) AS consultation_fee
+                doctors.photo
             FROM users
             JOIN doctors ON users.id = doctors.user_id
-            LEFT JOIN doctor_schedule ds ON ds.doctor_id = users.id
             WHERE users.approved = true
             `
         );

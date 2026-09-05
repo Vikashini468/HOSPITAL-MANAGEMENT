@@ -751,7 +751,6 @@ async function loadDoctors() {
                 <img src="${photo}" class="doctor-photo" onerror="this.src='/uploads/${d.gender && d.gender.toLowerCase()==='female' ? 'female-doctor.webp' : 'boy-doctor.webp'}'">
                 <h3>${d.name}</h3>
                 <p>${d.specialization || "General"}</p>
-                <p style="color:#0d47a1;font-weight:600;">₹${d.consultation_fee || 0} / visit</p>
                 <button class="view-btn" onclick="viewDoctor(${d.id})">View Details</button>
             </div>`;
         }).join("");
@@ -771,7 +770,6 @@ async function viewDoctor(id) {
             <p><b>Specialization:</b> ${s.specialisation || "-"}</p>
             <p><b>Consulting Hours:</b> ${s.start_time || "-"} – ${s.end_time || "-"}</p>
             <p><b>Available Days:</b> ${s.available_days || "-"}</p>
-            <p><b>Fee:</b> ₹${s.consultation_fee || 0}</p>
             <hr style="margin:14px 0;border:none;border-top:1px solid #eee;">
             <label>Appointment Date</label>
             <input type="date" id="appointmentDate" min="${today}" onchange="loadSlots()" value="${today}">
@@ -983,8 +981,7 @@ async function loadBilling() {
     box.innerHTML = bills.map(b => {
         const medicines = Array.isArray(b.medicines) ? b.medicines : [];
         const medTotal = medicines.reduce((sum, m) => sum + (parseFloat(m.total) || 0), 0);
-        const consultFee = parseFloat(b.consultation_fee) || 0;
-        const grandTotal = consultFee + medTotal;
+        const grandTotal = medTotal;
         const date = new Date(b.appointment_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
         const medRows = medicines.length > 0 ? medicines.map(m => `
             <tr>
@@ -1009,12 +1006,6 @@ async function loadBilling() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Consultation Fee</td>
-                        <td style="text-align:center;">1</td>
-                        <td style="text-align:right;">₹${consultFee.toFixed(2)}</td>
-                        <td style="text-align:right;">₹${consultFee.toFixed(2)}</td>
-                    </tr>
                     ${medRows}
                 </tbody>
             </table>

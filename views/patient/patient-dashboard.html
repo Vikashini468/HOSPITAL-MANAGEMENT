@@ -625,6 +625,56 @@
     .slot-btn:hover { background: #dbe8ff; }
     .slot-btn.selected { background: #0d47a1; color: white; border-color: #0d47a1; }
 
+    .sym-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid #e3eaf5;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+
+    .sym-grid label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #333;
+      background: white;
+      border: 1px solid #e3eaf5;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: 0.15s;
+    }
+
+    .sym-grid label:hover { border-color: #b7d0f7; }
+
+    .sym-grid label:has(input:checked) {
+      background: #eef4ff;
+      border-color: #0d47a1;
+      color: #0d47a1;
+      font-weight: 600;
+    }
+
+    .sym-grid label input { accent-color: #0d47a1; margin: 0; }
+
+    .sym-chip {
+      display: inline-block;
+      background: #eef4ff;
+      color: #0d47a1;
+      border: 1px solid #b7d0f7;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      margin: 2px 2px;
+    }
+
     .no-slots { color: #888; font-size: 13px; margin-top: 12px; }
 
     .book-success {
@@ -1219,7 +1269,9 @@
         <div class="step-line"></div>
         <div class="step" id="step3">3. Time Slot</div>
         <div class="step-line"></div>
-        <div class="step" id="step4">4. Confirm</div>
+        <div class="step" id="step4">4. Symptoms</div>
+        <div class="step-line"></div>
+        <div class="step" id="step5">5. Confirm</div>
       </div>
 
       <!-- STEP 1: DEPARTMENT -->
@@ -1255,10 +1307,35 @@
         </div>
       </div>
 
-      <!-- STEP 4: CONFIRM -->
+      <!-- STEP 4: SYMPTOMS -->
       <div id="book-step4" class="book-step" style="display:none;">
         <div class="book-header">
           <button class="back-btn" onclick="bookGoStep(3)">&#8592; Back</button>
+          <div class="sec-title">Select Symptoms</div>
+        </div>
+        <div class="profile-card2">
+          <div class="profile-row2"><span class="lbl">Doctor</span><span class="val" id="symDoctor">-</span></div>
+          <div class="profile-row2"><span class="lbl">Date</span><span class="val" id="symDate">-</span></div>
+          <div class="profile-row2"><span class="lbl">Time</span><span class="val" id="symTime">-</span></div>
+          <label class="book-field-label">Search Symptoms
+            <input type="text" id="symptomSearch" placeholder="Type to filter symptoms..." oninput="filterSymptoms()">
+          </label>
+          <div style="font-size:12px;color:#888;margin:8px 0;">Select all symptoms that apply:</div>
+          <div id="symptomList" class="sym-grid"></div>
+          <div id="otherSymptomBox" style="display:none;margin-top:12px;">
+            <label class="book-field-label">Other Symptom
+              <input type="text" id="otherSymptomInput" placeholder="Describe your symptom..." maxlength="200">
+            </label>
+          </div>
+          <div id="symMsg" style="font-size:12px;color:#0d47a1;margin-top:10px;min-height:16px;"></div>
+          <button class="edit-btn save-btn" id="symNextBtn" onclick="symptomsNext()">Next</button>
+        </div>
+      </div>
+
+      <!-- STEP 5: CONFIRM -->
+      <div id="book-step5" class="book-step" style="display:none;">
+        <div class="book-header">
+          <button class="back-btn" onclick="bookGoStep(4)">&#8592; Back</button>
           <div class="sec-title">Confirm Appointment</div>
         </div>
         <div class="profile-card2">
@@ -1267,6 +1344,7 @@
           <div class="profile-row2"><span class="lbl">Specialization</span><span class="val" id="cfSpec">-</span></div>
           <div class="profile-row2"><span class="lbl">Date</span><span class="val" id="cfDate">-</span></div>
           <div class="profile-row2"><span class="lbl">Time</span><span class="val" id="cfTime">-</span></div>
+          <div class="profile-row2"><span class="lbl">Symptoms</span><span class="val" id="cfSymptoms">-</span></div>
           <div class="profile-row2" id="cfQueueRow" style="display:none;"><span class="lbl">Queue Number</span><span class="val" id="cfQueue">-</span></div>
           <button class="edit-btn save-btn" id="confirmBtn" onclick="confirmBooking()">Confirm Appointment</button>
           <div id="bookMsg"></div>
@@ -1671,9 +1749,17 @@ function apptCardHtml(a) {
         <div><span class="lbl">Queue No</span><span class="val">${a.token_no != null ? a.token_no : "-"}</span></div>
         <div><span class="lbl">Date</span><span class="val">${isNaN(new Date(a.appointment_date)) ? (a.appointment_date || "-") : dateStr}</span></div>
         <div><span class="lbl">Time</span><span class="val">${timeStr}</span></div>
+        <div><span class="lbl">Symptoms</span><span class="val">${fmtSymptoms(a.symptoms)}</span></div>
       </div>
       ${cancelBtn}
     </div>`;
+}
+
+function fmtSymptoms(s) {
+  const list = String(s || "").split(",").map(x => x.trim()).filter(Boolean);
+  return list.length
+    ? list.map(x => `<span class="sym-chip">${x.replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))}</span>`).join(" ")
+    : '-';
 }
 
 function isCancellable(a) {
@@ -1852,13 +1938,14 @@ function selectDepartment(dept) {
 }
 
 function bookGoStep(n) {
-  [1, 2, 3, 4].forEach(i => {
+  [1, 2, 3, 4, 5].forEach(i => {
     document.getElementById(`book-step${i}`).style.display = i === n ? "block" : "none";
     document.getElementById(`step${i}`).classList.toggle("active", i <= n);
   });
   if (n === 2) renderDoctors();
   if (n === 1 && !doctorsData.length) loadDepartments();
   if (n === 3 && selectedDoctor) loadSlots();
+  if (n === 4) renderSymptoms();
 }
 
 let deptRequestId = 0;
@@ -1975,6 +2062,15 @@ function selectSlot(time) {
   document.getElementById("cfDate").textContent   = new Date(document.getElementById("slotDate").value + "T00:00:00")
     .toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   document.getElementById("cfTime").textContent   = formatTime(time);
+  document.getElementById("symDoctor").textContent = `Dr. ${selectedDoctor.name}`;
+  document.getElementById("symDate").textContent   = document.getElementById("cfDate").textContent;
+  document.getElementById("symTime").textContent   = formatTime(time);
+  document.getElementById("symptomSearch").value   = "";
+  document.getElementById("otherSymptomBox").style.display = "none";
+  document.getElementById("otherSymptomInput").value = "";
+  document.getElementById("symMsg").textContent     = "";
+  document.getElementById("cfSymptoms").textContent = "-";
+  selectedSymptomsSet = new Set();
   bookGoStep(4);
 }
 
@@ -1984,6 +2080,71 @@ function formatTime(t) {
   const ampm = hh >= 12 ? "PM" : "AM";
   const h12 = hh % 12 || 12;
   return `${h12}:${m} ${ampm}`;
+}
+
+/* ── SYMPTOM SELECTION (step 4) ── */
+const SYMPTOM_OPTIONS = [
+  "Fever","Cough","Cold","Headache","Chest Pain","Shortness of Breath",
+  "Body Pain","Joint Pain","Back Pain","Fatigue","Weakness","Dizziness",
+  "Vomiting","Nausea","Diarrhea","Abdominal Pain","Loss of Appetite",
+  "Frequent Urination","Excessive Thirst","Blurred Vision","Swelling",
+  "Skin Rash","Allergy","High Blood Pressure","Low Blood Pressure",
+  "Palpitations","Difficulty Breathing","Sore Throat","Ear Pain","Eye Pain",
+  "Burning Urination","Constipation","Weight Loss","Weight Gain","Insomnia",
+  "Anxiety","Stress","Other"
+];
+
+let selectedSymptomsSet = new Set();
+
+function renderSymptoms() {
+  const box = document.getElementById("symptomList");
+  if (!box) return;
+  const q = (document.getElementById("symptomSearch").value || "").trim().toLowerCase();
+  const list = q ? SYMPTOM_OPTIONS.filter(s => s.toLowerCase().includes(q)) : SYMPTOM_OPTIONS;
+  box.innerHTML = list.length
+    ? list.map(s => `<label><input type="checkbox" value="${s}" ${selectedSymptomsSet.has(s) ? 'checked' : ''} onchange="onSymptomChange(this)"> ${s}</label>`).join("")
+    : '<p class="no-slots">No matching symptoms.</p>';
+  updateSymMsg();
+}
+
+function filterSymptoms() { renderSymptoms(); }
+
+function onSymptomChange(cb) {
+  if (cb.checked) selectedSymptomsSet.add(cb.value);
+  else selectedSymptomsSet.delete(cb.value);
+  if (cb.value === "Other") {
+    document.getElementById("otherSymptomBox").style.display = cb.checked ? "block" : "none";
+    if (!cb.checked) document.getElementById("otherSymptomInput").value = "";
+  }
+  updateSymMsg();
+}
+
+function getSelectedSymptoms() {
+  const selected = [...selectedSymptomsSet].filter(s => s !== "Other");
+  const other = document.getElementById("otherSymptomInput").value.trim();
+  if (other) selected.push(other);
+  return selected;
+}
+
+function updateSymMsg() {
+  const el = document.getElementById("symMsg");
+  if (!el) return;
+  const sel = getSelectedSymptoms();
+  el.style.color = "#0d47a1";
+  el.textContent = sel.length ? `Selected (${sel.length}): ${sel.join(", ")}` : "";
+}
+
+function symptomsNext() {
+  const sel = getSelectedSymptoms();
+  const msg = document.getElementById("symMsg");
+  if (!sel.length) {
+    msg.style.color = "#c62828";
+    msg.textContent = "Please select at least one symptom to continue.";
+    return;
+  }
+  msg.style.color = "#0d47a1";
+  document.getElementById("cfSymptoms").textContent = sel.join(", ");
+  bookGoStep(5);
 }
 
 let isBooking = false;
@@ -2030,7 +2191,7 @@ async function confirmBooking() {
         appointmentDate: dateVal,
         appointmentTime: selectedSlot,
         appointmentDay:  dayName,
-        symptoms:        ""
+        symptoms:        getSelectedSymptoms().join(",")
       })
     });
     const data = await res.json();
