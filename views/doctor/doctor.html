@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
   <title>Doctor Dashboard</title>
@@ -921,6 +921,16 @@ async function startConsultation(appointmentId) {
 
         currentPatientId = data.patient_id;
 
+        /* Keep the open consultation's patient info for reuse by
+           the diet recommendation generator. */
+        window.__consultPatient = {
+            name:        data.patient_name,
+            age:         data.age,
+            gender:      data.gender,
+            blood_group: data.blood_group,
+            symptoms:    data.symptoms
+        };
+
         /* Load any previously saved vitals for this appointment */
         const vRes    = await fetch(`/appointment/vitals/${appointmentId}`);
         const vitals  = await vRes.json();
@@ -1115,6 +1125,20 @@ async function startConsultation(appointmentId) {
 
                 </div>
                 <!-- ── END AI DISEASE RISK PREDICTION ── -->
+
+                <!-- ── DIET RECOMMENDATION ── -->
+                <div style="margin-top:20px;background:#fff8f0;border:1px solid #f0d9b8;border-radius:10px;padding:16px;">
+
+                    <div style="font-size:13px;font-weight:700;color:#7a4a0d;margin-bottom:12px;">🥗 Diet Recommendation</div>
+
+                    <button id="diet-generate-btn" class="primary-btn" style="background:#7a4a0d;padding:8px 18px;font-size:13px;" onclick="generateDietRecommendation(${appointmentId})">
+                        Generate Diet Recommendation
+                    </button>
+
+                    <div id="diet-recommendation-result" style="margin-top:12px;"></div>
+
+                </div>
+                <!-- ── END DIET RECOMMENDATION ── -->
 
                 <div style="margin-top:25px;display:flex;flex-direction:column;gap:12px;">
 
@@ -1674,6 +1698,585 @@ async function predictDiseaseRisk() {
         box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Network error while running disease risk prediction.</span>';
     }
 
+}
+
+// =====================================================
+// DIET RECOMMENDATION (Consultation page)
+// Connects to POST /api/diet/predict and maps the open
+// consultation's patient data (demographics + stored
+// lifestyle + stored medical history + live vitals +
+// clinical notes) onto the diet model input fields.
+// Fields the system never collects are filled with safe
+// default values so the diet AI can always respond.
+// Does NOT modify vitals, notes, prescriptions, labs, or
+// disease-prediction data.
+// =====================================================
+
+function dietField(id) {
+    const el = document.getElementById(id);
+    const v  = el ? el.value : '';
+    return (v === undefined || v === null || String(v).trim() === '') ? '' : String(v).trim();
+}
+
+function dietNum(id, fallback) {
+    const n = parseFloat(dietField(id));
+    return isNaN(n) ? fallback : n;
+}
+
+/* Safe fallbacks for metrics the system does not collect */
+const DIET_DEFAULTS = {
+    daily_steps:          7000,
+    exercise_hours:       1.0,
+    sleep_hours:          7.0,
+    water_intake_liters:  2.5,
+    hba1c:                5.4,
+    total_cholesterol:    180,
+    ldl:                  100,
+    hdl:                  45,
+    triglycerides:        120,
+    activity_level:       'Moderate',
+    diet_preference:      'Non-Vegetarian',
+    goal:                 'Healthy_Lifestyle'
+};
+
+/* Registration-style physical activity → diet model activity_level */
+function mapActivityLevel(value) {
+    const s = String(value || '').toLowerCase();
+    if (/low|sedentary|light/.test(s))                     return 'Low';
+    if (/high|active|vigorous|intense/.test(s))            return 'High';
+    if (/moderate/.test(s))                                return 'Moderate';
+    return '';
+}
+
+/* Registration sleep ranges ("Less than 5", "5-6", "7-8", "More than 8") → hours */
+function mapSleepHours(value) {
+    const s = String(value == null ? '' : value).replace(/\s+/g, ' ').trim().toLowerCase();
+    if (/less than|<|under|fewer/.test(s)) return 5;
+    if (/more than|>|over|above/.test(s))  return 9;
+    const m = s.match(/(\d+)\s*[-–—]\s*(\d+)/);
+    if (m)  return (Number(m[1]) + Number(m[2])) / 2;
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+}
+
+const EXERCISE_BY_ACTIVITY  = { 'Low': 0.5, 'Moderate': 1.0, 'High': 1.5 };
+const CALORIE_FACTOR        = { 'Low': 1.375, 'Moderate': 1.55, 'High': 1.725 };
+
+/* =====================================================
+   ALLERGY SAFETY CHECK
+   Compares the patient's recorded allergies / dietary
+   restrictions against the AI recommendation. Only flags a
+   potential conflict — it never alters the model output.
+   The doctor makes the final decision.
+   ===================================================== */
+function checkDietConflicts(recommendedFood, patientAllergies) {
+    const flags = [];
+
+    /* Normalise to lower-case tokens so partial matches work
+       (e.g. allergy "nuts" matches "almonds" / "peanuts"). */
+    const toTokens = (s) =>
+        String(s == null ? '' : s)
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]+/g, ' ')
+            .split(/\s+/)
+            .map(t => t.trim())
+            .filter(t => t.length > 1);
+
+    const foodTokens  = new Set(toTokens(recommendedFood));
+    const allergyList = Array.isArray(patientAllergies) ? patientAllergies : toTokens(patientAllergies);
+
+    allergyList.forEach(allergy => {
+        const a = String(allergy == null ? '' : allergy).trim();
+        if (!a) return;
+        const aLower = a.toLowerCase();
+        const aTokens = toTokens(a);
+
+        let hit = foodTokens.has(aLower) || foodTokens.has(a);
+        if (!hit) {
+            /* Single-token allergies are matched directly; multi-token
+               allergies require every token to appear in the food text. */
+            if (aTokens.length === 1) {
+                for (const t of aTokens) if (foodTokens.has(t)) { hit = true; break; }
+            } else {
+                const foodStr = ' ' + String(recommendedFood || '').toLowerCase().replace(/[^a-z0-9\s]+/g, ' ') + ' ';
+                const partial = aTokens.filter(t => foodStr.includes(' ' + t + ' ')).length;
+                if (aTokens.length > 0 && partial === aTokens.length) hit = true;
+            }
+        }
+        /* Substring sweep for cases like "peanut" vs "peanut butter"
+           and singular/plural forms (e.g. "nuts" in "peanuts"). */
+        if (!hit && aLower.length >= 3 && String(recommendedFood || '').toLowerCase().includes(aLower)) hit = true;
+
+        if (hit) flags.push(a);
+    });
+
+    return flags;
+}
+
+async function generateDietRecommendation(callerAppointmentId) {
+
+    const box = document.getElementById('diet-recommendation-result');
+    if (!box) return;
+
+    /* Guard: reject if the button's appointment no longer matches the open consultation.
+       This prevents stale results if the doctor navigates between patients quickly. */
+    if (!currentAppointmentId) {
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ No consultation is open. Start a consultation first.</span>';
+        return;
+    }
+    if (callerAppointmentId && String(callerAppointmentId) !== String(currentAppointmentId)) {
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Patient mismatch — please refresh the consultation and try again.</span>';
+        return;
+    }
+
+    const pat = window.__consultPatient || {};
+
+    /* Disable the button and show spinner immediately — before any async work */
+    const genBtn = document.getElementById('diet-generate-btn');
+    if (genBtn) { genBtn.disabled = true; genBtn.textContent = '⏳ Generating…'; }
+    box.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+            <div style="width:18px;height:18px;border:3px solid #f0d9b8;border-top-color:#7a4a0d;border-radius:50%;animation:dietSpin .7s linear infinite;"></div>
+            <span style="color:#7a4a0d;font-size:13px;font-weight:600;">Fetching patient data and generating recommendation…</span>
+        </div>
+        <style>@keyframes dietSpin{to{transform:rotate(360deg)}}</style>`;
+
+    /* Stored lifestyle / medical history / vitals for this patient */
+    let dataset = null;
+    try {
+        const dRes  = await fetch(`/appointment/dataset/${currentAppointmentId}`);
+        const dData = await dRes.json();
+        if (dData && dData.success && dData.dataset) dataset = dData.dataset;
+    } catch (err) {
+        console.warn('Consultation dataset unavailable:', err);
+    }
+
+    const info  = (dataset && dataset.patient_information) || {};
+    const ls    = info.lifestyle || {};
+    const vit   = (dataset && dataset.vitals) || {};
+    const bp    = vit.blood_pressure || {};
+    const mh    = (dataset && dataset.medical_history) || {};
+    const fam   = mh.family_history || {};
+
+    /* Demographics — appointment data wins, dataset backs it up */
+    const age    = parseInt(pat.age, 10) || parseInt(info.age, 10) || 0;
+    const gender = String(pat.gender || info.gender || 'Male').trim();
+
+    if (!age) {
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Patient age is missing. Start the consultation again.</span>';
+        return;
+    }
+
+    /* Vitals — live form inputs win (doctor may have just updated them),
+       then the saved consultation dataset */
+    const height_cm    = dietNum('v-height', 0)    || vit.height_cm   || 0;
+    const weight_kg    = dietNum('v-weight', 0)    || vit.weight_kg   || 0;
+    const bmi          = dietNum('v-bmi', 0)       || vit.bmi         || 0;
+    const systolic_bp  = dietNum('v-bp-sys', 0)    || bp.systolic     || 0;
+    const diastolic_bp = dietNum('v-bp-dia', 0)    || bp.diastolic    || 0;
+    const blood_sugar  = dietNum('v-sugar', 0)     || vit.blood_sugar_random || 0;
+
+    if (height_cm <= 0 || weight_kg <= 0) {
+        box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ Enter patient height and weight in the Patient Vitals section first.</span>';
+        return;
+    }
+
+    /* Activity level + some daily habits from the stored lifestyle */
+    const activityLevel = mapActivityLevel(ls.physical_activity) || DIET_DEFAULTS.activity_level;
+    const sleepHours    = mapSleepHours(ls.sleep_hours) || DIET_DEFAULTS.sleep_hours;
+    const exerciseHours = EXERCISE_BY_ACTIVITY[activityLevel] || DIET_DEFAULTS.exercise_hours;
+
+    const female = /^f/i.test(gender);
+
+    /* Health flags: stored existing/family conditions + vitals + clinical text */
+    const existingList  = (mh.existing_diseases || []).join(' ');
+    const clinicalText  = String([
+        existingList,
+        pat.symptoms || '',
+        dietField('n-chief-complaint'),
+        dietField('n-diagnosis'),
+        dietField('n-advice')
+    ].join(' ')).toLowerCase();
+
+    const diabetes      = (blood_sugar >= 180 || fam.diabetes || /diabet|blood.sugar|sugar/.test(clinicalText))             ? 'Yes' : 'No';
+    const hypertension  = (systolic_bp >= 140 || diastolic_bp >= 90 || fam.hypertension || /hypertens|high.blood.pressure/.test(clinicalText)) ? 'Yes' : 'No';
+    const cardiovascular_disease = (fam.heart_disease || /heart|cardio/.test(clinicalText))                                  ? 'Yes' : 'No';
+
+    /* Medical history text — stored conditions + doctor's diagnosis */
+    const medicalHistory = [existingList, dietField('n-diagnosis')]
+        .map(s => String(s || '').trim())
+        .filter(Boolean)
+        .join(', ') || undefined;
+
+    /* Symptoms — appointment symptoms + chief complaint */
+    const symptoms = (pat.symptoms || (dataset && dataset.symptoms) || dietField('n-chief-complaint'))
+        ? String(pat.symptoms || (dataset && dataset.symptoms) || dietField('n-chief-complaint')).trim()
+        : undefined;
+
+    /* Daily calorie target from the Mifflin–St Jeor equation */
+    const bmr                 = 10 * weight_kg + 6.25 * height_cm - 5 * age + (female ? -161 : 5);
+    const activityFactor      = CALORIE_FACTOR[activityLevel] || 1.55;
+    let daily_calorie_target  = bmr * activityFactor;
+    if (DIET_DEFAULTS.goal === 'Weight_Loss')      daily_calorie_target -= 500;
+    else if (DIET_DEFAULTS.goal === 'Muscle_Gain') daily_calorie_target += 300;
+    daily_calorie_target = Math.max(1200, Math.round(daily_calorie_target));
+
+    /* ── Lab values — pulled from the consultation dataset lab_results when
+       available; safe defaults are used only when genuinely absent. ── */
+    const labResults        = (dataset && dataset.lab_results) || {};
+    const hba1c             = labResults.hba1c             || DIET_DEFAULTS.hba1c;
+    const total_cholesterol = labResults.total_cholesterol  || labResults.total_cholesterol_mg_dl || DIET_DEFAULTS.total_cholesterol;
+    const ldl               = labResults.ldl                || labResults.ldl_mg_dl               || DIET_DEFAULTS.ldl;
+    const hdl               = labResults.hdl                || labResults.hdl_mg_dl               || DIET_DEFAULTS.hdl;
+    const triglycerides     = labResults.triglycerides      || labResults.triglycerides_mg_dl      || DIET_DEFAULTS.triglycerides;
+
+    /* ── Diet preference, allergies, dietary restrictions ──
+       These depend on dataset which is fetched above, so they
+       are derived here after dataset is available. piSafe is
+       declared later inside the try block after the API call,
+       so we derive these values from info/ls directly. ── */
+    const rawDietPref   = String(ls.diet_quality || ls.diet || info.dietary_restrictions || '').toLowerCase();
+    const diet_preference = /vegan/.test(rawDietPref)
+        ? 'Vegan'
+        : /vegetarian|\bveg\b/.test(rawDietPref)
+            ? 'Vegetarian'
+            : DIET_DEFAULTS.diet_preference;
+
+    const _allergyList  = Array.isArray(info.allergies) ? info.allergies : [];
+    const allergiesStr  = _allergyList.length ? _allergyList.join(', ') : undefined;
+
+    const dietaryRestrictionsStr = (info.dietary_restrictions && String(info.dietary_restrictions).trim())
+        ? String(info.dietary_restrictions).trim()
+        : undefined;
+
+    /* Map the consultation data onto the diet model input fields */
+    const payload = {
+        age:                    age,
+        gender:                 gender,
+        height_cm:              height_cm,
+        weight_kg:              weight_kg,
+        bmi:                    bmi || +((weight_kg / ((height_cm / 100) * (height_cm / 100))).toFixed(1)),
+        activity_level:         activityLevel,
+        daily_steps:            DIET_DEFAULTS.daily_steps,
+        exercise_hours:         exerciseHours,
+        sleep_hours:            sleepHours,
+        water_intake_liters:    DIET_DEFAULTS.water_intake_liters,
+        diet_preference:        diet_preference,
+        diabetes:               diabetes,
+        hypertension:           hypertension,
+        cardiovascular_disease: cardiovascular_disease,
+        medical_history:        medicalHistory,
+        symptoms:               symptoms,
+        fasting_glucose:        blood_sugar || 100,
+        hba1c:                  hba1c,
+        systolic_bp:            systolic_bp,
+        diastolic_bp:           diastolic_bp,
+        total_cholesterol:      total_cholesterol,
+        ldl:                    ldl,
+        hdl:                    hdl,
+        triglycerides:          triglycerides,
+        dietary_restrictions:   dietaryRestrictionsStr,
+        allergies:              allergiesStr,
+        preferred_cuisine:      'Indian',
+        goal:                   DIET_DEFAULTS.goal,
+        daily_calorie_target:   daily_calorie_target,
+        patient_id:             currentPatientId || undefined,
+        patient_name:           pat.name || undefined
+    };
+
+    try {
+
+        const res  = await fetch('/api/diet/predict', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body:    JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            const msg = Array.isArray(data.errors) && data.errors.length
+                ? data.errors.join('; ')
+                : (data.message || 'Unable to generate recommendation.');
+            box.innerHTML = `<span style="color:#c62828;font-size:13px;">⚠️ ${String(msg).replace(/</g, '&lt;')}</span>`;
+            if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Generate Diet Recommendation'; }
+            return;
+        }
+
+        const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const row = (label, value) => `
+            <div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px dashed #e3eaf5;">
+                <span style="min-width:140px;font-size:12px;font-weight:700;color:#7a4a0d;">${label}</span>
+                <span style="font-size:12px;color:#333;line-height:1.5;word-break:break-word;">${esc(value)}</span>
+            </div>`;
+
+        /* Keep the pending result in memory — nothing is saved until
+           the doctor clicks "Verify & Save". */
+        window.__lastDietResult = {
+            recommended_diet:  data.recommended_diet,
+            recommended_food:  data.recommended_food,
+            meal_type:         data.meal_type
+        };
+
+        /* Allergy safety check — compare recorded allergies / dietary
+           restrictions against the recommended food. Only flags; it
+           never modifies the model output. The doctor decides. */
+        const patientAllergies = Array.isArray(info.allergies) ? info.allergies : [];
+        const dietRestrictions = info.dietary_restrictions;
+        const safetyItems      = patientAllergies.concat(
+            dietRestrictions && String(dietRestrictions).trim()
+                ? String(dietRestrictions).trim()
+                : []
+        );
+        const conflictFlags  = checkDietConflicts(data.recommended_food, safetyItems);
+        const conflictBanner = conflictFlags.length ? `
+            <div style="margin-top:12px;background:#fff3f3;border:2px solid #c62828;border-radius:8px;padding:12px 14px;">
+                <div style="font-size:13px;font-weight:700;color:#c62828;margin-bottom:4px;">⚠️ Potential allergy/dietary restriction conflict — Doctor review required.</div>
+                <div style="font-size:12px;color:#7f1d1d;line-height:1.5;">
+                    This recommendation may conflict with the following recorded
+                    ${conflictFlags.length === 1 ? 'item' : 'items'}:
+                    <b>${conflictFlags.join(', ')}</b>.
+                </div>
+            </div>` : '';
+
+        /* Food label lookup: fetch nutritional info for the recommended food */
+        let foodInfo = null;
+        if (data.recommended_food && String(data.recommended_food) !== 'None') {
+            try {
+                const fiRes = await fetch('/api/diet/food-info?name=' + encodeURIComponent(data.recommended_food));
+                if (fiRes.ok) { const fj = await fiRes.json(); if (fj && fj.found) foodInfo = fj.food; }
+            } catch (_) {}
+        }
+
+        const nutrientPill = (label, val, unit) =>
+            val != null
+                ? `<span style="display:inline-flex;flex-direction:column;align-items:center;background:#f0f7ff;border:1px solid #d0e4ff;border-radius:8px;padding:6px 10px;min-width:58px;">
+                       <span style="font-size:14px;font-weight:700;color:#0d47a1;">${val}</span>
+                       <span style="font-size:10px;color:#555;margin-top:1px;">${label}${unit ? ' (' + unit + ')' : ''}</span>
+                   </span>`
+                : '';
+
+        const foodInfoBlock = foodInfo ? `
+            <div style="margin-top:10px;background:#f8fbff;border:1px solid #d0e4ff;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:11px;font-weight:700;color:#0d47a1;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Nutritional Profile &mdash; ${esc(foodInfo.food_name || data.recommended_food)}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    ${nutrientPill('Calories', foodInfo.calories, 'kcal')}
+                    ${nutrientPill('Protein',  foodInfo.protein,  'g')}
+                    ${nutrientPill('Carbs',    foodInfo.carbs,    'g')}
+                    ${nutrientPill('Fat',      foodInfo.fat,      'g')}
+                    ${nutrientPill('Fiber',    foodInfo.fiber,    'g')}
+                    ${foodInfo.sugar  != null ? nutrientPill('Sugar',  foodInfo.sugar,  'g')  : ''}
+                    ${foodInfo.sodium != null ? nutrientPill('Sodium', foodInfo.sodium, 'mg') : ''}
+                </div>
+            </div>` : '';
+
+        const hasFood     = data.recommended_food && String(data.recommended_food) !== 'None';
+        const hasMealType = data.meal_type        && String(data.meal_type)        !== 'None';
+
+        box.innerHTML = `
+            <div style="margin-top:12px;background:#fffdf8;border:1px solid #e8d5b5;border-radius:10px;overflow:hidden;">
+
+                <!-- patient identity + status badge -->
+                <div style="background:linear-gradient(135deg,#7a4a0d,#a0621a);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                    <div>
+                        <div style="font-size:14px;font-weight:800;color:#fff;">&#x1F957; Diet Recommendation</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:2px;">
+                            ${esc(pat.name || 'Patient')}
+                            ${pat.age    ? ' &nbsp;&middot;&nbsp; Age: ' + esc(String(pat.age))    : ''}
+                            ${pat.gender ? ' &nbsp;&middot;&nbsp; ' + esc(pat.gender) : ''}
+                        </div>
+                    </div>
+                    <span style="background:#fff3e0;color:#e65100;font-weight:700;font-size:10px;padding:4px 12px;border-radius:20px;white-space:nowrap;border:1px solid #ffcc80;">AI Generated &mdash; Doctor Review Required</span>
+                </div>
+
+                <div style="padding:14px 16px;">
+
+                    <!-- Recommended diet plan -->
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:11px;font-weight:700;color:#7a4a0d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Recommended Diet Plan</div>
+                        <div style="font-size:14px;font-weight:700;color:#333;background:#fff8f0;border:1px solid #f0d9b8;border-radius:8px;padding:10px 12px;">
+                            ${esc(data.recommended_diet || '&mdash;')}
+                        </div>
+                    </div>
+
+                    <!-- Recommended food + meal type -->
+                    <div style="display:grid;grid-template-columns:${hasMealType ? '1fr 1fr' : '1fr'};gap:10px;margin-bottom:10px;">
+                        <div>
+                            <div style="font-size:11px;font-weight:700;color:#7a4a0d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Recommended Food</div>
+                            <div style="font-size:13px;font-weight:600;color:#333;background:#fff8f0;border:1px solid #f0d9b8;border-radius:8px;padding:9px 12px;">
+                                ${hasFood ? esc(data.recommended_food) : '<span style="color:#888;">&mdash;</span>'}
+                            </div>
+                        </div>
+                        ${hasMealType ? `
+                        <div>
+                            <div style="font-size:11px;font-weight:700;color:#7a4a0d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Meal Type</div>
+                            <div style="font-size:13px;font-weight:600;color:#333;background:#fff8f0;border:1px solid #f0d9b8;border-radius:8px;padding:9px 12px;">
+                                ${esc(data.meal_type)}
+                            </div>
+                        </div>` : ''}
+                    </div>
+
+                    <!-- Nutritional profile from food catalogue -->
+                    ${foodInfoBlock}
+
+                    <!-- Allergy / dietary conflict banner -->
+                    ${conflictBanner}
+
+                    <!-- Action buttons -->
+                    <div style="display:flex;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #f0d9b8;">
+                        <button id="diet-verify-btn" class="primary-btn"
+                                style="background:#2e7d32;padding:9px 14px;font-size:13px;flex:1;"
+                                onclick="verifyDietRecommendation()">
+                            &#x2714; Verify &amp; Save
+                        </button>
+                        <button id="diet-reject-btn" class="primary-btn"
+                                style="background:#c62828;padding:9px 14px;font-size:13px;flex:1;"
+                                onclick="rejectDietRecommendation()">
+                            &#x2716; Reject Recommendation
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        `;
+    } catch (err) {
+        console.error(err);
+        const isServiceDown = err && /fetch|network|ECONNREFUSED/i.test(String(err.message || ''));
+        box.innerHTML = isServiceDown
+            ? `<div style="background:#fff3f3;border:1px solid #ef9a9a;border-radius:8px;padding:12px 14px;">
+                   <div style="font-size:13px;font-weight:700;color:#c62828;margin-bottom:4px;">⚠️ Diet AI service is not reachable</div>
+                   <div style="font-size:12px;color:#555;">Start the diet service: <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;">python "AI Service/diet/app.py"</code> then try again.</div>
+               </div>`
+            : `<span style="color:#c62828;font-size:13px;">⚠️ ${String(err.message || 'Network error').replace(/</g, '&lt;')}</span>`;
+    } finally {
+        if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Generate Diet Recommendation'; }
+    }
+}
+
+// =====================================================
+// DIET RECOMMENDATION REVIEW — doctor verification step
+// The recommendation is never written to the patient's
+// permanent medical record until the doctor explicitly
+// clicks "Verify & Save" (POST /api/diet/verify, which
+// stores it with verification_status = VERIFIED).
+// "Not Correct" marks the recommendation as rejected and
+// lets the doctor generate a fresh one.
+// This is completely separate from the disease-prediction
+// verification workflow.
+// =====================================================
+
+/* Locks both review buttons while a submission is in flight,
+   so an accidental double-click cannot submit twice. */
+let __dietReviewLock = false;
+
+function lockDietReviewButtons() {
+    const v = document.getElementById('diet-verify-btn');
+    const r = document.getElementById('diet-reject-btn');
+    if (v) v.disabled = true;
+    if (r) r.disabled = true;
+}
+
+function dietReviewPayload(data) {
+    return {
+        appointment_id:   currentAppointmentId,
+        patient_id:       currentPatientId,
+        doctor_id:        doctorId || null,
+        recommended_diet: data.recommended_diet,
+        recommended_food: data.recommended_food,
+        meal_type:        data.meal_type
+    };
+}
+
+async function verifyDietRecommendation() {
+
+    const data = window.__lastDietResult;
+    const box  = document.getElementById('diet-recommendation-result');
+
+    if (!data) {
+        if (box) box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ No diet recommendation to review.</span>';
+        return;
+    }
+
+    if (!currentAppointmentId || !currentPatientId) {
+        if (box) box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ No consultation selected.</span>';
+        return;
+    }
+
+    if (__dietReviewLock) return;
+    __dietReviewLock = true;
+    lockDietReviewButtons();
+
+    try {
+        const res  = await fetch('/api/diet/review', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body:    JSON.stringify({ ...dietReviewPayload(data), status: 'VERIFIED' })
+        });
+
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || 'Verification failed');
+
+        window.__lastDietResult = null;
+
+        if (box) box.innerHTML = `
+            <div style="margin-top:12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 14px;">
+                <div style="font-size:13px;font-weight:700;color:#2e7d32;margin-bottom:4px;">✔ Verified &amp; Saved</div>
+                <div style="font-size:12px;color:#444;">This diet recommendation is now part of the patient's permanent medical record.</div>
+                ${result.duplicate ? '<div style="font-size:11px;color:#888;margin-top:6px;">Already saved — duplicate submission prevented.</div>' : ''}
+            </div>`;
+    } catch (err) {
+        console.error(err);
+        if (box) box.innerHTML = `<span style="color:#c62828;font-size:13px;">⚠️ ${String(err.message || 'Verification failed').replace(/</g, '&lt;')}</span>`;
+    } finally {
+        __dietReviewLock = false;
+    }
+}
+
+async function rejectDietRecommendation() {
+
+    const data = window.__lastDietResult;
+    const box  = document.getElementById('diet-recommendation-result');
+
+    if (!data) {
+        if (box) box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ No diet recommendation to review.</span>';
+        return;
+    }
+
+    if (!currentAppointmentId || !currentPatientId) {
+        if (box) box.innerHTML = '<span style="color:#c62828;font-size:13px;">⚠️ No consultation selected.</span>';
+        return;
+    }
+
+    if (__dietReviewLock) return;
+    __dietReviewLock = true;
+    lockDietReviewButtons();
+
+    const payload = dietReviewPayload(data);
+    payload.status = 'REJECTED';
+
+    try {
+        const res  = await fetch('/api/diet/review', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body:    JSON.stringify({ ...payload, status: 'REJECTED' })
+        });
+
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || 'Review failed');
+
+        /* Marked rejected — clear the pending result and allow a new one */
+        window.__lastDietResult = null;
+        if (box) box.innerHTML = `
+            <div style="margin-top:12px;background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;padding:12px 14px;">
+                <div style="font-size:13px;font-weight:700;color:#c62828;margin-bottom:4px;">✖ Marked as Not Correct (Rejected)</div>
+                <div style="font-size:12px;color:#444;">The recommendation was not saved. You can generate a new diet recommendation.</div>
+            </div>`;
+    } catch (err) {
+        console.error(err);
+        if (box) box.innerHTML = `<span style="color:#c62828;font-size:13px;">⚠️ ${String(err.message || 'Review failed').replace(/</g, '&lt;')}</span>`;
+    } finally {
+        __dietReviewLock = false;
+    }
 }
 
 // =====================================================

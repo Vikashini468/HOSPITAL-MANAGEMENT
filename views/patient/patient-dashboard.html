@@ -1067,6 +1067,12 @@
   <a class="nav-item" id="nav-ai-history" href="#" onclick="goAIHistory(); return false;">
     <span class="icon">&#128203;</span> AI Prediction History
   </a>
+  <a class="nav-item" id="nav-diet" href="#" onclick="showDietRecommendation(); return false;">
+    <span class="icon">&#129367;</span> Diet Recommendation
+  </a>
+  <a class="nav-item" id="nav-diet-history" href="#" onclick="showDietHistory(); return false;">
+    <span class="icon">&#128221;</span> Diet Recommendation History
+  </a>
   <a class="nav-item" id="nav-timeline" href="#" onclick="showTimeline(); return false;">
     <span class="icon">&#128336;</span> Patient Timeline
   </a>
@@ -1190,6 +1196,26 @@
         <div class="dash-card-body">
           <div class="dash-card-title">AI Disease Prediction</div>
           <div class="dash-card-desc">Check your AI-powered disease risk predictions.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Diet Recommendation -->
+      <a class="dash-card" href="#" onclick="showDietRecommendation(); return false;">
+        <div class="dash-card-icon" style="background:#e8f5e9;">&#129367;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Diet Recommendation</div>
+          <div class="dash-card-desc">View your latest doctor-verified diet plan.</div>
+        </div>
+        <div class="dash-card-arrow">&#8250;</div>
+      </a>
+
+      <!-- Diet Recommendation History -->
+      <a class="dash-card" href="#" onclick="showDietHistory(); return false;">
+        <div class="dash-card-icon" style="background:#e0f2f1;">&#128221;</div>
+        <div class="dash-card-body">
+          <div class="dash-card-title">Diet Recommendation History</div>
+          <div class="dash-card-desc">View all your doctor-verified diet plans.</div>
         </div>
         <div class="dash-card-arrow">&#8250;</div>
       </a>
@@ -1449,6 +1475,30 @@
       <div id="aiPredictionList"></div>
     </div>
 
+    <!-- DIET RECOMMENDATION VIEW -->
+    <div id="view-diet" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+
+      <div style="margin-top:14px;margin-bottom:16px;">
+        <div class="sec-title" style="margin:0;">Diet Recommendation</div>
+        <div style="font-size:13px;color:#888;">Your latest doctor-verified diet plan.</div>
+      </div>
+
+      <div id="dietRecommendationList"></div>
+    </div>
+
+    <!-- DIET RECOMMENDATION HISTORY VIEW -->
+    <div id="view-diet-history" style="display:none;">
+      <button class="back-btn" onclick="showDashboard()">&#8592; Back to Dashboard</button>
+
+      <div style="margin-top:14px;margin-bottom:16px;">
+        <div class="sec-title" style="margin:0;">Diet Recommendation History</div>
+        <div style="font-size:13px;color:#888;">All your doctor-verified diet plans, newest first.</div>
+      </div>
+
+      <div id="dietHistoryList"></div>
+    </div>
+
   </div>
 </div>
 
@@ -1499,7 +1549,7 @@ loadName();
 /* ── PROFILE VIEW ── */
 function hideAllViews() {
   ["view-home","view-profile","view-book","view-appointments","view-healthcard",
-   "view-prescriptions","view-reports","view-medical-history","view-ai","view-timeline"]
+   "view-prescriptions","view-reports","view-medical-history","view-ai","view-timeline","view-diet","view-diet-history"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
 }
 
@@ -2600,6 +2650,133 @@ function goAIHistory() {
   window.location.href = userId ? `/patient/ai-history?id=${userId}` : `/patient/ai-history`;
 }
 
+/* ── DIET RECOMMENDATION ── */
+function showDietRecommendation() {
+  hideAllViews();
+  document.getElementById("view-diet").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-diet").classList.add("active");
+  loadDietRecommendation();
+}
+
+async function loadDietRecommendation() {
+  const box = document.getElementById("dietRecommendationList");
+  box.innerHTML = '<p class="no-slots">Loading diet recommendation...</p>';
+  if (!userId) { box.innerHTML = "<p>Patient not identified.</p>"; return; }
+
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  try {
+    const res = await fetch(`/api/diet/latest/${userId}?requesterId=${userId}`);
+    if (!res.ok) {
+      box.innerHTML = `<p style="color:#c62828;">Unable to load diet recommendation (${res.status}).</p>`;
+      return;
+    }
+    const data = await res.json();
+    const r = data && data.recommendation;
+
+    if (!r || String(r.verification_status || "").toUpperCase() !== "VERIFIED") {
+      box.innerHTML = `<p>No verified diet recommendation yet. Your doctor will share one after a consultation.</p>`;
+      return;
+    }
+
+    const verified = true; /* guard above already ensures VERIFIED */
+    const row = (label, value) =>
+      `<div class="profile-row2"><span class="lbl">${label}</span><span class="val">${value}</span></div>`;
+
+    const recDate    = r.recommendation_date ? tlDate(r.recommendation_date) : '—';
+    const verifiedAt = r.verified_at         ? tlDate(r.verified_at)         : null;
+
+    box.innerHTML = `
+      <div class="p-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div style="font-weight:700;color:#2e7d32;font-size:16px;">&#129367; Recommended Diet Plan</div>
+            ${r.doctor_name ? `<div style="font-size:13px;color:#666;margin-top:2px;">Verified by Dr. ${esc(r.doctor_name)}${r.doctor_specialisation ? ' &middot; ' + esc(r.doctor_specialisation) : ''}</div>` : ''}
+          </div>
+          <span style="background:#dcfce7;color:#166534;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;">&#10003; Verified</span>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+        ${row('Recommended Diet',  esc(r.recommended_diet))}
+        ${r.recommended_food ? row('Recommended Foods', esc(r.recommended_food)) : ''}
+        ${r.meal_type        ? row('Meal Type',         esc(r.meal_type))        : ''}
+        ${row('Recommendation Date', recDate)}
+        ${verifiedAt         ? row('Verified On',       esc(verifiedAt))         : ''}
+        ${r.doctor_notes     ? row('Doctor Notes',      esc(r.doctor_notes))     : ''}
+        <div style="margin-top:14px;">
+          <button class="edit-btn" style="background:#1565c0;" onclick="showDietHistory()">View All Recommendations &#8250;</button>
+        </div>
+      </div>`;
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load the diet recommendation.</p>';
+  }
+}
+
+/* ── DIET RECOMMENDATION HISTORY ── */
+function showDietHistory() {
+  hideAllViews();
+  document.getElementById("view-diet-history").style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("nav-diet-history").classList.add("active");
+  loadDietHistory();
+}
+
+async function loadDietHistory() {
+  const box = document.getElementById("dietHistoryList");
+  box.innerHTML = '<p class="no-slots">Loading diet recommendation history...</p>';
+  if (!userId) { box.innerHTML = "<p>Patient not identified.</p>"; return; }
+
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  try {
+    const res  = await fetch(`/api/diet/history/${userId}?requesterId=${userId}`);
+    if (!res.ok) {
+      box.innerHTML = `<p style="color:#c62828;">Unable to load diet recommendation history (${res.status}).</p>`;
+      return;
+    }
+    const data = await res.json();
+    /* Defensive: only render rows the backend confirmed as VERIFIED */
+    const list = (data && Array.isArray(data.recommendations) ? data.recommendations : [])
+      .filter(r => String(r.verification_status || "").toUpperCase() === "VERIFIED");
+
+    if (!list.length) {
+      box.innerHTML = `<p>No verified diet recommendations yet. Your doctor will share plans after consultations.</p>`;
+      return;
+    }
+
+    box.innerHTML = list.map((r, i) => {
+      const recDate    = r.recommendation_date ? tlDate(r.recommendation_date) : '—';
+      const verifiedAt = r.verified_at         ? tlDate(r.verified_at)         : null;
+      const row = (label, value) =>
+        `<div class="profile-row2"><span class="lbl">${label}</span><span class="val">${value}</span></div>`;
+
+      return `
+      <div class="p-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div style="font-weight:700;color:#2e7d32;font-size:15px;">
+              &#129367; Recommendation ${esc(String(list.length - i))}
+            </div>
+            ${r.doctor_name ? `<div style="font-size:12px;color:#888;margin-top:2px;">Verified by Dr. ${esc(r.doctor_name)}${r.doctor_specialisation ? ' &middot; ' + esc(r.doctor_specialisation) : ''}</div>` : ''}
+          </div>
+          <span style="background:#dcfce7;color:#166534;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;">&#10003; Verified</span>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+        ${row('Recommendation Date', recDate)}
+        ${row('Recommended Diet',    esc(r.recommended_diet))}
+        ${r.recommended_food ? row('Recommended Foods', esc(r.recommended_food)) : ''}
+        ${r.meal_type        ? row('Meal Type',         esc(r.meal_type))        : ''}
+        ${verifiedAt         ? row('Verified On',       esc(verifiedAt))         : ''}
+        ${r.doctor_notes     ? row('Doctor Notes',      esc(r.doctor_notes))     : ''}
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = '<p style="color:#c62828;">Unable to load the diet recommendation history.</p>';
+  }
+}
+
 /* Shared "Verified" badge + report download link for verified AI predictions */
 function aiReportLink(p) {
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -3151,6 +3328,10 @@ if (params.get("section") === "profileSection" || params.get("section") === "pro
   showAI();
 } else if (params.get("section") === "timeline") {
   showTimeline();
+} else if (params.get("section") === "diet") {
+  showDietRecommendation();
+} else if (params.get("section") === "diet-history") {
+  showDietHistory();
 }
 </script>
 

@@ -289,6 +289,7 @@ async function buildConsultationDataset(pool, appointmentId) {
                u.name AS patient_name, u.mobile,
                COALESCE(p.age, u.age)       AS age,
                COALESCE(p.gender, u.gender) AS gender,
+               p.allergies AS patient_allergies,
                phi.health_id AS patient_health_id
         FROM appointments a
         JOIN users u ON u.id = a.patient_id
@@ -345,6 +346,26 @@ async function buildConsultationDataset(pool, appointmentId) {
     /* Family history — merge legacy text with new-system array */
     const fhSources = [mh.family_history, newFh];
 
+    /* Allergies — merge every recorded source into one de-duplicated list.
+       Legacy `patients.allergies` (free text) + `patient_medical_history.allergy_details`/
+       `allergies` + new-system `pat_medical_history.allergies` (array). */
+    const rawAllergySources = [
+        a.patient_allergies,
+        mh.allergy_details,
+        mh.allergies,
+        (mh.allergies_text || null)
+    ];
+    const allergySet = new Set();
+    rawAllergySources.forEach(src => {
+        if (!src) return;
+        if (Array.isArray(src)) src.forEach(v => { if (v) allergySet.add(String(v).trim()); });
+        else String(src).split(',').forEach(v => { const t = v.trim(); if (t) allergySet.add(t); });
+    });
+
+    /* Dietary preferences / restrictions from the lifestyle record — used as a
+       soft safety signal alongside allergies. */
+    const dietaryRestrictions = dietQuality || (mh.dietary_restrictions || null);
+
     const dataset = {
         appointment_id:      Number(appointmentId),
         patient_id:          a.patient_id,
@@ -356,6 +377,8 @@ async function buildConsultationDataset(pool, appointmentId) {
         patient_information: {
             age:      a.age != null ? Number(a.age) : null,
             gender:   a.gender || null,
+            allergies:            [...allergySet],
+            dietary_restrictions: dietaryRestrictions,
             lifestyle: {
                 smoking:           ls.smoking           || null,
                 alcohol:           ls.alcohol           || null,

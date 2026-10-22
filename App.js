@@ -25,11 +25,11 @@ app.use(express.urlencoded({ extended: true }));
    DATABASE
 =========================== */
 const pool = new Pool({
-    user: "postgres",
-    host: "localhost",
-    database: "nalamaihospital",
-    password: "vikashini",
-    port: 5432
+    user:     process.env.DB_USER,
+    host:     process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port:     parseInt(process.env.DB_PORT || "5432")
 });
 
 app.locals.pool = pool;
@@ -64,7 +64,9 @@ const staffRoutes        = require("./routes/staffRoutes");
 const qrRoutes           = require("./routes/qrRoutes");
 const patientRegRoutes   = require("./routes/patientRegRoutes");
 const patientReg2        = require("./routes/patientRoutes2");
+const dietRoutes         = require("./routes/dietRoutes");
 
+app.use("/api/diet",        dietRoutes);
 app.use("/api/inpatient",   inpatientRoutes);
 app.use("/api/staff",       staffRoutes);
 app.use("/api/qr",          qrRoutes);
@@ -79,6 +81,7 @@ pool.connect().then(() => {
     inpatientRoutes.initTables(pool).catch(console.error);
     patientReg2.initTables(pool).catch(console.error);
     pharmacyRoutes.initPrescriptionSchema(pool).catch(console.error);
+    dietRoutes.initTables(pool).catch(console.error);
 });
 app.use("/receptionist", receptionistRoutes);
 app.use("/revenue", revenueRoutes);

@@ -1,0 +1,201 @@
+patient_id,age,gender,medical_history,symptoms,bmi,activity_level,allergies
+P001,48,Male,None,None,27.8,Low,None
+P002,55,Female,High Cholesterol,Headache,22.9,Low,Egg
+P003,57,Male,High Cholesterol,None,31.6,Moderate,None
+P004,47,Female,None,None,32.0,Moderate,Nuts
+P005,22,Male,None,None,27.3,High,Egg
+P006,28,Female,High Cholesterol,None,29.0,Moderate,None
+P007,27,Female,None,None,29.0,Low,None
+P008,37,Female,None,None,20.4,Moderate,Egg
+P009,34,Female,Obesity,Thirst,25.0,Moderate,None
+P010,64,Male,Prediabetes,None,24.2,Low,None
+P011,20,Male,Diabetes,Thirst,27.9,Moderate,Egg
+P012,47,Male,Hypertension,Dizziness,29.2,Moderate,None
+P013,43,Female,None,Dizziness,29.5,Moderate,None
+P014,20,Male,Obesity,Fatigue,32.8,Moderate,None
+P015,34,Male,Diabetes,None,24.9,Moderate,None
+P016,49,Male,Diabetes,None,21.4,Moderate,Nuts
+P017,51,Female,None,Bloating,32.3,High,None
+P018,47,Female,High Cholesterol,None,29.0,High,None
+P019,47,Male,High Cholesterol,None,28.5,Moderate,Nuts
+P020,58,Female,High Cholesterol,Fatigue,24.4,Moderate,None
+P021,63,Female,None,Fatigue,22.7,Moderate,None
+P022,31,Female,Prediabetes,Headache,23.3,Moderate,None
+P023,68,Male,Prediabetes,None,25.2,High,None
+P024,63,Female,None,Bloating,26.9,Low,None
+P025,36,Female,Obesity,Bloating,22.1,Moderate,Nuts
+P026,28,Female,Obesity,Fatigue,31.3,Moderate,Milk
+P027,55,Male,None,None,25.5,Low,Egg
+P028,58,Female,None,Dizziness,24.0,Moderate,None
+P029,50,Female,None,None,24.0,High,None
+P030,20,Female,None,Bloating,27.8,Moderate,Milk
+P031,60,Male,None,Dizziness,31.0,Moderate,Milk
+P032,68,Female,High Cholesterol,Thirst,21.9,Moderate,None
+P033,44,Female,None,None,26.2,High,None
+P034,33,Male,None,None,20.4,Moderate,None
+P035,52,Female,Obesity,None,28.2,Low,Egg
+P036,27,Male,None,None,38.0,Moderate,None
+P037,52,Male,Hypertension,Fatigue,28.1,Moderate,None
+P038,49,Male,Prediabetes,None,21.9,High,None
+P039,48,Male,Prediabetes,Bloating,27.5,Low,None
+P040,52,Female,None,Fatigue,25.2,Moderate,None
+P041,22,Female,High Cholesterol,Headache,21.8,Moderate,None
+P042,45,Male,None,Dizziness,26.1,Low,None
+P043,61,Male,Diabetes,Headache,27.7,Low,None
+P044,39,Male,Hypertension,None,27.7,Moderate,None
+P045,34,Male,High Cholesterol,Headache,22.3,Moderate,None
+P046,41,Female,Prediabetes,Dizziness,24.5,Moderate,None
+P047,62,Male,None,None,25.8,High,None
+P048,51,Female,High Cholesterol,None,21.0,Moderate,None
+P049,69,Male,None,None,18.0,Moderate,None
+P050,45,Male,None,None,26.3,Moderate,None
+P051,20,Female,None,Headache,19.0,Moderate,None
+P052,58,Female,Prediabetes,Fatigue,24.1,Moderate,None
+P053,35,Male,None,None,22.6,High,None
+P054,45,Female,Diabetes,Fatigue,24.4,Moderate,None
+P055,42,Female,Diabetes,Headache,24.1,Moderate,Milk
+P056,23,Female,Hypertension,None,27.7,Moderate,None
+P057,46,Male,Hypertension,Headache,28.1,Moderate,None
+P058,22,Male,Prediabetes,Bloating,29.8,High,None
+P059,50,Female,None,Headache,23.7,Low,None
+P060,45,Female,High Cholesterol,Thirst,25.0,Moderate,None
+P061,64,Female,Hypertension,None,27.4,Moderate,Nuts
+P062,67,Female,Prediabetes,None,25.2,Moderate,None
+P063,56,Male,Prediabetes,Thirst,28.7,Low,Milk
+P064,67,Male,Diabetes,None,20.8,High,None
+P065,60,Female,None,Bloating,23.8,High,None
+P066,24,Male,Hypertension,Headache,29.6,Moderate,None
+P067,35,Male,Prediabetes,None,22.6,Moderate,None
+P068,66,Female,Obesity,Headache,25.5,High,Milk
+P069,65,Female,High Cholesterol,Dizziness,23.7,Low,None
+P070,27,Female,None,Dizziness,26.4,High,None
+P071,64,Male,Prediabetes,Fatigue,22.7,Moderate,None
+P072,38,Male,None,None,31.2,Moderate,None
+P073,39,Male,Hypertension,None,30.8,Moderate,None
+P074,52,Female,None,None,28.7,High,Egg
+P075,66,Male,Diabetes,Dizziness,25.8,Moderate,None
+P076,66,Male,None,None,29.6,Moderate,Egg
+P077,22,Female,Hypertension,None,25.0,Low,None
+P078,69,Female,None,None,29.6,High,Egg
+P079,36,Male,Hypertension,Headache,22.8,Low,Milk
+P080,37,Male,High Cholesterol,Thirst,18.8,Moderate,None
+P081,69,Female,Prediabetes,None,20.3,High,Egg
+P082,40,Female,None,None,26.3,High,Milk
+P083,53,Male,High Cholesterol,Bloating,26.9,Moderate,Nuts
+P084,29,Male,Prediabetes,None,33.5,Moderate,None
+P085,32,Female,Prediabetes,Headache,26.9,Moderate,None
+P086,53,Female,Hypertension,Thirst,24.4,Moderate,Milk
+P087,24,Male,Diabetes,Thirst,23.1,Moderate,None
+P088,57,Female,None,None,36.2,Moderate,None
+P089,46,Male,None,Fatigue,26.6,Moderate,None
+P090,70,Male,Hypertension,Bloating,23.6,Low,Egg
+P091,39,Male,Diabetes,None,27.1,Low,None
+P092,66,Male,None,Fatigue,25.4,Moderate,None
+P093,23,Male,Hypertension,Dizziness,23.3,Moderate,Egg
+P094,70,Male,Hypertension,Dizziness,21.1,Moderate,None
+P095,25,Female,None,Dizziness,25.1,Low,None
+P096,45,Male,None,Fatigue,21.2,Moderate,None
+P097,67,Male,None,None,25.0,Moderate,Egg
+P098,41,Female,Diabetes,Headache,24.6,Moderate,None
+P099,33,Male,Obesity,Fatigue,29.1,Low,None
+P100,34,Female,Diabetes,None,27.5,Moderate,None
+P101,58,Male,None,Dizziness,25.8,Moderate,None
+P102,64,Female,Obesity,None,21.8,Moderate,None
+P103,68,Male,Obesity,None,18.0,Moderate,None
+P104,64,Female,None,Headache,30.0,Low,None
+P105,67,Female,None,Thirst,23.9,Low,Milk
+P106,50,Female,None,Headache,23.8,High,Milk
+P107,30,Male,Hypertension,Fatigue,26.5,Moderate,Nuts
+P108,30,Female,Obesity,Fatigue,26.6,High,None
+P109,23,Male,Prediabetes,Fatigue,26.7,Moderate,Nuts
+P110,30,Male,None,Fatigue,18.0,Moderate,None
+P111,29,Female,None,None,33.9,High,None
+P112,36,Male,Hypertension,Fatigue,33.8,Moderate,None
+P113,68,Female,None,None,27.4,Moderate,Egg
+P114,54,Male,None,Thirst,28.2,Moderate,Milk
+P115,60,Male,None,None,28.7,High,None
+P116,23,Male,Diabetes,Dizziness,28.2,Moderate,Nuts
+P117,33,Male,Diabetes,Thirst,26.6,Moderate,None
+P118,21,Female,High Cholesterol,None,28.9,Low,None
+P119,22,Female,Diabetes,None,19.3,High,None
+P120,46,Female,Obesity,Bloating,30.3,Moderate,None
+P121,52,Female,Obesity,Fatigue,25.8,Moderate,None
+P122,66,Female,Diabetes,Fatigue,23.5,Moderate,None
+P123,48,Female,Diabetes,None,28.7,Moderate,None
+P124,46,Male,Obesity,Dizziness,21.6,High,None
+P125,42,Female,None,Dizziness,28.2,Low,None
+P126,59,Female,None,Fatigue,25.3,Low,Milk
+P127,56,Female,Obesity,None,22.2,Low,None
+P128,60,Female,None,Dizziness,27.5,Low,None
+P129,55,Female,None,Headache,25.7,Moderate,None
+P130,45,Male,None,None,30.1,Moderate,Milk
+P131,26,Male,Prediabetes,Fatigue,30.8,Low,Milk
+P132,44,Male,None,None,22.1,Low,None
+P133,62,Female,Obesity,Fatigue,21.2,Moderate,Milk
+P134,59,Male,Diabetes,None,27.7,Moderate,None
+P135,38,Male,Diabetes,None,23.6,Moderate,None
+P136,33,Male,None,Fatigue,18.0,Moderate,None
+P137,57,Female,Diabetes,Dizziness,24.0,High,None
+P138,65,Female,None,None,26.5,Low,None
+P139,48,Male,Obesity,None,30.6,Moderate,None
+P140,66,Male,None,None,18.0,Moderate,None
+P141,51,Female,None,Dizziness,25.6,Moderate,None
+P142,50,Male,None,Dizziness,25.8,Low,None
+P143,38,Male,None,Thirst,31.2,Moderate,None
+P144,42,Male,None,None,29.5,Moderate,None
+P145,53,Female,Diabetes,Thirst,24.0,Low,Milk
+P146,65,Male,Diabetes,Thirst,27.5,Moderate,None
+P147,59,Male,None,None,22.2,High,Egg
+P148,64,Female,Diabetes,None,32.3,Low,Milk
+P149,55,Male,None,Headache,22.3,High,None
+P150,40,Male,None,Dizziness,25.5,High,None
+P151,26,Male,Hypertension,None,30.5,Moderate,None
+P152,62,Male,None,None,26.6,Moderate,None
+P153,59,Male,None,None,29.0,Moderate,None
+P154,41,Male,Hypertension,Fatigue,25.0,Moderate,None
+P155,62,Female,None,None,27.1,Low,None
+P156,62,Female,Diabetes,None,21.1,Low,Nuts
+P157,63,Male,Obesity,Dizziness,24.2,Low,Egg
+P158,66,Female,Diabetes,Fatigue,22.7,High,None
+P159,42,Female,High Cholesterol,None,29.0,Moderate,None
+P160,64,Female,Prediabetes,None,31.2,Moderate,Egg
+P161,40,Male,None,Headache,18.0,Moderate,Egg
+P162,42,Male,Prediabetes,Fatigue,24.3,High,Milk
+P163,61,Female,None,None,31.2,Low,None
+P164,59,Female,Hypertension,Thirst,30.9,Low,None
+P165,48,Male,Diabetes,Dizziness,30.7,Moderate,None
+P166,61,Female,None,None,29.0,High,None
+P167,54,Female,Prediabetes,Dizziness,25.4,High,Nuts
+P168,58,Female,Diabetes,Thirst,23.2,Low,None
+P169,49,Male,None,None,27.4,Low,Egg
+P170,68,Male,Diabetes,Headache,28.6,Low,Egg
+P171,62,Male,Obesity,Bloating,26.7,Moderate,None
+P172,23,Male,None,None,25.7,High,None
+P173,65,Female,High Cholesterol,None,22.8,High,Nuts
+P174,66,Male,High Cholesterol,Dizziness,23.3,High,Egg
+P175,61,Male,None,None,18.0,High,None
+P176,66,Male,None,Fatigue,38.0,Moderate,None
+P177,22,Male,High Cholesterol,Bloating,24.7,High,Nuts
+P178,24,Male,Hypertension,None,18.1,Moderate,None
+P179,24,Male,None,None,25.7,Moderate,None
+P180,59,Male,High Cholesterol,Fatigue,22.8,Moderate,Nuts
+P181,53,Male,None,Dizziness,30.1,Moderate,None
+P182,67,Male,High Cholesterol,None,26.1,Low,Egg
+P183,46,Male,None,Bloating,22.8,Moderate,Milk
+P184,51,Male,None,None,27.5,High,None
+P185,32,Female,Diabetes,None,24.6,Moderate,None
+P186,53,Female,None,None,25.5,High,None
+P187,26,Male,None,None,27.8,Low,Nuts
+P188,39,Female,Obesity,Thirst,25.7,High,None
+P189,36,Female,Obesity,None,18.0,High,Egg
+P190,31,Female,Hypertension,Headache,29.6,Moderate,None
+P191,52,Male,None,None,24.9,Low,None
+P192,23,Male,Diabetes,None,18.0,High,None
+P193,30,Male,High Cholesterol,Dizziness,30.2,High,None
+P194,66,Female,Obesity,Dizziness,31.0,High,Nuts
+P195,20,Female,Diabetes,None,30.4,Low,None
+P196,34,Female,None,Fatigue,21.6,High,None
+P197,27,Female,High Cholesterol,None,27.9,Moderate,None
+P198,22,Female,Prediabetes,Thirst,27.4,Moderate,None
+P199,63,Female,None,Fatigue,27.0,Low,None
+P200,43,Female,None,None,18.9,Moderate,None

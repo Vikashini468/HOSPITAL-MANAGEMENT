@@ -1,0 +1,29 @@
+food_id,food_name,category,calories,protein,carbs,fat,fiber,sugar,sodium,cuisine
+F001,Oats,Breakfast,389,16.9,66.3,6.9,10.6,0.9,2,Indian
+F002,Idli,Breakfast,58,2.0,12.0,0.4,0.9,0.2,40,Indian
+F003,Vegetable Upma,Breakfast,190,5.0,30.0,5.0,4.0,3.0,280,Indian
+F004,Vegetable Dosa,Breakfast,170,4.0,25.0,5.0,3.0,2.0,250,Indian
+F005,Boiled Egg,Protein,78,6.3,0.6,5.3,0.0,0.4,62,Indian
+F006,Apple,Fruit,52,0.3,13.8,0.2,2.4,10.4,1,General
+F007,Banana,Fruit,89,1.1,22.8,0.3,2.6,12.2,1,General
+F008,Guava,Fruit,68,2.6,14.3,1.0,5.4,8.9,2,Indian
+F009,Papaya,Fruit,43,0.5,10.8,0.3,1.7,7.8,8,Indian
+F010,Brown Rice,Lunch,216,5.0,45.0,1.8,3.5,0.7,10,Indian
+F011,White Rice,Lunch,130,2.7,28.2,0.3,0.4,0.1,1,Indian
+F012,Dal,Protein,116,9.0,20.0,0.4,7.9,1.8,2,Indian
+F013,Chickpeas,Protein,164,8.9,27.4,2.6,7.6,4.8,7,Indian
+F014,Vegetable Curry,Vegetable,120,3.0,15.0,5.0,4.0,5.0,180,Indian
+F015,Spinach,Vegetable,23,2.9,3.6,0.4,2.2,0.4,79,Indian
+F016,Carrot,Vegetable,41,0.9,9.6,0.2,2.8,4.7,69,Indian
+F017,Chapati,Dinner,120,3.5,18.0,3.0,3.0,1.5,120,Indian
+F018,Grilled Chicken,Protein,165,31.0,0.0,3.6,0.0,0.0,74,Indian
+F019,Grilled Fish,Protein,150,28.0,0.0,4.0,0.0,0.0,70,Indian
+F020,Vegetable Soup,Dinner,80,3.0,12.0,2.0,4.0,5.0,220,Indian
+F021,Curd,Snack,61,3.5,4.7,3.3,0.0,4.7,46,Indian
+F022,Unsalted Nuts,Snack,170,6.0,6.0,15.0,3.0,1.5,2,General
+F023,Fried Chips,Snack,536,7.0,53.0,34.0,4.0,0.3,500,General
+F024,Sugary Soft Drink,Drink,42,0.0,10.6,0.0,0.0,10.6,5,General
+F025,Cake,Dessert,350,4.0,50.0,15.0,1.0,30.0,300,General
+F026,Fried Chicken,Protein,260,18.0,12.0,17.0,1.0,0.5,700,General
+F027,Paneer,Protein,265,18.0,6.0,20.0,0.0,3.0,22,Indian
+F028,Mixed Vegetable Salad,Vegetable,70,3.0,11.0,2.0,4.5,4.0,40,Indian
